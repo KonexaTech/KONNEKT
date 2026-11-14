@@ -136,10 +136,31 @@ export async function createDirectConversation(myId, otherId) {
     );
   }
 
+  // The staging migration creates direct chats by username,
+  // not by user ID. Resolve the selected member's username first.
+  const { data: targetProfile, error: profileError } =
+    await supabase
+      .from('profiles')
+      .select('id,username')
+      .eq('id', otherId)
+      .maybeSingle();
+
+  if (profileError) throw profileError;
+
+  if (!targetProfile) {
+    throw new Error('KONNEKT user not found.');
+  }
+
+  if (!targetProfile.username) {
+    throw new Error(
+      'This member needs to set a username before you can start a chat.'
+    );
+  }
+
   const { data, error } = await supabase.rpc(
-    'create_direct_conversation',
+    'konnekt_start_direct_conversation',
     {
-      target_user_id: otherId
+      target_username: targetProfile.username
     }
   );
 
@@ -155,6 +176,10 @@ export async function createDirectConversation(myId, otherId) {
 }
 
 export async function getSignedChatMedia(path) {
+  if (!path) {
+    throw new Error('Attachment path is missing.');
+  }
+
   const { data, error } = await supabase.storage
     .from('konnekt-chat-media')
     .createSignedUrl(path, 3600);
