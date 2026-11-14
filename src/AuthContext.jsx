@@ -25,10 +25,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
 
-  // Remember the currently authenticated user for sign-out handling.
   const currentUserId = useRef(null);
 
-  // Safely update the user's online status in Supabase.
   const publishPresence = async (userId, isOnline) => {
     if (!userId) return;
 
@@ -39,7 +37,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Keep authentication and presence connected.
   useEffect(() => {
     let alive = true;
 
@@ -49,7 +46,6 @@ export function AuthProvider({ children }) {
       const nextUserId = nextSession?.user?.id || null;
       const previousUserId = currentUserId.current;
 
-      // Mark the previous account offline if the account changes or signs out.
       if (previousUserId && previousUserId !== nextUserId) {
         publishPresence(previousUserId, false);
       }
@@ -60,19 +56,17 @@ export function AuthProvider({ children }) {
       if (nextUserId) {
         publishPresence(nextUserId, true);
 
-        // Initialise push notifications without blocking authentication.
-        Promise.resolve(initialisePushNotifications(nextUserId)).catch(
-          (error) => {
-            console.error(
-              'KONNEKT push notification initialisation failed:',
-              error
-            );
-          }
-        );
+        Promise.resolve(
+          initialisePushNotifications(nextUserId)
+        ).catch((error) => {
+          console.error(
+            'KONNEKT push notification initialisation failed:',
+            error
+          );
+        });
       }
     };
 
-    // Subscribe to authentication changes.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
@@ -90,9 +84,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // Restore an existing login session.
-    supabase.auth
-      .getSession()
+    supabase.auth.getSession()
       .then(({ data, error }) => {
         if (error) throw error;
 
@@ -115,15 +107,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Update presence when the browser tab becomes visible or hidden.
   useEffect(() => {
     const userId = session?.user?.id;
 
-    if (!userId) return;
+    if (!userId || typeof document === 'undefined') return;
 
     const updateBrowserPresence = () => {
-      const isVisible = document.visibilityState === 'visible';
-      publishPresence(userId, isVisible);
+      publishPresence(
+        userId,
+        document.visibilityState === 'visible'
+      );
     };
 
     document.addEventListener(
@@ -141,7 +134,6 @@ export function AuthProvider({ children }) {
     };
   }, [session?.user?.id]);
 
-  // Update presence when the Android app enters or leaves the foreground.
   useEffect(() => {
     const userId = session?.user?.id;
 
@@ -159,7 +151,6 @@ export function AuthProvider({ children }) {
           }
         );
 
-        // Handle cleanup if the user signs out before registration finishes.
         if (!active) {
           await newListener.remove();
           return;
@@ -168,7 +159,7 @@ export function AuthProvider({ children }) {
         listener = newListener;
       } catch (error) {
         console.warn(
-          'KONNEKT native app lifecycle listener unavailable:',
+          'KONNEKT native lifecycle listener unavailable:',
           error
         );
       }
@@ -185,16 +176,16 @@ export function AuthProvider({ children }) {
     };
   }, [session?.user?.id]);
 
+  const value = {
+    session,
+    user: session?.user || null,
+    loading,
+    recovery,
+    setRecovery,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        user: session?.user || null,
-        loading,
-        recovery,
-        setRecovery,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
