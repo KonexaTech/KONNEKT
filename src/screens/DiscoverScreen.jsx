@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, FlatList,
+  StyleSheet, ActivityIndicator, Image
+} from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { createDirectConversation } from '../services/social';
 
-const profileColumns = 'id,username,full_name,avatar_url,bio';
-const resultKinds = [
+const PROFILE_COLUMNS = 'id,username,full_name,avatar_url,bio';
+const RESULT_KINDS = [
   { key: 'people', label: 'People' },
   { key: 'videos', label: 'Videos' },
   { key: 'hashtags', label: 'Hashtags' }
@@ -14,7 +17,7 @@ const resultKinds = [
 export default function DiscoverScreen({ navigation }) {
   const { user } = useAuth();
   const [people, setPeople] = useState([]);
-  const [posts, setPosts] = useState([]);
+  const [reels, setReels] = useState([]);
   const [following, setFollowing] = useState(new Set());
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState('people');
@@ -24,36 +27,34 @@ export default function DiscoverScreen({ navigation }) {
 
   const load = useCallback(async () => {
     if (!user?.id) {
+      setPeople([]);
+      setReels([]);
+      setFollowing(new Set());
       setBusy(false);
       return;
     }
-
     setBusy(true);
     setNotice('');
-
     try {
-      const [profilesResult, followsResult, postsResult] = await Promise.all([
-        supabase.from('profiles').select(profileColumns).neq('id', user.id).order('full_name', { ascending: true }).limit(200),
+      const [profilesRes, followsRes, reelsRes] = await Promise.all([
+        supabase.from('profiles').select(PROFILE_COLUMNS).neq('id', user.id).order('full_name', { ascending: true }).limit(200),
         supabase.from('follows').select('followed_id').eq('follower_id', user.id),
-        supabase.from('posts').select('id,user_id,caption,media_url,media_type,created_at').eq('media_type', 'video').order('created_at', { ascending: false }).limit(100)
+        supabase.from('reels').select('id,user_id,caption,media_path,visibility,published_at,created_at').is('deleted_at', null).order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(100)
       ]);
+      if (profilesRes.error) throw profilesRes.error;
+      if (followsRes.error) throw followsRes.error;
+      if (reelsRes.error) throw reelsRes.error;
 
-      if (profilesResult.error) throw profilesResult.error;
-      if (followsResult.error) throw followsResult.error;
-      if (postsResult.error) throw postsResult.error;
-
-      const postRows = postsResult.data || [];
-      const creatorIds = [...new Set(postRows.map(post => post.user_id))];
-      const creatorResult = creatorIds.length
+      const reelRows = (reelsRes.data || []).filter(r => !!r.media_path);
+      const creatorIds = [...new Set(reelRows.map(r => r.user_id).filter(Boolean))];
+      const creatorRes = creatorIds.length
         ? await supabase.from('profiles').select('id,username,full_name,avatar_url').in('id', creatorIds)
         : { data: [], error: null };
-
-      if (creatorResult.error) throw creatorResult.error;
-
-      const creatorMap = Object.fromEntries((creatorResult.data || []).map(profile => [profile.id, profile]));
-      setPeople(profilesResult.data || []);
-      setPosts(postRows.map(post => ({ ...post, creator: creatorMap[post.user_id] || {} })));
-      setFollowing(new Set((followsResult.data || []).map(row => row.followed_id)));
+      if (creatorRes.error) throw creatorRes.error;
+      const creatorMap = Object.fromEntries((creatorRes.data || []).map(p => [p.id, p]));
+      setPeople(profilesRes.data || []);
+      setReels(reelRows.map(r => ({ ...r, creator: creatorMap[r.user_id] || {} })));
+      setFollowing(new Set((followsRes.data || []).map(row => row.followed_id)));
     } catch (error) {
       setNotice(`Could not load Discover: ${error?.message || 'Please try again.'}`);
     } finally {
@@ -64,42 +65,53 @@ export default function DiscoverScreen({ navigation }) {
   useEffect(() => {
     load();
     const channel = supabase.channel(`discover-${user?.id || 'guest'}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'follows' }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'follows' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reels' }, () => load())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [load, user?.id]);
 
-  const term = query.trim().replace(/^@/, '').toLowerCase();
-  const filteredPeople = useMemo(() => people.filter(person => !term || `${person.username || ''} ${person.full_name || ''} ${person.bio || ''}`.toLowerCase().includes(term)), [people, term]);
-  const filteredPosts = useMemo(() => posts.filter(post => !term || `${post.caption || ''} ${post.creator?.username || ''} ${post.creator?.full_name || ''}`.toLowerCase().includes(term)), [posts, term]);
+  const term = query.trim().toLowerCase();
+  const filteredPeople = useMemo(() => {
+    const needle = term.replace(/^@/, '');
+    return people.filter(person =>
+      !needle || `${person.username || ''} ${person.full_name || ''} ${person.bio || ''}`.toLowerCase().includes(needle)
+    );
+  }, [people, term]);
+
+  const filteredReels = useMemo(() => {
+    const needle = term.startsWith('#') ? term.slice(1) : term.replace(/^@/, '');
+    return reels.filter(reel =>
+      !needle || `${reel.caption || ''} ${reel.creator?.username || ''} ${reel.creator?.full_name || ''}`.toLowerCase().includes(needle)
+    );
+  }, [reels, term]);
+
   const hashtags = useMemo(() => {
     const counts = new Map();
-    posts.forEach(post => {
-      (post.caption?.match(/#[\p{L}\p{N}_]+/gu) || []).forEach(tag => {
+    reels.forEach(reel => {
+      (reel.caption?.match(/#[\p{L}\p{N}_]+/gu) || []).forEach(tag => {
         const normalized = tag.toLowerCase();
         const needle = term.startsWith('#') ? term.slice(1) : term;
         if (!term || normalized.includes(needle)) counts.set(normalized, (counts.get(normalized) || 0) + 1);
       });
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 40);
-  }, [posts, term]);
+  }, [reels, term]);
 
   const toggleFollow = async person => {
-    if (!user?.id || !person?.id || actionId) return;
+    if (!user?.id || !person?.id || actionId || person.id === user.id) return;
     setActionId(person.id);
     setNotice('');
-    const isFollowing = following.has(person.id);
+    const wasFollowing = following.has(person.id);
     try {
-      const result = isFollowing
+      const result = wasFollowing
         ? await supabase.from('follows').delete().eq('follower_id', user.id).eq('followed_id', person.id)
         : await supabase.from('follows').insert({ follower_id: user.id, followed_id: person.id });
       if (result.error) throw result.error;
-      setFollowing(previous => {
-        const next = new Set(previous);
-        if (isFollowing) next.delete(person.id);
-        else next.add(person.id);
+      setFollowing(prev => {
+        const next = new Set(prev);
+        wasFollowing ? next.delete(person.id) : next.add(person.id);
         return next;
       });
     } catch (error) {
@@ -109,7 +121,7 @@ export default function DiscoverScreen({ navigation }) {
     }
   };
 
-  const openProfile = person => navigation.navigate('ContactProfile', {
+  const openProfile = person => navigation?.navigate?.('ContactProfile', {
     contact: {
       id: person.id,
       name: person.full_name || person.username || 'KONNEKT member',
@@ -122,12 +134,15 @@ export default function DiscoverScreen({ navigation }) {
   });
 
   const message = async person => {
-    if (actionId) return;
+    if (!user?.id || actionId) return;
     setActionId(person.id);
     setNotice('');
     try {
       const chatId = await createDirectConversation(user.id, person.id);
-      navigation.navigate('ChatConversation', { chatId, chatName: person.full_name || (person.username ? `@${person.username}` : 'KONNEKT member') });
+      navigation?.navigate?.('ChatConversation', {
+        chatId,
+        chatName: person.full_name || (person.username ? `@${person.username}` : 'KONNEKT member')
+      });
     } catch (error) {
       setNotice(`Could not open chat: ${error?.message || 'Please try again.'}`);
     } finally {
@@ -140,19 +155,21 @@ export default function DiscoverScreen({ navigation }) {
     const name = item.full_name || item.username || 'KONNEKT member';
     return (
       <View style={s.person}>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Open ${name}'s profile`} style={s.identity} onPress={() => openProfile(item)}>
-          {item.avatar_url ? <Image source={{ uri: item.avatar_url }} style={s.avatarImage} /> : <View style={s.avatar}><Text style={s.avatarText}>{name.slice(0, 1).toUpperCase()}</Text></View>}
+        <TouchableOpacity style={s.identity} onPress={() => openProfile(item)} accessibilityRole="button" accessibilityLabel={`Open ${name}'s profile`}>
+          {item.avatar_url
+            ? <Image source={{ uri: item.avatar_url }} style={s.avatarImage} />
+            : <View style={s.avatar}><Text style={s.avatarText}>{name.slice(0, 1).toUpperCase()}</Text></View>}
           <View style={s.personCopy}>
-            <Text style={s.name} numberOfLines={1}>{item.full_name || 'KONNEKT member'}</Text>
+            <Text style={s.name} numberOfLines={1}>{name}</Text>
             <Text style={s.username}>{item.username ? `@${item.username}` : 'KONNEKT member'}</Text>
             {!!item.bio && <Text style={s.bio} numberOfLines={1}>{item.bio}</Text>}
           </View>
         </TouchableOpacity>
         <View style={s.actions}>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={isFollowing ? `Unfollow ${name}` : `Follow ${name}`} style={[s.follow, isFollowing && s.following]} disabled={!!actionId} onPress={() => toggleFollow(item)}>
+          <TouchableOpacity style={[s.follow, isFollowing && s.following]} disabled={!!actionId} onPress={() => toggleFollow(item)}>
             <Text style={s.followText}>{actionId === item.id ? '…' : isFollowing ? 'Following' : 'Follow'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" style={s.message} disabled={!!actionId} onPress={() => message(item)}>
+          <TouchableOpacity style={s.message} disabled={!!actionId} onPress={() => message(item)}>
             <Text style={s.messageText}>{actionId === item.id ? '…' : 'Message'}</Text>
           </TouchableOpacity>
         </View>
@@ -160,10 +177,10 @@ export default function DiscoverScreen({ navigation }) {
     );
   };
 
-  const renderVideo = ({ item }) => {
+  const renderReel = ({ item }) => {
     const creator = item.creator?.username ? `@${item.creator.username}` : item.creator?.full_name || 'KONNEKT creator';
     return (
-      <TouchableOpacity accessibilityRole="button" style={s.videoCard} onPress={() => navigation.navigate('Reels')}>
+      <TouchableOpacity style={s.videoCard} accessibilityRole="button" onPress={() => navigation?.navigate?.('Reels', { reelId: item.id })}>
         <View style={s.videoThumb}><Text style={s.play}>▶</Text><Text style={s.videoTag}>REEL</Text></View>
         <View style={s.videoCopy}>
           <Text style={s.videoCaption} numberOfLines={2}>{item.caption || 'Watch this Reel'}</Text>
@@ -175,57 +192,58 @@ export default function DiscoverScreen({ navigation }) {
   };
 
   const renderHashtag = ({ item }) => (
-    <TouchableOpacity accessibilityRole="button" style={s.hashtagRow} onPress={() => { setQuery(item[0]); setKind('videos'); }}>
+    <TouchableOpacity style={s.hashtagRow} onPress={() => { setQuery(item[0]); setKind('videos'); }}>
       <View style={s.hashIcon}><Text style={s.hashGlyph}>#</Text></View>
       <View style={s.personCopy}>
         <Text style={s.hashName}>{item[0]}</Text>
-        <Text style={s.username}>{item[1]} {item[1] === 1 ? 'video' : 'videos'}</Text>
+        <Text style={s.username}>{item[1]} {item[1] === 1 ? 'Reel' : 'Reels'}</Text>
       </View>
       <Text style={s.arrow}>›</Text>
     </TouchableOpacity>
   );
 
-  const data = kind === 'people' ? filteredPeople : kind === 'videos' ? filteredPosts : hashtags;
-  const emptyLabel = kind === 'people' ? 'No matching accounts found.' : kind === 'videos' ? 'No videos match that search yet.' : 'Hashtags appear here when creators add them to video captions.';
+  const data = kind === 'people' ? filteredPeople : kind === 'videos' ? filteredReels : hashtags;
+  const emptyLabel = kind === 'people'
+    ? 'No matching accounts found.'
+    : kind === 'videos'
+      ? 'No Reels match that search yet.'
+      : 'Hashtags appear here when creators add them to Reel captions.';
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <View>
-          <Text style={s.title}>Discover</Text>
-          <Text style={s.subtitle}>Find people, creators and videos on KONNEKT</Text>
-        </View>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh Discover" onPress={load} style={s.refresh}>
-          <Text style={s.refreshText}>↻</Text>
-        </TouchableOpacity>
+        <View><Text style={s.title}>Discover</Text><Text style={s.subtitle}>Find people, creators and Reels on KONNEKT</Text></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh Discover" onPress={load} style={s.refresh}><Text style={s.refreshText}>↻</Text></TouchableOpacity>
       </View>
-
-      <TextInput style={s.search} value={query} onChangeText={setQuery} placeholder="Search names, creators, videos or #hashtags" placeholderTextColor="#C4B4D0" autoCapitalize="none" returnKeyType="search" accessibilityLabel="Search Discover" />
-
+      <TextInput
+        style={s.search}
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search names, creators, Reels or #hashtags"
+        placeholderTextColor="#C4B4D0"
+        autoCapitalize="none"
+        returnKeyType="search"
+        accessibilityLabel="Search Discover"
+      />
       <View style={s.filters} accessibilityRole="tablist">
-        {resultKinds.map(option => (
+        {RESULT_KINDS.map(option => (
           <TouchableOpacity key={option.key} accessibilityRole="tab" accessibilityState={{ selected: kind === option.key }} style={[s.filter, kind === option.key && s.filterActive]} onPress={() => setKind(option.key)}>
             <Text style={[s.filterText, kind === option.key && s.filterTextActive]}>{option.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
-
-      <Text style={s.section}>{term ? `${data.length} search results` : kind === 'people' ? 'Suggested accounts' : kind === 'videos' ? 'Recent videos' : 'Popular hashtags'}</Text>
-
-      {busy && !people.length && !posts.length ? (
-        <ActivityIndicator color="#FFC107" style={{ marginTop: 35 }} />
-      ) : (
-        <FlatList
-          data={data}
-          keyExtractor={item => kind === 'people' ? item.id : kind === 'videos' ? item.id : item[0]}
-          renderItem={kind === 'people' ? renderPerson : kind === 'videos' ? renderVideo : renderHashtag}
-          onRefresh={load}
-          refreshing={busy}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={<Text style={s.empty}>{emptyLabel}</Text>}
-        />
-      )}
-
+      <Text style={s.section}>{term ? `${data.length} search results` : kind === 'people' ? 'Suggested accounts' : kind === 'videos' ? 'Recent Reels' : 'Popular hashtags'}</Text>
+      {busy && !people.length && !reels.length
+        ? <ActivityIndicator color="#FFC107" style={{ marginTop: 35 }} />
+        : <FlatList
+            data={data}
+            keyExtractor={item => kind === 'people' ? item.id : kind === 'videos' ? item.id : item[0]}
+            renderItem={kind === 'people' ? renderPerson : kind === 'videos' ? renderReel : renderHashtag}
+            onRefresh={load}
+            refreshing={busy}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={<Text style={s.empty}>{emptyLabel}</Text>}
+          />}
       {!!notice && <Text accessibilityRole="alert" style={s.notice}>{notice}</Text>}
     </View>
   );
@@ -274,64 +292,3 @@ const s = StyleSheet.create({
   empty: { color: '#C4B4D0', textAlign: 'center', padding: 22, lineHeight: 20, fontSize: 12 },
   notice: { color: '#FFD0B5', padding: 10, backgroundColor: 'rgba(255,107,0,.12)', borderRadius: 9, marginTop: 8, fontSize: 12 }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
