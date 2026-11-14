@@ -22,7 +22,20 @@ export default function AccountSettingsScreen({ navigation }) {
     );
   };
 
-  const renderSwitch = (title, description, value, onValueChange) => (
+  const openScreen = (screen, fallbackTitle) => {
+    try {
+      navigation.navigate(screen);
+    } catch (error) {
+      showComingSoon(fallbackTitle);
+    }
+  };
+
+  const renderSwitch = (
+    title,
+    description,
+    value,
+    onValueChange
+  ) => (
     <View style={styles.settingItem}>
       <View style={styles.settingText}>
         <Text style={styles.settingTitle}>{title}</Text>
@@ -32,45 +45,108 @@ export default function AccountSettingsScreen({ navigation }) {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#39244B', true: '#00A77C' }}
+        trackColor={{
+          false: '#39244B',
+          true: '#00A77C'
+        }}
         thumbColor={value ? '#00E5A8' : '#B8C4D4'}
       />
     </View>
   );
 
-  const renderLink = (title, description) => (
+  const renderLink = (
+    title,
+    description,
+    onPress = () => showComingSoon(title),
+    destructive = false
+  ) => (
     <TouchableOpacity
+      accessibilityRole="button"
       style={styles.settingItem}
-      onPress={() => showComingSoon(title)}
+      onPress={onPress}
     >
       <View style={styles.settingText}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text
+          style={[
+            styles.settingTitle,
+            destructive && styles.destructiveTitle
+          ]}
+        >
+          {title}
+        </Text>
+
+        <Text style={styles.description}>
+          {description}
+        </Text>
       </View>
 
-      <Text style={styles.arrow}>›</Text>
+      <Text
+        style={[
+          styles.arrow,
+          destructive && styles.destructiveTitle
+        ]}
+      >
+        ›
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.back}>‹ Back</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Account Settings</Text>
+        <Text style={styles.headerTitle}>
+          Account Settings
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Manage your KONNEKT account and preferences.
+        </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Account</Text>
+      <Text style={styles.sectionTitle}>
+        Account
+      </Text>
 
-      {renderLink('Personal information', 'Manage your name and username')}
+      {renderLink(
+        'Personal information',
+        'Manage your name and username',
+        () => openScreen('EditProfile', 'Personal information')
+      )}
 
-      {renderLink('Phone number', 'Manage your registered number')}
+      {renderLink(
+        'Phone number',
+        'Manage your registered number',
+        () => openScreen('PhoneVerification', 'Phone number')
+      )}
 
-      {renderLink('Change password', 'Keep your account secure')}
+      {renderLink(
+        'Change password',
+        'Keep your account secure',
+        () => openScreen('ChangePassword', 'Change password')
+      )}
 
-      <Text style={styles.sectionTitle}>Privacy</Text>
+      {renderLink(
+        'Two-step verification',
+        'Add another layer of account protection',
+        () => openScreen(
+          'TwoStepVerification',
+          'Two-step verification'
+        )
+      )}
+
+      <Text style={styles.sectionTitle}>
+        Privacy
+      </Text>
 
       {renderSwitch(
         'Private account',
@@ -93,13 +169,66 @@ export default function AccountSettingsScreen({ navigation }) {
         setReadReceipts
       )}
 
-      <Text style={styles.sectionTitle}>More</Text>
+      {renderLink(
+        'Privacy settings',
+        'Manage your privacy preferences',
+        () => openScreen('PrivacySettings', 'Privacy settings')
+      )}
 
-      {renderLink('Blocked accounts', 'Manage people you have blocked')}
+      <Text style={styles.sectionTitle}>
+        Security
+      </Text>
 
-      {renderLink('Help and support', 'Get assistance with KONNEKT')}
+      {renderLink(
+        'Active sessions',
+        'Review devices and sessions connected to your account',
+        () => openScreen('ActiveSessions', 'Active sessions')
+      )}
 
-      {renderLink('Terms and privacy policy', 'Read our policies')}
+      {renderLink(
+        'Encryption and key recovery',
+        'Manage your encryption key backup and recovery',
+        () => openScreen('KeyRecovery', 'Encryption and key recovery')
+      )}
+
+      <Text style={styles.sectionTitle}>
+        More
+      </Text>
+
+      {renderLink(
+        'Blocked accounts',
+        'Manage people you have blocked',
+        () => openScreen('BlockedContacts', 'Blocked accounts')
+      )}
+
+      {renderLink(
+        'Help and support',
+        'Get assistance with KONNEKT',
+        () => openScreen('HelpSupport', 'Help and support')
+      )}
+
+      {renderLink(
+        'Terms and privacy policy',
+        'Read our policies',
+        () => openScreen('TermsPrivacy', 'Terms and privacy policy')
+      )}
+
+      <Text style={styles.sectionTitle}>
+        Account management
+      </Text>
+
+      {renderLink(
+        'Delete account',
+        'Submit a request for permanent account deletion',
+        () => navigation.navigate('AccountDeletion'),
+        true
+      )}
+
+      <Text style={styles.deletionNote}>
+        Account deletion requests are reviewed before permanent
+        deletion. Submitting a request does not immediately
+        deactivate or delete your account.
+      </Text>
 
       <Text style={styles.footer}>
         KONNEKT Settings • Version 1.0
@@ -112,29 +241,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#10091B',
-    padding: 20
+    paddingHorizontal: 20
   },
+
+  content: {
+    paddingBottom: 35
+  },
+
   header: {
     marginTop: 25,
-    marginBottom: 30
+    marginBottom: 20
   },
+
   back: {
     color: '#00E5A8',
     fontSize: 16,
     marginBottom: 18
   },
+
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 26,
     fontWeight: 'bold'
   },
+
+  subtitle: {
+    color: '#BBA9CC',
+    fontSize: 12,
+    marginTop: 7
+  },
+
   sectionTitle: {
     color: '#00E5A8',
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 15,
+    marginTop: 20,
     marginBottom: 12
   },
+
   settingItem: {
     backgroundColor: '#241630',
     padding: 16,
@@ -144,24 +288,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between'
   },
+
   settingText: {
     flex: 1,
     paddingRight: 12
   },
+
   settingTitle: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold'
   },
+
   description: {
     color: '#BBA9CC',
     fontSize: 12,
     marginTop: 5
   },
+
   arrow: {
     color: '#00E5A8',
     fontSize: 25
   },
+
+  destructiveTitle: {
+    color: '#FF8095'
+  },
+
+  deletionNote: {
+    color: '#BBA9CC',
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 3,
+    marginBottom: 12,
+    paddingHorizontal: 5
+  },
+
   footer: {
     color: '#BBA9CC',
     textAlign: 'center',
