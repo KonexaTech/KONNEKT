@@ -231,7 +231,7 @@ const privateKey = await crypto.subtle.importKey(
   'pkcs8',
   fromBase64(payload.privateKey),
   { name: 'ECDH', namedCurve: 'P-256' },
-  false,
+  true,
   ['deriveKey']
 );
 
