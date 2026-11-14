@@ -1,790 +1,354 @@
-
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
-
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  TextInput,
-  Image,
-  Dimensions
+  View, Text, TouchableOpacity, FlatList, StyleSheet,
+  ActivityIndicator, TextInput, Image, Dimensions
 } from 'react-native';
-
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { chooseMedia, uploadMedia } from '../services/media';
 
 const MAX_VIDEO_BYTES = 45 * 1024 * 1024;
-const REEL_PAGE_HEIGHT = Math.max(
-  420,
-  Dimensions.get('window').height - 245
-);
+const BUCKET = 'konnekt-public-media';
+const PAGE_HEIGHT = Math.max(420, Dimensions.get('window').height - 245);
+
+function mediaUrl(path) {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data?.publicUrl || '';
+}
 
 export default function WatchScreen({ navigation }) {
   const { user } = useAuth();
-
-  const [posts, setPosts] = useState([]);
+  const [reels, setReels] = useState([]);
   const [liked, setLiked] = useState(new Set());
   const [following, setFollowing] = useState(new Set());
-  const [followBusy, setFollowBusy] = useState('');
   const [likeCounts, setLikeCounts] = useState({});
   const [comments, setComments] = useState({});
-  const [commentDrafts, setCommentDrafts] = useState({});
+  const [drafts, setDrafts] = useState({});
   const [failedMedia, setFailedMedia] = useState({});
-  const [activePostId, setActivePostId] = useState(null);
-
+  const [activeId, setActiveId] = useState(null);
   const [busy, setBusy] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
-
+  const [commentBusy, setCommentBusy] = useState('');
+  const [likeBusy, setLikeBusy] = useState('');
+  const [followBusy, setFollowBusy] = useState('');
   const [caption, setCaption] = useState('');
   const [notice, setNotice] = useState('');
   const [feedHeight, setFeedHeight] = useState(0);
+  const requestRef = useRef(0);
+  const pageHeight = feedHeight || PAGE_HEIGHT;
 
-  const pageHeight = feedHeight || REEL_PAGE_HEIGHT;
-
-  // Only the currently visible Reel should autoplay.
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 70
-  });
-
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    const visible = viewableItems?.find(
-      entry => entry.isViewable && entry.item?.id
-    );
-
-    if (visible) {
-      setActivePostId(visible.item.id);
-    }
-  });
-
-  const load = useCallback(async (showRefresh = false) => {
+  const load = useCallback(async (refresh = false) => {
     if (!user?.id) {
-      setPosts([]);
+      setReels([]);
       setBusy(false);
       setRefreshing(false);
       return;
     }
-
-    if (showRefresh) setRefreshing(true);
-
+    const requestId = ++requestRef.current;
+    if (refresh) setRefreshing(true);
+    else setBusy(true);
     try {
-      // Load the actual feed first.
-      // Supporting likes/comments/follows must not hide posts.
       const { data, error } = await supabase
-        .from('posts')
-        .select('*')
+        .from('reels')
+        .select('id,user_id,caption,media_path,visibility,published_at,created_at,deleted_at')
+        .is('deleted_at', null)
+        .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(60);
-
       if (error) throw error;
 
-      const rows = (data || []).filter(post =>
-        !!post.media_url &&
-        ['video', 'image'].includes(post.media_type || 'video')
-      );
+      const rows = (data || []).filter(row => !!row.media_path);
+      const reelIds = rows.map(row => row.id);
+      const creatorIds = [...new Set(rows.map(row => row.user_id).filter(Boolean))];
 
-      const postIds = rows.map(post => post.id);
-
-      const profileIds = [
-        ...new Set(rows.map(post => post.user_id).filter(Boolean))
-      ];
-
-      // Supporting information is loaded separately.
-      const [
-        profileResult,
-        myLikesResult,
-        allLikesResult,
-        commentsResult,
-        followsResult
-      ] = await Promise.all([
-        profileIds.length
-          ? supabase
-              .from('profiles')
-              .select('id,username,full_name,avatar_url')
-              .in('id', profileIds)
+      const [profilesRes, myLikesRes, allLikesRes, commentsRes, followsRes] = await Promise.all([
+        creatorIds.length
+          ? supabase.from('profiles').select('id,username,full_name,avatar_url,bio').in('id', creatorIds)
           : Promise.resolve({ data: [], error: null }),
-
-        supabase
-          .from('post_likes')
-          .select('post_id')
-          .eq('user_id', user.id),
-
-        postIds.length
-          ? supabase
-              .from('post_likes')
-              .select('post_id')
-              .in('post_id', postIds)
+        supabase.from('reel_likes').select('reel_id').eq('user_id', user.id),
+        reelIds.length
+          ? supabase.from('reel_likes').select('reel_id').in('reel_id', reelIds)
           : Promise.resolve({ data: [], error: null }),
-
-        postIds.length
-          ? supabase
-              .from('post_comments')
-              .select('id,post_id,user_id,body,created_at')
-              .in('post_id', postIds)
-              .order('created_at', { ascending: true })
+        reelIds.length
+          ? supabase.from('reel_comments').select('id,reel_id,user_id,body,created_at,deleted_at').in('reel_id', reelIds).is('deleted_at', null).order('created_at', { ascending: true })
           : Promise.resolve({ data: [], error: null }),
-
-        supabase
-          .from('follows')
-          .select('followed_id')
-          .eq('follower_id', user.id)
+        supabase.from('follows').select('followed_id').eq('follower_id', user.id)
       ]);
+      if (requestId !== requestRef.current) return;
 
       const warnings = [];
+      if (profilesRes.error) warnings.push('creator profiles');
+      if (myLikesRes.error) warnings.push('your likes');
+      if (allLikesRes.error) warnings.push('like counts');
+      if (commentsRes.error) warnings.push('comments');
+      if (followsRes.error) warnings.push('follow status');
 
-      if (profileResult.error) warnings.push('creator profiles');
-      if (myLikesResult.error) warnings.push('your likes');
-      if (allLikesResult.error) warnings.push('like counts');
-      if (commentsResult.error) warnings.push('comments');
-      if (followsResult.error) warnings.push('follow status');
-
-      const profiles = profileResult.data || [];
-
-      const profileMap = Object.fromEntries(
-        profiles.map(profile => [profile.id, profile])
-      );
-
-      const commentRows = commentsResult.data || [];
-
-      const commentUserIds = [
-        ...new Set(
-          commentRows.map(comment => comment.user_id).filter(Boolean)
-        )
-      ];
-
+      const profiles = profilesRes.data || [];
+      const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+      const commentRows = commentsRes.data || [];
+      const commentUserIds = [...new Set(commentRows.map(c => c.user_id).filter(Boolean))];
       let commentProfiles = [];
-
       if (commentUserIds.length) {
-        const result = await supabase
-          .from('profiles')
-          .select('id,username,full_name')
-          .in('id', commentUserIds);
-
-        if (result.error) {
-          warnings.push('comment profiles');
-        } else {
-          commentProfiles = result.data || [];
-        }
+        const result = await supabase.from('profiles').select('id,username,full_name,avatar_url').in('id', commentUserIds);
+        if (result.error) warnings.push('comment authors');
+        else commentProfiles = result.data || [];
       }
-
-      const commentProfileMap = Object.fromEntries(
-        commentProfiles.map(profile => [profile.id, profile])
-      );
-
-      const groupedComments = {};
-
+      const commentProfileMap = Object.fromEntries(commentProfiles.map(p => [p.id, p]));
+      const grouped = {};
       commentRows.forEach(comment => {
-        if (!groupedComments[comment.post_id]) {
-          groupedComments[comment.post_id] = [];
-        }
-
-        groupedComments[comment.post_id].push({
-          ...comment,
-          profile: commentProfileMap[comment.user_id]
-        });
+        if (!grouped[comment.reel_id]) grouped[comment.reel_id] = [];
+        grouped[comment.reel_id].push({ ...comment, profile: commentProfileMap[comment.user_id] || {} });
       });
-
       const counts = {};
-
-      (allLikesResult.data || []).forEach(row => {
-        counts[row.post_id] = (counts[row.post_id] || 0) + 1;
+      (allLikesRes.data || []).forEach(row => {
+        counts[row.reel_id] = (counts[row.reel_id] || 0) + 1;
       });
 
-      setComments(groupedComments);
-      setLikeCounts(counts);
-
-      setLiked(
-        new Set(
-          (myLikesResult.data || []).map(row => row.post_id)
-        )
-      );
-
-      setFollowing(
-        new Set(
-          (followsResult.data || []).map(row => row.followed_id)
-        )
-      );
-
-      const feedPosts = rows.map(post => ({
-        ...post,
-        profile: profileMap[post.user_id] || {}
+      const nextReels = rows.map(row => ({
+        ...row,
+        media_url: mediaUrl(row.media_path),
+        profile: profileMap[row.user_id] || {}
       }));
-
-      setPosts(feedPosts);
-
+      setReels(nextReels);
+      setComments(grouped);
+      setLikeCounts(counts);
+      setLiked(new Set((myLikesRes.data || []).map(row => row.reel_id)));
+      setFollowing(new Set((followsRes.data || []).map(row => row.followed_id)));
       setFailedMedia({});
-
-      setActivePostId(previous => {
-        if (feedPosts.some(post => post.id === previous)) {
-          return previous;
-        }
-
-        return feedPosts[0]?.id || null;
-      });
-
-      if (warnings.length) {
-        setNotice(
-          `Your feed loaded, but some extra information could not load: ${warnings.join(', ')}.`
-        );
-      } else {
-        setNotice('');
-      }
-
-      if (!feedPosts.length) {
-        setNotice(
-          'No published videos or images were found in the feed yet.'
-        );
-      }
+      setActiveId(previous => nextReels.some(r => r.id === previous) ? previous : (nextReels[0]?.id || null));
+      setNotice(warnings.length ? `Reels loaded, but some details could not load: ${warnings.join(', ')}.` : '');
+      if (!nextReels.length) setNotice('No published Reels are available yet.');
     } catch (error) {
-      setNotice(
-        `Feed could not load: ${error?.message || 'Please try again.'}`
-      );
+      if (requestId === requestRef.current) setNotice(`Reels could not load: ${error?.message || 'Please try again.'}`);
     } finally {
-      setBusy(false);
-      setRefreshing(false);
+      if (requestId === requestRef.current) {
+        setBusy(false);
+        setRefreshing(false);
+      }
     }
   }, [user?.id]);
 
   useEffect(() => {
     load();
-
     if (!user?.id) return undefined;
-
-    const channel = supabase
-      .channel(`konnekt-reels-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'posts'
-        },
-        () => load()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'post_likes'
-        },
-        () => load()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'follows'
-        },
-        () => load()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'post_comments'
-        },
-        () => load()
-      )
+    const channel = supabase.channel(`konnekt-reels-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reels' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reel_likes' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reel_comments' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'follows' }, () => load())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { requestRef.current += 1; supabase.removeChannel(channel); };
   }, [load, user?.id]);
 
   const publish = async () => {
-    if (!user?.id) {
-      setNotice('Please sign in before publishing a Reel.');
+    if (!user?.id || uploading) {
+      if (!user?.id) setNotice('Please sign in before publishing a Reel.');
       return;
     }
-
     try {
-      const file = await chooseMedia(
-        'video/mp4,video/webm,video/quicktime'
-      );
-
+      const file = await chooseMedia('video/mp4,video/webm,video/quicktime');
       if (!file) return;
-
-      if (!file.type?.startsWith('video/')) {
-        throw new Error('Please select a video file.');
-      }
-
-      if (file.size > MAX_VIDEO_BYTES) {
-        throw new Error(
-          'Choose a video smaller than 45 MB.'
-        );
-      }
-
+      if (!file.type?.startsWith('video/')) throw new Error('Please select a video file.');
+      if (file.size > MAX_VIDEO_BYTES) throw new Error('Choose a video smaller than 45 MB.');
       setUploading(true);
       setNotice('Uploading your video…');
-
-      const media = await uploadMedia(
-        file,
-        'konnekt-public-media',
-        `posts/${user.id}`
-      );
-
-      if (!media?.url) {
-        throw new Error('The uploaded video URL was not returned.');
-      }
-
-      const { error } = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          caption: caption.trim(),
-          media_url: media.url,
-          media_type: 'video'
-        });
-
+      const media = await uploadMedia(file, BUCKET, `reels/${user.id}`);
+      if (!media?.path) throw new Error('The upload did not return a storage path.');
+      const { error } = await supabase.from('reels').insert({
+        user_id: user.id,
+        caption: caption.trim(),
+        media_path: media.path,
+        visibility: 'public',
+        published_at: new Date().toISOString()
+      });
       if (error) throw error;
-
       setCaption('');
       setNotice('Your Reel has been published.');
-
-      await load();
+      await load(true);
     } catch (error) {
-      setNotice(
-        error?.message || 'Video upload failed. Please try again.'
-      );
+      setNotice(error?.message || 'Video upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
-  const toggleLike = async post => {
-    if (!user?.id) return;
-
-    const wasLiked = liked.has(post.id);
-
-    setLiked(previous => {
-      const next = new Set(previous);
-
-      if (wasLiked) next.delete(post.id);
-      else next.add(post.id);
-
+  const toggleLike = async reel => {
+    if (!user?.id || likeBusy) return;
+    const wasLiked = liked.has(reel.id);
+    setLikeBusy(reel.id);
+    setLiked(prev => {
+      const next = new Set(prev);
+      wasLiked ? next.delete(reel.id) : next.add(reel.id);
       return next;
     });
-
-    setLikeCounts(previous => ({
-      ...previous,
-      [post.id]: Math.max(
-        0,
-        (previous[post.id] || 0) + (wasLiked ? -1 : 1)
-      )
-    }));
-
+    setLikeCounts(prev => ({ ...prev, [reel.id]: Math.max(0, (prev[reel.id] || 0) + (wasLiked ? -1 : 1)) }));
     try {
       const result = wasLiked
-        ? await supabase
-            .from('post_likes')
-            .delete()
-            .eq('post_id', post.id)
-            .eq('user_id', user.id)
-        : await supabase
-            .from('post_likes')
-            .insert({
-              post_id: post.id,
-              user_id: user.id
-            });
-
+        ? await supabase.from('reel_likes').delete().eq('reel_id', reel.id).eq('user_id', user.id)
+        : await supabase.from('reel_likes').insert({ reel_id: reel.id, user_id: user.id });
       if (result.error) throw result.error;
     } catch (error) {
-      setNotice(`Like could not be saved: ${error.message}`);
+      setNotice(`Like could not be saved: ${error?.message || 'Please try again.'}`);
       await load();
+    } finally {
+      setLikeBusy('');
     }
   };
 
   const toggleFollow = async creatorId => {
-    if (
-      !creatorId ||
-      creatorId === user?.id ||
-      followBusy
-    ) {
-      return;
-    }
-
-    const alreadyFollowing = following.has(creatorId);
-
+    if (!user?.id || !creatorId || creatorId === user.id || followBusy) return;
+    const wasFollowing = following.has(creatorId);
     setFollowBusy(creatorId);
-
     try {
-      const result = alreadyFollowing
-        ? await supabase
-            .from('follows')
-            .delete()
-            .eq('follower_id', user.id)
-            .eq('followed_id', creatorId)
-        : await supabase
-            .from('follows')
-            .insert({
-              follower_id: user.id,
-              followed_id: creatorId
-            });
-
+      const result = wasFollowing
+        ? await supabase.from('follows').delete().eq('follower_id', user.id).eq('followed_id', creatorId)
+        : await supabase.from('follows').insert({ follower_id: user.id, followed_id: creatorId });
       if (result.error) throw result.error;
-
-      setFollowing(previous => {
-        const next = new Set(previous);
-
-        if (alreadyFollowing) next.delete(creatorId);
-        else next.add(creatorId);
-
+      setFollowing(prev => {
+        const next = new Set(prev);
+        wasFollowing ? next.delete(creatorId) : next.add(creatorId);
         return next;
       });
-
-      setNotice('');
     } catch (error) {
-      setNotice(`Follow update failed: ${error.message}`);
+      setNotice(`Follow update failed: ${error?.message || 'Please try again.'}`);
     } finally {
       setFollowBusy('');
     }
   };
 
-  const openCreator = item => {
-    const profile = item.profile || {};
-
-    navigation?.navigate?.('ContactProfile', {
-      contact: {
-        id: item.user_id,
-        name:
-          profile.full_name ||
-          profile.username ||
-          'KONNEKT member',
-        username: profile.username
-          ? `@${profile.username}`
-          : '@member',
-        avatar_url: profile.avatar_url,
-        initials: (
-          profile.full_name ||
-          profile.username ||
-          'K'
-        ).slice(0, 2).toUpperCase(),
-        bio: 'KONNEKT creator',
-        onKonnekt: true
-      }
-    });
+  const openCreator = reel => {
+    const p = reel.profile || {};
+    navigation?.navigate?.('ContactProfile', { contact: {
+      id: reel.user_id,
+      name: p.full_name || p.username || 'KONNEKT member',
+      username: p.username ? `@${p.username}` : '@member',
+      avatar_url: p.avatar_url,
+      initials: (p.full_name || p.username || 'K').slice(0, 2).toUpperCase(),
+      bio: p.bio || 'KONNEKT creator',
+      onKonnekt: true
+    }});
   };
 
-  const reportReel = item => {
-    navigation?.navigate?.('ReportUser', {
-      contact: {
-        id: item.user_id,
-        name:
-          item.profile?.full_name ||
-          item.profile?.username ||
-          'KONNEKT member'
-      },
-      contentId: item.id,
-      contentType: 'post'
-    });
-  };
+  const reportReel = reel => navigation?.navigate?.('ReportUser', {
+    contact: { id: reel.user_id, name: reel.profile?.full_name || reel.profile?.username || 'KONNEKT member' },
+    contentId: reel.id,
+    contentType: 'post'
+  });
 
-  const addComment = async post => {
-    const body = (commentDrafts[post.id] || '').trim();
-
-    if (!body || !user?.id) return;
-
+  const addComment = async reel => {
+    const body = (drafts[reel.id] || '').trim();
+    if (!body || !user?.id || commentBusy) return;
+    setCommentBusy(reel.id);
     try {
-      const { error } = await supabase
-        .from('post_comments')
-        .insert({
-          post_id: post.id,
-          user_id: user.id,
-          body
-        });
-
+      const { error } = await supabase.from('reel_comments').insert({ reel_id: reel.id, user_id: user.id, body });
       if (error) throw error;
-
-      setCommentDrafts(previous => ({
-        ...previous,
-        [post.id]: ''
-      }));
-
+      setDrafts(prev => ({ ...prev, [reel.id]: '' }));
       await load();
     } catch (error) {
-      setNotice(`Comment could not be sent: ${error.message}`);
+      setNotice(`Comment could not be sent: ${error?.message || 'Please try again.'}`);
+    } finally {
+      setCommentBusy('');
     }
   };
 
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const visible = viewableItems?.find(v => v.isViewable && v.item?.id);
+    if (visible) setActiveId(visible.item.id);
+  });
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 70 });
+
   const renderReel = ({ item }) => {
-    const postComments = comments[item.id] || [];
-
-    const creator = item.profile?.username
-      ? `@${item.profile.username}`
-      : 'KONNEKT member';
-
-    const isOwnReel =
-      String(item.user_id) === String(user?.id);
-
-    const isActive = activePostId === item.id;
-
-    const isVideo =
-      (item.media_type || 'video') === 'video';
-
+    const reelComments = comments[item.id] || [];
+    const profile = item.profile || {};
+    const own = item.user_id === user?.id;
+    const active = activeId === item.id;
+    const url = item.media_url;
     return (
       <View style={[s.reelCard, { height: pageHeight }]}>
-
         <View style={s.creatorRow}>
-          <TouchableOpacity
-            style={s.creatorIdentity}
-            onPress={() => openCreator(item)}
-            accessibilityRole="button"
-            accessibilityLabel="Open creator profile"
-          >
-            <View style={s.creatorAvatar}>
-              <Text style={s.creatorAvatarText}>
-                {(
-                  item.profile?.full_name ||
-                  item.profile?.username ||
-                  'K'
-                ).slice(0, 1).toUpperCase()}
-              </Text>
-            </View>
-
+          <TouchableOpacity style={s.creatorIdentity} onPress={() => openCreator(item)} accessibilityRole="button">
+            <View style={s.creatorAvatar}><Text style={s.creatorAvatarText}>{(profile.full_name || profile.username || 'K').slice(0, 1).toUpperCase()}</Text></View>
             <View style={{ flex: 1 }}>
-              <Text style={s.creator}>{creator}</Text>
-
-              <Text style={s.creatorName}>
-                {item.profile?.full_name || 'KONNEKT creator'}
-              </Text>
+              <Text style={s.creator}>{profile.username ? `@${profile.username}` : 'KONNEKT member'}</Text>
+              <Text style={s.creatorName}>{profile.full_name || 'KONNEKT creator'}</Text>
             </View>
           </TouchableOpacity>
-
-          {isOwnReel ? (
-            <View style={s.ownBadge}>
-              <Text style={s.ownBadgeText}>Your Reel</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={
-                following.has(item.user_id)
-                  ? 'Unfollow creator'
-                  : 'Follow creator'
-              }
-              onPress={() => toggleFollow(item.user_id)}
-              disabled={
-                followBusy === item.user_id ||
-                !!followBusy
-              }
-              style={[
-                s.followButton,
-                following.has(item.user_id) &&
-                  s.followingButton
-              ]}
-            >
-              <Text style={s.followText}>
-                {followBusy === item.user_id
-                  ? 'Saving…'
-                  : following.has(item.user_id)
-                    ? '✓ Following'
-                    : '+ Follow'}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {own
+            ? <View style={s.ownBadge}><Text style={s.ownBadgeText}>Your Reel</Text></View>
+            : <TouchableOpacity style={[s.followButton, following.has(item.user_id) && s.followingButton]} onPress={() => toggleFollow(item.user_id)} disabled={!!followBusy}>
+                <Text style={s.followText}>{followBusy === item.user_id ? 'Saving…' : following.has(item.user_id) ? '✓ Following' : '+ Follow'}</Text>
+              </TouchableOpacity>}
         </View>
-
         <View style={s.mediaFrame}>
-          {failedMedia[item.id] ? (
-            <View style={s.mediaError}>
-              <Text style={s.mediaErrorIcon}>⚠</Text>
-              <Text style={s.mediaErrorTitle}>
-                This media could not play
-              </Text>
-              <Text style={s.mediaErrorText}>
-                The file may be unavailable or in an unsupported format.
-              </Text>
-              <TouchableOpacity
-                style={s.retryButton}
-                onPress={() => {
-                  setFailedMedia(previous => ({
-                    ...previous,
-                    [item.id]: false
-                  }));
-                }}
-              >
-                <Text style={s.retryText}>Try again</Text>
-              </TouchableOpacity>
-            </View>
-          ) : isVideo ? (
-            <video
-              key={`${item.id}-${item.media_url}`}
-              src={item.media_url}
-              controls
-              playsInline
-              loop
-              muted
-              autoPlay={isActive}
-              preload={isActive ? 'auto' : 'metadata'}
-              onError={() => {
-                setFailedMedia(previous => ({
-                  ...previous,
-                  [item.id]: true
-                }));
-              }}
-              style={{
-                display: 'block',
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                backgroundColor: '#000',
-                borderRadius: 14
-              }}
-            />
-          ) : (
-            <Image
-              source={{ uri: item.media_url }}
-              style={s.media}
-              resizeMode="contain"
-              onError={() => {
-                setFailedMedia(previous => ({
-                  ...previous,
-                  [item.id]: true
-                }));
-              }}
-            />
-          )}
+          {failedMedia[item.id]
+            ? <View style={s.mediaError}>
+                <Text style={s.mediaErrorIcon}>⚠</Text>
+                <Text style={s.mediaErrorTitle}>This media could not play</Text>
+                <Text style={s.mediaErrorText}>The file may be unavailable or in an unsupported format.</Text>
+                <TouchableOpacity style={s.retryButton} onPress={() => setFailedMedia(prev => ({ ...prev, [item.id]: false }))}><Text style={s.retryText}>Try again</Text></TouchableOpacity>
+              </View>
+            : <video
+                key={`${item.id}-${url}`}
+                src={url}
+                controls
+                playsInline
+                loop
+                muted
+                autoPlay={active}
+                preload={active ? 'auto' : 'metadata'}
+                onError={() => setFailedMedia(prev => ({ ...prev, [item.id]: true }))}
+                style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', borderRadius: 14 }}
+              />}
         </View>
-
-        {!!item.caption && (
-          <Text style={s.caption}>{item.caption}</Text>
-        )}
-
-        {!isOwnReel && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Report this Reel"
-            style={s.reportReel}
-            onPress={() => reportReel(item)}
-          >
-            <Text style={s.reportReelText}>
-              ⚑ Report this Reel
-            </Text>
-          </TouchableOpacity>
-        )}
-
+        {!!item.caption && <Text style={s.caption}>{item.caption}</Text>}
+        {!own && <TouchableOpacity style={s.reportReel} onPress={() => reportReel(item)}><Text style={s.reportReelText}>⚑ Report this Reel</Text></TouchableOpacity>}
         <View style={s.actions}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => toggleLike(item)}
-            style={s.actionButton}
-          >
-            <Text style={s.action}>
-              {liked.has(item.id) ? '❤️ Liked' : '🤍 Like'}
-              {' · '}
-              {likeCounts[item.id] || 0}
-            </Text>
+          <TouchableOpacity onPress={() => toggleLike(item)} disabled={!!likeBusy} style={s.actionButton}>
+            <Text style={s.action}>{liked.has(item.id) ? '❤️ Liked' : '🤍 Like'} · {likeCounts[item.id] || 0}</Text>
           </TouchableOpacity>
-
-          <Text style={s.action}>
-            💬 {postComments.length} comments
-          </Text>
+          <Text style={s.action}>💬 {reelComments.length} comments</Text>
         </View>
-
-        {postComments.slice(-2).map(comment => (
+        {reelComments.slice(-2).map(comment => (
           <Text key={comment.id} style={s.comment}>
-            <Text style={s.commentUser}>
-              @{comment.profile?.username || 'member'}{' '}
-            </Text>
-            {comment.body}
+            <Text style={s.commentUser}>@{comment.profile?.username || 'member'} </Text>{comment.body}
           </Text>
         ))}
-
         <View style={s.commentRow}>
           <TextInput
-            value={commentDrafts[item.id] || ''}
-            onChangeText={value =>
-              setCommentDrafts(previous => ({
-                ...previous,
-                [item.id]: value
-              }))
-            }
+            value={drafts[item.id] || ''}
+            onChangeText={value => setDrafts(prev => ({ ...prev, [item.id]: value }))}
             placeholder="Add a comment…"
             placeholderTextColor="#BBA9CC"
             style={s.commentInput}
             maxLength={2000}
           />
-
-          <TouchableOpacity
-            onPress={() => addComment(item)}
-            style={s.commentSend}
-            disabled={!(commentDrafts[item.id] || '').trim()}
-          >
-            <Text style={s.sendText}>Send</Text>
+          <TouchableOpacity onPress={() => addComment(item)} style={s.commentSend} disabled={!(drafts[item.id] || '').trim() || !!commentBusy}>
+            <Text style={s.sendText}>{commentBusy === item.id ? '…' : 'Send'}</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   };
 
-  const empty = useMemo(
-    () => (
-      <View style={s.emptyWrap}>
-        <Text style={s.emptyIcon}>🎬</Text>
-
-        <Text style={s.emptyTitle}>
-          Your Reels feed starts here
-        </Text>
-
-        <Text style={s.empty}>
-          No published videos or images are available yet.
-          Create the first Reel and invite other members to share.
-        </Text>
-
-        <TouchableOpacity
-          style={s.emptyRefresh}
-          onPress={() => load(true)}
-        >
-          <Text style={s.emptyRefreshText}>Refresh feed</Text>
-        </TouchableOpacity>
-      </View>
-    ),
-    [load]
-  );
+  const empty = useMemo(() => (
+    <View style={s.emptyWrap}>
+      <Text style={s.emptyIcon}>🎬</Text>
+      <Text style={s.emptyTitle}>Your Reels feed starts here</Text>
+      <Text style={s.empty}>No published videos are available yet. Create the first Reel and invite other members to share.</Text>
+      <TouchableOpacity style={s.emptyRefresh} onPress={() => load(true)}><Text style={s.emptyRefreshText}>Refresh feed</Text></TouchableOpacity>
+    </View>
+  ), [load]);
 
   return (
     <View style={s.container}>
-
       <View style={s.header}>
-        <View>
-          <Text style={s.title}>Reels</Text>
-          <Text style={s.sub}>
-            Discover videos from the KONNEKT community
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={publish}
-          style={[
-            s.upload,
-            uploading && s.uploadDisabled
-          ]}
-          disabled={uploading}
-        >
-          {uploading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={s.uploadText}>
-              ＋ Create Reel
-            </Text>
-          )}
+        <View><Text style={s.title}>Reels</Text><Text style={s.sub}>Discover videos from the KONNEKT community</Text></View>
+        <TouchableOpacity onPress={publish} style={[s.upload, uploading && s.uploadDisabled]} disabled={uploading}>
+          {uploading ? <ActivityIndicator color="#FFF" /> : <Text style={s.uploadText}>＋ Create Reel</Text>}
         </TouchableOpacity>
       </View>
-
       <TextInput
         style={s.input}
         value={caption}
@@ -793,415 +357,87 @@ export default function WatchScreen({ navigation }) {
         placeholderTextColor="#BBA9CC"
         maxLength={500}
       />
-
-      {!!notice && (
-        <Text style={s.notice}>{notice}</Text>
-      )}
-
-      <View
-        style={s.feedViewport}
-        onLayout={event => {
-          const height = event.nativeEvent.layout.height;
-
-          if (
-            height > 0 &&
-            Math.abs(height - feedHeight) > 1
-          ) {
-            setFeedHeight(height);
-          }
-        }}
-      >
-        {busy ? (
-          <ActivityIndicator
-            color="#00E6FF"
-            style={{ marginTop: 35 }}
-          />
-        ) : (
-          <FlatList
-            style={{ flex: 1 }}
-            data={posts}
-            keyExtractor={item => String(item.id)}
-            renderItem={renderReel}
-            pagingEnabled
-            snapToInterval={pageHeight}
-            snapToAlignment="start"
-            decelerationRate="fast"
-            getItemLayout={(_, index) => ({
-              length: pageHeight,
-              offset: pageHeight * index,
-              index
-            })}
-            onViewableItemsChanged={
-              onViewableItemsChanged.current
-            }
-            viewabilityConfig={viewabilityConfig.current}
-            onRefresh={() => load(true)}
-            refreshing={refreshing}
-            contentContainerStyle={
-              posts.length
-                ? s.feedContent
-                : s.emptyContent
-            }
-            ListEmptyComponent={empty}
-            showsVerticalScrollIndicator={false}
-            removeClippedSubviews={false}
-          />
-        )}
+      {!!notice && <Text accessibilityRole="alert" style={s.notice}>{notice}</Text>}
+      <View style={s.feedViewport} onLayout={event => {
+        const height = event.nativeEvent.layout.height;
+        if (height > 0 && Math.abs(height - feedHeight) > 1) setFeedHeight(height);
+      }}>
+        {busy
+          ? <ActivityIndicator color="#00E6FF" style={{ marginTop: 35 }} />
+          : <FlatList
+              style={{ flex: 1 }}
+              data={reels}
+              keyExtractor={item => String(item.id)}
+              renderItem={renderReel}
+              pagingEnabled
+              snapToInterval={pageHeight}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              getItemLayout={(_, index) => ({ length: pageHeight, offset: pageHeight * index, index })}
+              onViewableItemsChanged={onViewableItemsChanged.current}
+              viewabilityConfig={viewabilityConfig.current}
+              onRefresh={() => load(true)}
+              refreshing={refreshing}
+              contentContainerStyle={reels.length ? s.feedContent : s.emptyContent}
+              ListEmptyComponent={empty}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={false}
+            />}
       </View>
-
-      <Text style={s.footer}>
-        Keep videos short, respectful and safe to share.
-      </Text>
+      <Text style={s.footer}>Keep videos short, respectful and safe to share.</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    minHeight: 0,
-    backgroundColor: '#10091B',
-    paddingHorizontal: 14,
-    paddingTop: 8
-  },
-
-  header: {
-    marginTop: 12,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10
-  },
-
-  title: {
-    color: '#FFF',
-    fontSize: 27,
-    fontWeight: 'bold'
-  },
-
-  sub: {
-    color: '#BBA9CC',
-    marginTop: 3,
-    fontSize: 11
-  },
-
-  upload: {
-    backgroundColor: '#6A0DAD',
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-    borderRadius: 11
-  },
-
-  uploadDisabled: {
-    opacity: 0.65
-  },
-
-  uploadText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 12
-  },
-
-  input: {
-    backgroundColor: '#241630',
-    borderWidth: 1,
-    borderColor: '#39244B',
-    borderRadius: 11,
-    padding: 12,
-    color: '#FFF',
-    marginBottom: 9
-  },
-
-  notice: {
-    color: '#9FD3FF',
-    marginBottom: 8,
-    fontSize: 12,
-    lineHeight: 18
-  },
-
-  feedViewport: {
-    flex: 1,
-    minHeight: 180
-  },
-
-  feedContent: {
-    paddingBottom: 0
-  },
-
-  emptyContent: {
-    flexGrow: 1,
-    justifyContent: 'center'
-  },
-
-  emptyWrap: {
-    alignItems: 'center',
-    padding: 28
-  },
-
-  emptyIcon: {
-    fontSize: 44,
-    marginBottom: 12
-  },
-
-  emptyTitle: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 8
-  },
-
-  empty: {
-    color: '#C4B4D0',
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 340
-  },
-
-  emptyRefresh: {
-    marginTop: 18,
-    backgroundColor: '#3A0CA3',
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 11
-  },
-
-  emptyRefreshText: {
-    color: '#FFF',
-    fontWeight: 'bold'
-  },
-
-  reelCard: {
-    backgroundColor: '#10091B',
-    padding: 12,
-    marginBottom: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#39244B',
-    justifyContent: 'flex-start'
-  },
-
-  creatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginBottom: 12,
-    minHeight: 54,
-    width: '100%'
-  },
-
-  creatorIdentity: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    minWidth: 0
-  },
-
-  followButton: {
-    backgroundColor: '#6A0DAD',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    minWidth: 88,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    elevation: 3
-  },
-
-  followingButton: {
-    backgroundColor: '#39244B',
-    borderWidth: 1,
-    borderColor: '#4B6683'
-  },
-
-  followText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 12
-  },
-
-  ownBadge: {
-    backgroundColor: '#39244B',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 18
-  },
-
-  ownBadgeText: {
-    color: '#B9C9DB',
-    fontSize: 11,
-    fontWeight: 'bold'
-  },
-
-  creatorAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#3A0CA3',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-
-  creatorAvatarText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-
-  creator: {
-    color: '#D8B8F5',
-    fontWeight: 'bold',
-    fontSize: 13
-  },
-
-  creatorName: {
-    color: '#BBA9CC',
-    fontSize: 10,
-    marginTop: 2
-  },
-
-  mediaFrame: {
-    width: '100%',
-    flex: 1,
-    minHeight: 180,
-    backgroundColor: '#000',
-    borderRadius: 14,
-    overflow: 'hidden'
-  },
-
-  media: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#000'
-  },
-
-  mediaError: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 22,
-    backgroundColor: '#170D26'
-  },
-
-  mediaErrorIcon: {
-    color: '#FFC107',
-    fontSize: 34,
-    marginBottom: 10
-  },
-
-  mediaErrorTitle: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-    textAlign: 'center'
-  },
-
-  mediaErrorText: {
-    color: '#BBA9CC',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 19
-  },
-
-  retryButton: {
-    backgroundColor: '#6A0DAD',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 9,
-    marginTop: 15
-  },
-
-  retryText: {
-    color: '#FFF',
-    fontWeight: 'bold'
-  },
-
-  caption: {
-    color: '#FFF',
-    marginTop: 10,
-    lineHeight: 19,
-    fontSize: 13
-  },
-
-  reportReel: {
-    alignSelf: 'flex-end',
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    marginTop: 5,
-    marginBottom: 5,
-    borderRadius: 8,
-    backgroundColor: '#30203F'
-  },
-
-  reportReelText: {
-    color: '#FFB6C0',
-    fontSize: 11,
-    fontWeight: '700'
-  },
-
-  actions: {
-    flexDirection: 'row',
-    gap: 18,
-    alignItems: 'center',
-    paddingVertical: 11
-  },
-
-  actionButton: {
-    paddingVertical: 2
-  },
-
-  action: {
-    color: '#DCEBFA',
-    fontWeight: '600',
-    fontSize: 12
-  },
-
-  comment: {
-    color: '#CBD8E8',
-    fontSize: 11,
-    marginTop: 5,
-    lineHeight: 17
-  },
-
-  commentUser: {
-    color: '#64B9FF',
-    fontWeight: 'bold'
-  },
-
-  commentRow: {
-    flexDirection: 'row',
-    gap: 7,
-    marginTop: 10
-  },
-
-  commentInput: {
-    flex: 1,
-    backgroundColor: '#1B3048',
-    color: '#FFF',
-    padding: 10,
-    borderRadius: 9,
-    minWidth: 0
-  },
-
-  commentSend: {
-    backgroundColor: '#6A0DAD',
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    borderRadius: 9
-  },
-
-  sendText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 12
-  },
-
-  footer: {
-    color: '#65788F',
-    textAlign: 'center',
-    fontSize: 9,
-    paddingVertical: 5
-  }
+  container: { flex: 1, minHeight: 0, backgroundColor: '#10091B', paddingHorizontal: 14, paddingTop: 8 },
+  header: { marginTop: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  title: { color: '#FFF', fontSize: 27, fontWeight: 'bold' },
+  sub: { color: '#BBA9CC', marginTop: 3, fontSize: 11 },
+  upload: { backgroundColor: '#6A0DAD', paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11 },
+  uploadDisabled: { opacity: 0.65 },
+  uploadText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
+  input: { backgroundColor: '#241630', borderWidth: 1, borderColor: '#39244B', borderRadius: 11, padding: 12, color: '#FFF', marginBottom: 9 },
+  notice: { color: '#9FD3FF', marginBottom: 8, fontSize: 12, lineHeight: 18 },
+  feedViewport: { flex: 1, minHeight: 180 },
+  feedContent: { paddingBottom: 0 },
+  emptyContent: { flexGrow: 1, justifyContent: 'center' },
+  emptyWrap: { alignItems: 'center', padding: 28 },
+  emptyIcon: { fontSize: 44, marginBottom: 12 },
+  emptyTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 18, marginBottom: 8 },
+  empty: { color: '#C4B4D0', textAlign: 'center', lineHeight: 22, maxWidth: 340 },
+  emptyRefresh: { marginTop: 18, backgroundColor: '#3A0CA3', borderRadius: 10, paddingHorizontal: 18, paddingVertical: 11 },
+  emptyRefreshText: { color: '#FFF', fontWeight: 'bold' },
+  reelCard: { backgroundColor: '#10091B', padding: 12, borderBottomWidth: 1, borderBottomColor: '#39244B', justifyContent: 'flex-start' },
+  creatorRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12, minHeight: 54, width: '100%' },
+  creatorIdentity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 0 },
+  followButton: { backgroundColor: '#6A0DAD', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, minWidth: 88, alignItems: 'center', justifyContent: 'center', flexShrink: 0, elevation: 3 },
+  followingButton: { backgroundColor: '#39244B', borderWidth: 1, borderColor: '#4B6683' },
+  followText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
+  ownBadge: { backgroundColor: '#39244B', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 18 },
+  ownBadgeText: { color: '#B9C9DB', fontSize: 11, fontWeight: 'bold' },
+  creatorAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
+  creatorAvatarText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  creator: { color: '#D8B8F5', fontWeight: 'bold', fontSize: 13 },
+  creatorName: { color: '#BBA9CC', fontSize: 10, marginTop: 2 },
+  mediaFrame: { width: '100%', flex: 1, minHeight: 180, backgroundColor: '#000', borderRadius: 14, overflow: 'hidden' },
+  mediaError: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 22, backgroundColor: '#170D26' },
+  mediaErrorIcon: { color: '#FFC107', fontSize: 34, marginBottom: 10 },
+  mediaErrorTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 15, textAlign: 'center' },
+  mediaErrorText: { color: '#BBA9CC', fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 19 },
+  retryButton: { backgroundColor: '#6A0DAD', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 9, marginTop: 15 },
+  retryText: { color: '#FFF', fontWeight: 'bold' },
+  caption: { color: '#FFF', marginTop: 10, lineHeight: 19, fontSize: 13 },
+  reportReel: { alignSelf: 'flex-end', paddingVertical: 7, paddingHorizontal: 10, marginTop: 5, marginBottom: 5, borderRadius: 8, backgroundColor: '#30203F' },
+  reportReelText: { color: '#FFB6C0', fontSize: 11, fontWeight: '700' },
+  actions: { flexDirection: 'row', gap: 18, alignItems: 'center', paddingVertical: 11 },
+  actionButton: { paddingVertical: 2 },
+  action: { color: '#DCEBFA', fontWeight: '600', fontSize: 12 },
+  comment: { color: '#CBD8E8', fontSize: 11, marginTop: 5, lineHeight: 17 },
+  commentUser: { color: '#64B9FF', fontWeight: 'bold' },
+  commentRow: { flexDirection: 'row', gap: 7, marginTop: 10 },
+  commentInput: { flex: 1, backgroundColor: '#1B3048', color: '#FFF', padding: 10, borderRadius: 9, minWidth: 0 },
+  commentSend: { backgroundColor: '#6A0DAD', paddingHorizontal: 12, justifyContent: 'center', borderRadius: 9 },
+  sendText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
+  footer: { color: '#65788F', textAlign: 'center', fontSize: 9, paddingVertical: 5 }
 });
