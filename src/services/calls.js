@@ -1,10 +1,30 @@
+
 import { supabase } from '../lib_supabase';
 
-export async function createCall({ calleeId, conversationId = null, callType = 'voice' }) {
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+// Create a one-to-one voice or video call.
+export async function createCall({
+  calleeId,
+  conversationId = null,
+  callType = 'voice'
+}) {
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser();
+
   if (authError) throw authError;
-  if (!user) throw new Error('Sign in before placing a call.');
-  if (!calleeId || calleeId === user.id) throw new Error('Choose another KONNEKT member.');
+
+  if (!user) {
+    throw new Error('Sign in before placing a call.');
+  }
+
+  if (!calleeId || calleeId === user.id) {
+    throw new Error('Choose another KONNEKT member.');
+  }
+
+  if (!['voice', 'video'].includes(callType)) {
+    throw new Error('Choose a valid call type.');
+  }
 
   const { data, error } = await supabase
     .from('call_sessions')
@@ -13,86 +33,183 @@ export async function createCall({ calleeId, conversationId = null, callType = '
       callee_id: calleeId,
       conversation_id: conversationId,
       call_type: callType,
-      status: 'ringing',
+      status: 'ringing'
     })
     .select()
     .single();
+
   if (error) throw error;
+
   return data;
 }
 
-export async function sendCallSignal(callId, signalType, payload = {}) {
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+// Send a signal during a one-to-one call.
+export async function sendCallSignal(
+  callId,
+  signalType,
+  payload = {}
+) {
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser();
+
   if (authError) throw authError;
-  if (!user) throw new Error('You are not signed in.');
-  const { error } = await supabase.from('call_signals').insert({
-    call_id: callId,
-    sender_id: user.id,
-    signal_type: signalType,
-    payload,
-  });
+
+  if (!user) {
+    throw new Error('You are not signed in.');
+  }
+
+  if (!callId || !signalType) {
+    throw new Error('Call ID and signal type are required.');
+  }
+
+  const { error } = await supabase
+    .from('call_signals')
+    .insert({
+      call_id: callId,
+      sender_id: user.id,
+      signal_type: signalType,
+      payload
+    });
+
   if (error) throw error;
 }
 
+
+// Subscribe to one-to-one call signals and session changes.
 export function watchCall(callId, onSignal, onSession) {
   const channel = supabase
     .channel(`konnekt-call-${callId}`)
-    .on('postgres_changes', {
-      event: 'INSERT', schema: 'public', table: 'call_signals', filter: `call_id=eq.${callId}`,
-    }, (payload) => onSignal?.(payload.new))
-    .on('postgres_changes', {
-      event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `id=eq.${callId}`,
-    }, (payload) => onSession?.(payload.new))
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'call_signals',
+        filter: `call_id=eq.${callId}`
+      },
+      (payload) => onSignal?.(payload.new)
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'call_sessions',
+        filter: `id=eq.${callId}`
+      },
+      (payload) => onSession?.(payload.new)
+    )
     .subscribe();
-  return () => { supabase.removeChannel(channel); };
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
+
+// Retrieve existing signals for a one-to-one call.
 export async function getCallSignals(callId) {
   const { data, error } = await supabase
     .from('call_signals')
     .select('*')
     .eq('call_id', callId)
     .order('created_at', { ascending: true });
+
   if (error) throw error;
+
   return data || [];
 }
 
+
+// Update a one-to-one call session.
 export async function updateCall(callId, patch) {
-  const { error } = await supabase.from('call_sessions').update(patch).eq('id', callId);
+  if (!callId) {
+    throw new Error('A call ID is required.');
+  }
+
+  const { error } = await supabase
+    .from('call_sessions')
+    .update(patch)
+    .eq('id', callId);
+
   if (error) throw error;
 }
 
-/** Use an authenticated short-lived TURN credential service when configured. */
+
+// Get STUN and, when configured, short-lived TURN credentials.
+// Do not put permanent TURN credentials in frontend environment variables.
 export async function getKonnektIceServers() {
-  const stun = { urls: import.meta.env.VITE_STUN_URL || 'stun:stun.l.google.com:19302' };
+  const stun = {
+    urls:
+      import.meta.env.VITE_STUN_URL ||
+      'stun:stun.l.google.com:19302'
+  };
+
   const endpoint = import.meta.env.VITE_TURN_CREDENTIALS_URL;
-  if (!endpoint) return [stun];
+
+  if (!endpoint) {
+    return [stun];
+  }
 
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error
+    } = await supabase.auth.getSession();
+
     if (error) throw error;
-    if (!session?.access_token) return [stun];
+
+    if (!session?.access_token) {
+      return [stun];
+    }
+
     const response = await fetch(endpoint, {
-      headers: { Authorization: `Bearer ${session.access_token}`, Accept: 'application/json' },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        Accept: 'application/json'
+      }
     });
-    if (!response.ok) throw new Error(`TURN credential service returned ${response.status}.`);
+
+    if (!response.ok) {
+      throw new Error(
+        `TURN credential service returned ${response.status}.`
+      );
+    }
+
     const result = await response.json();
+
     const servers = Array.isArray(result.iceServers)
-      ? result.iceServers.filter((server) => server?.urls)
+      ? result.iceServers.filter(server => server?.urls)
       : [];
-    return servers.length ? [stun, ...servers] : [stun];
+
+    return servers.length
+      ? [stun, ...servers]
+      : [stun];
+
   } catch (error) {
-    console.warn('KONNEKT TURN configuration:', error?.message || error);
+    console.warn(
+      'KONNEKT TURN configuration:',
+      error?.message || error
+    );
+
     return [stun];
   }
 }
 
+
+// Create a group voice or video call.
+// Current peer-to-peer beta limit: four conversation members.
 export async function createGroupCall({
   conversationId,
   callType = 'voice'
 }) {
-  const { data: { user }, error: authError } =
-    await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser();
 
   if (authError) throw authError;
 
@@ -104,6 +221,11 @@ export async function createGroupCall({
     throw new Error('Choose a group conversation first.');
   }
 
+  if (!['voice', 'video'].includes(callType)) {
+    throw new Error('Choose a valid call type.');
+  }
+
+  // Confirm conversation membership.
   const { data: members, error: memberError } = await supabase
     .from('conversation_members')
     .select('user_id')
@@ -112,7 +234,9 @@ export async function createGroupCall({
   if (memberError) throw memberError;
 
   if (!members || members.length < 2) {
-    throw new Error('This group does not have enough members for a call.');
+    throw new Error(
+      'This group does not have enough members for a call.'
+    );
   }
 
   if (members.length > 4) {
@@ -121,14 +245,17 @@ export async function createGroupCall({
     );
   }
 
-  if (!members.some(member => member.user_id === user.id)) {
-    throw new Error('You are not a member of this conversation.');
+  const isMember = members.some(
+    member => member.user_id === user.id
+  );
+
+  if (!isMember) {
+    throw new Error(
+      'You are not a member of this conversation.'
+    );
   }
 
-  if (!['voice', 'video'].includes(callType)) {
-    throw new Error('Choose a valid call type.');
-  }
-
+  // Create the group call session.
   const { data: call, error } = await supabase
     .from('group_call_sessions')
     .insert({
@@ -142,8 +269,8 @@ export async function createGroupCall({
 
   if (error) throw error;
 
-  // All participants start as invited.
-  // The Join button changes their status to joined.
+  // Initially invite every conversation member.
+  // The Join button should change the participant status to joined.
   const participants = members.map(({ user_id }) => ({
     call_id: call.id,
     user_id,
@@ -154,8 +281,9 @@ export async function createGroupCall({
     .from('group_call_participants')
     .insert(participants);
 
+  // If participant creation fails, attempt to close the session.
   if (participantsError) {
-    await supabase
+    const { error: cleanupError } = await supabase
       .from('group_call_sessions')
       .update({
         status: 'ended',
@@ -163,17 +291,15 @@ export async function createGroupCall({
       })
       .eq('id', call.id);
 
+    if (cleanupError) {
+      console.warn(
+        'Could not close incomplete group call:',
+        cleanupError.message
+      );
+    }
+
     throw participantsError;
   }
 
-  return call;
-}
-
-
-  const { error: participantsError } = await supabase.from('group_call_participants').insert(participants);
-  if (participantsError) {
-    await supabase.from('group_call_sessions').update({ status: 'ended', ended_at: now }).eq('id', call.id);
-    throw participantsError;
-  }
   return call;
 }
