@@ -87,34 +87,89 @@ export async function getKonnektIceServers() {
   }
 }
 
-export async function createGroupCall({ conversationId, callType = 'voice' }) {
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+export async function createGroupCall({
+  conversationId,
+  callType = 'voice'
+}) {
+  const { data: { user }, error: authError } =
+    await supabase.auth.getUser();
+
   if (authError) throw authError;
-  if (!user) throw new Error('Sign in before starting a group call.');
+
+  if (!user) {
+    throw new Error('Sign in before starting a group call.');
+  }
+
+  if (!conversationId) {
+    throw new Error('Choose a group conversation first.');
+  }
 
   const { data: members, error: memberError } = await supabase
     .from('conversation_members')
     .select('user_id')
     .eq('conversation_id', conversationId);
-  if (memberError) throw memberError;
-  if (!members || members.length < 2) throw new Error('This group does not have enough members for a call.');
-  if (members.length > 4) throw new Error('Group calls currently support up to four people in the peer-to-peer beta.');
 
-  const { data: call, error } = await supabase.from('group_call_sessions').insert({
-    conversation_id: conversationId,
-    created_by: user.id,
-    call_type: callType,
-    status: 'active',
-  }).select().single();
+  if (memberError) throw memberError;
+
+  if (!members || members.length < 2) {
+    throw new Error('This group does not have enough members for a call.');
+  }
+
+  if (members.length > 4) {
+    throw new Error(
+      'Group calls currently support up to four people in the peer-to-peer beta.'
+    );
+  }
+
+  if (!members.some(member => member.user_id === user.id)) {
+    throw new Error('You are not a member of this conversation.');
+  }
+
+  if (!['voice', 'video'].includes(callType)) {
+    throw new Error('Choose a valid call type.');
+  }
+
+  const { data: call, error } = await supabase
+    .from('group_call_sessions')
+    .insert({
+      conversation_id: conversationId,
+      created_by: user.id,
+      call_type: callType,
+      status: 'active'
+    })
+    .select()
+    .single();
+
   if (error) throw error;
 
-  const now = new Date().toISOString();
+  // All participants start as invited.
+  // The Join button changes their status to joined.
   const participants = members.map(({ user_id }) => ({
     call_id: call.id,
     user_id,
-    status: user_id === user.id ? 'joined' : 'invited',
-    ...(user_id === user.id ? { joined_at: now } : {}),
+    status: 'invited'
   }));
+
+  const { error: participantsError } = await supabase
+    .from('group_call_participants')
+    .insert(participants);
+
+  if (participantsError) {
+    await supabase
+      .from('group_call_sessions')
+      .update({
+        status: 'ended',
+        ended_at: new Date().toISOString()
+      })
+      .eq('id', call.id);
+
+    throw participantsError;
+  }
+
+  return call;
+}
+
+
   const { error: participantsError } = await supabase.from('group_call_participants').insert(participants);
   if (participantsError) {
     await supabase.from('group_call_sessions').update({ status: 'ended', ended_at: now }).eq('id', call.id);
