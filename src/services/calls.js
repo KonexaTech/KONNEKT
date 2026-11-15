@@ -1,5 +1,6 @@
 
 import { supabase } from '../lib_supabase';
+import { isConversationId } from './conversationId';
 
 // Create a one-to-one voice or video call.
 export async function createCall({
@@ -18,8 +19,12 @@ export async function createCall({
     throw new Error('Sign in before placing a call.');
   }
 
-  if (!calleeId || calleeId === user.id) {
+  if (!isConversationId(calleeId) || calleeId === user.id) {
     throw new Error('Choose another KONNEKT member.');
+  }
+
+  if (conversationId !== null && !isConversationId(conversationId)) {
+    throw new Error('Invalid conversation ID.');
   }
 
   if (!['voice', 'video'].includes(callType)) {
@@ -61,7 +66,7 @@ export async function sendCallSignal(
     throw new Error('You are not signed in.');
   }
 
-  if (!callId || !signalType) {
+  if (!isConversationId(callId) || !['offer', 'answer', 'ice-candidate', 'hangup'].includes(signalType)) {
     throw new Error('Call ID and signal type are required.');
   }
 
@@ -80,6 +85,7 @@ export async function sendCallSignal(
 
 // Subscribe to one-to-one call signals and session changes.
 export function watchCall(callId, onSignal, onSession) {
+  if (!isConversationId(callId)) throw new Error('Invalid call ID.');
   const channel = supabase
     .channel(`konnekt-call-${callId}`)
     .on(
@@ -112,6 +118,7 @@ export function watchCall(callId, onSignal, onSession) {
 
 // Retrieve existing signals for a one-to-one call.
 export async function getCallSignals(callId) {
+  if (!isConversationId(callId)) throw new Error('Invalid call ID.');
   const { data, error } = await supabase
     .from('call_signals')
     .select('*')
@@ -126,8 +133,11 @@ export async function getCallSignals(callId) {
 
 // Update a one-to-one call session.
 export async function updateCall(callId, patch) {
-  if (!callId) {
-    throw new Error('A call ID is required.');
+  if (!isConversationId(callId)) {
+    throw new Error('A valid call ID is required.');
+  }
+  if (!patch || Object.keys(patch).some(key => !['status', 'answered_at', 'ended_at'].includes(key))) {
+    throw new Error('Invalid call status update.');
   }
 
   const { error } = await supabase
@@ -217,8 +227,8 @@ export async function createGroupCall({
     throw new Error('Sign in before starting a group call.');
   }
 
-  if (!conversationId) {
-    throw new Error('Choose a group conversation first.');
+  if (!isConversationId(conversationId)) {
+    throw new Error('Choose a valid group conversation first.');
   }
 
   if (!['voice', 'video'].includes(callType)) {

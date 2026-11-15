@@ -30,7 +30,7 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return { path, url: data.publicUrl, type };
   }
-  const { data, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
-  if (signedError) throw signedError;
-  return { path, url: data.signedUrl, type };
+  // Private attachments are fetched by authorized recipients when displayed.
+  // Do not mint a long-lived bearer URL at upload time.
+  return { path, type };
 }

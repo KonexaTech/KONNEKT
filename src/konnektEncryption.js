@@ -126,7 +126,13 @@ export async function createGroupKeyEnvelopes(conversationId, memberProfiles, ke
     });
   }
   const { error } = await supabase.from('group_key_envelopes').insert(envelopes);
-  if (error) throw error;
+  if (error) {
+    // Concurrent creator attempts can race on the same group-key envelope.
+    // Only accept the conflict if this member can actually decrypt an existing key.
+    if (error.code !== '23505') throw error;
+    const existingKey = await getGroupKonnektCryptoKey(conversationId, user.id);
+    if (!existingKey) throw error;
+  }
   return true;
 }
 
