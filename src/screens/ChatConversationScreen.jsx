@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { chooseMedia, uploadMedia } from '../services/media';
+import { isConversationId } from '../services/conversationId';
 import {
   ensureKonnektIdentity,
   encryptKonnektText,
@@ -34,6 +35,7 @@ export default function ChatConversationScreen({ navigation, route }) {
   const [otherMember, setOtherMember] = useState(null);
   const [isGroup, setIsGroup] = useState(false);
   const [groupMemberIds, setGroupMemberIds] = useState([]);
+  const [loadedConversationId, setLoadedConversationId] = useState(null);
   const [busy, setBusy] = useState(true);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
@@ -41,7 +43,9 @@ export default function ChatConversationScreen({ navigation, route }) {
   const sendLock = useRef(false);
 
   const load = useCallback(async () => {
-    if (!conversationId || !user?.id) {
+    setLoadedConversationId(null);
+    setEncryptionReady(false);
+    if (!isConversationId(conversationId) || !user?.id) {
       setNotice('Open a conversation before sending messages.');
       setBusy(false);
       return;
@@ -79,6 +83,9 @@ export default function ChatConversationScreen({ navigation, route }) {
 
       const members = memberRows || [];
       const memberIds = members.map(row => row.user_id);
+      if (!conversation || !memberIds.includes(user.id)) {
+        throw new Error('This conversation is unavailable.');
+      }
 
       setGroupMemberIds(memberIds);
 
@@ -245,6 +252,7 @@ export default function ChatConversationScreen({ navigation, route }) {
       }
 
       setMessages(decoded);
+      setLoadedConversationId(conversationId);
 
       setEncryptionReady(
         isGroupChat
@@ -332,6 +340,7 @@ export default function ChatConversationScreen({ navigation, route }) {
 
   useEffect(() => {
     load();
+    if (!isConversationId(conversationId) || !user?.id) return;
 
     const channel = supabase.channel(`messages-${conversationId}`)
       .on(
@@ -363,7 +372,7 @@ export default function ChatConversationScreen({ navigation, route }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [load, conversationId]);
+  }, [load, conversationId, user?.id]);
 
   // =======================================================
   // SEND MESSAGE
@@ -372,7 +381,8 @@ export default function ChatConversationScreen({ navigation, route }) {
   const send = async (extra = {}, lockHeld = false) => {
     const body = message.trim();
 
-    if ((!body && !extra.media_path) || !user?.id) return;
+    if ((!body && !extra.media_path) || !user?.id ||
+        loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) return false;
     if (sendLock.current && !lockHeld) return false;
 
     sendLock.current = true;
@@ -470,7 +480,8 @@ export default function ChatConversationScreen({ navigation, route }) {
   // =======================================================
 
   const attach = async () => {
-    if (sendLock.current) return;
+    if (sendLock.current || loadedConversationId !== conversationId || busy ||
+        !isConversationId(conversationId)) return;
     sendLock.current = true;
     setSending(true);
     try {
@@ -540,6 +551,10 @@ export default function ChatConversationScreen({ navigation, route }) {
   // =======================================================
 
   const startCall = async callType => {
+    if (loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) {
+      setNotice('Wait for the conversation to load before starting a call.');
+      return;
+    }
     try {
       if (isGroup) {
         const session = await createGroupCall({
@@ -676,7 +691,7 @@ export default function ChatConversationScreen({ navigation, route }) {
       )}
 
       <View style={s.composer}>
-        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending}>
+        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || loadedConversationId !== conversationId}>
           <Text style={{ fontSize: 21 }}>📎</Text>
         </TouchableOpacity>
 
@@ -693,7 +708,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         {/* Send remains clickable when encryption is being set up.
             Actual sending still requires successful encryption. */}
         <TouchableOpacity
-          disabled={sending || !message.trim()}
+          disabled={sending || busy || loadedConversationId !== conversationId || !message.trim()}
           accessibilityRole="button"
           accessibilityLabel="Send message"
           style={[
