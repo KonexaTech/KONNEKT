@@ -293,3 +293,59 @@ test('incoming group-call decline executes its update and session change dismiss
   await page.getByText('SIGN UP', { exact: true }).waitFor();
   assert.equal(await page.getByRole('alertdialog').count(), 0);
 }));
+
+
+test('sending an attachment preserves a newer composer draft', async () => run({}, async ({ page, db, requests }) => {
+  await page.getByRole('tab', { name: 'Chats', exact: true }).click();
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  await page.getByText('Other Member', { exact: true }).click();
+  await page.waitForFunction(() => !document.querySelector('[aria-label="Attach media"]')?.getAttribute('aria-disabled'));
+  let release, started;
+  const began = new Promise(resolve => { started = resolve; });
+  const pending = new Promise(resolve => { release = resolve; });
+  await page.route('**/rest/v1/messages', async route => {
+    if (route.request().method() === 'POST') { started(); await pending; }
+    await route.fallback();
+  });
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Attach media', exact: true }).click();
+  await (await chooser).setFiles({ name: 'draft.png', mimeType: 'image/png', buffer: Buffer.from('fixture-image') });
+  await began;
+  await page.getByPlaceholder('Message securely…').fill('Next message draft');
+  const response = page.waitForResponse(r => r.url().includes('/rest/v1/messages') && r.request().method() === 'POST');
+  release();
+  await response;
+  await page.waitForTimeout(300);
+  assert.equal(await page.getByPlaceholder('Message securely…').inputValue(), 'Next message draft');
+  assert.equal(requests.filter(r => r.path === '/rest/v1/messages' && r.method === 'POST').length, 1);
+}));
+
+
+test('voice-note failures clean unused uploads and invalid conversation IDs make no requests', async () => run({}, async ({ page, db, requests, failures }) => {
+  await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor();
+  const attempt = chat => page.evaluate(async ({ me, chat }) => {
+    try {
+      const { sendEncryptedVoiceMessage } = await import('/KONNEKT/src/services/voiceMessages.js');
+      await sendEncryptedVoiceMessage(new File(['fixture voice'], 'failed.webm', { type: 'audio/webm' }), chat, me);
+    } catch (error) { return error.message; }
+  }, { me: ME, chat });
+  const before = requests.length;
+  assert.match(await attempt('undefined'), /active conversation/);
+  // Unrelated initial feed requests may finish in the background.
+  assert.equal(requests.slice(before).filter(r => r.search.includes('undefined') || r.path.includes('/storage/')).length, 0);
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  failures.set('POST:messages', { message: 'Fixture message rejected' });
+  assert.match(await attempt(CHAT), /Fixture message rejected/);
+  const uploads = requests.filter(r => r.method === 'POST' && r.path.includes('/storage/v1/object/'));
+  const removals = requests.filter(r => r.method === 'DELETE' && r.path.includes('/storage/v1/object/'));
+  assert.equal(uploads.length, 1);
+  assert.equal(removals.length, 1);
+  assert.equal(removals[0].body.prefixes[0], uploads[0].path.split('/konnekt-chat-media/')[1]);
+  assert.equal(db.messages.length, 0);
+}));

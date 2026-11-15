@@ -1,12 +1,13 @@
 import { supabase } from '../lib_supabase';
 import { uploadMedia } from './media';
+import { isConversationId } from './conversationId';
 import {
   getGroupKonnektCryptoKey, getKonnektConversationCryptoKey,
   encryptKonnektBinary, encryptWithKonnektCryptoKey
 } from './konnektEncryption';
 
 export async function sendEncryptedVoiceMessage(file, conversationId, userId) {
-  if (!conversationId || !userId) throw new Error('Open an active conversation first.');
+  if (!isConversationId(conversationId) || !userId) throw new Error('Open an active conversation first.');
   const { data: conversation, error } = await supabase.from('conversations')
     .select('is_group').eq('id', conversationId).single();
   if (error) throw error;
@@ -29,6 +30,7 @@ export async function sendEncryptedVoiceMessage(file, conversationId, userId) {
   const encrypted = await encryptKonnektBinary(key, file);
   const uploaded = await uploadMedia(new File([encrypted.blob], `${file.name}.enc`, { type: file.type }),
     'konnekt-chat-media', `${conversationId}/${userId}`);
+  try {
   const { error: sendError } = await supabase.from('messages').insert({
     conversation_id: conversationId, sender_id: userId,
     ...(await encryptWithKonnektCryptoKey(key, 'Voice note')),
@@ -36,4 +38,15 @@ export async function sendEncryptedVoiceMessage(file, conversationId, userId) {
     media_encryption_iv: encrypted.iv, media_mime_type: file.type
   });
   if (sendError) throw sendError;
+  } catch (error) {
+    // A failed message must not leave an unreferenced encrypted upload behind.
+    try {
+      const { error: cleanupError } = await supabase.storage
+        .from('konnekt-chat-media').remove([uploaded.path]);
+      if (cleanupError) throw cleanupError;
+    } catch {
+      throw new Error('Voice note failed and its unused attachment could not be removed. Please try again later.');
+    }
+    throw error;
+  }
 }

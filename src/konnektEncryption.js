@@ -127,10 +127,18 @@ export async function createGroupKeyEnvelopes(conversationId, memberProfiles, ke
   }
   const { error } = await supabase.from('group_key_envelopes').insert(envelopes);
   if (error) {
+ fix/messaging-milestone
     // A concurrent creator session may already have saved the whole group batch.
     if (error.code !== '23505' || !await getGroupKonnektCryptoKey(conversationId, user.id)) {
       throw error;
     }
+
+    // Concurrent creator attempts can race on the same group-key envelope.
+    // Only accept the conflict if this member can actually decrypt an existing key.
+    if (error.code !== '23505') throw error;
+    const existingKey = await getGroupKonnektCryptoKey(conversationId, user.id);
+    if (!existingKey) throw error;
+ main
   }
   return true;
 }

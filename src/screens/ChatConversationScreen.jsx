@@ -49,6 +49,11 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
     loadedConversationId === conversationId && !busy && !sending;
 
   const load = useCallback(async () => {
+ fix/messaging-milestone
+
+    setLoadedConversationId(null);
+    setEncryptionReady(false);
+ main
     if (!isConversationId(conversationId) || !user?.id) {
       setNotice('Open a conversation before sending messages.');
       setBusy(false);
@@ -87,6 +92,9 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
 
       const members = memberRows || [];
       const memberIds = members.map(row => row.user_id);
+      if (!conversation || !memberIds.includes(user.id)) {
+        throw new Error('This conversation is unavailable.');
+      }
 
       if (!conversation || !memberIds.includes(user.id)) {
         setLoadedConversationId(null);
@@ -259,6 +267,7 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
 
       setLoadedConversationId(conversationId);
       setMessages(decoded);
+      setLoadedConversationId(conversationId);
 
       setEncryptionReady(
         isGroupChat
@@ -381,9 +390,22 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
     };
   }, [load, conversationId, user?.id]);
 
+ fix/messaging-milestone
   const send = async (withAttachment = false) => {
     const body = message.trim();
     if (!canCompose || (!body && !withAttachment) || sendLock.current) return;
+
+  // =======================================================
+  // SEND MESSAGE
+  // =======================================================
+
+  const send = async (extra = {}, lockHeld = false) => {
+    const body = message.trim();
+
+    if ((!body && !extra.media_path) || !user?.id ||
+        loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) return false;
+    if (sendLock.current && !lockHeld) return false;
+ main
 
     sendLock.current = true;
     setSending(true);
@@ -434,10 +456,91 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
       const { error } = await supabase.from('messages').insert(payload);
       if (error) throw error;
 
-      setMessage('');
+      // Keep a newer draft typed while this message or attachment was sending.
+      setMessage(current => current.trim() === body ? '' : current);
       await load();
+ fix/messaging-milestone
     } catch (error) {
       setNotice(error?.message || (withAttachment ? 'Attachment could not be sent.' : 'Message could not be sent.'));
+
+      return true;
+    } catch (e) {
+      setNotice(e?.message || 'Message could not be sent.');
+      return false;
+    } finally {
+      if (!lockHeld) {
+        sendLock.current = false;
+        setSending(false);
+      }
+    }
+  };
+
+  // =======================================================
+  // ATTACHMENTS
+  // =======================================================
+
+  const attach = async () => {
+    if (sendLock.current || loadedConversationId !== conversationId || busy ||
+        !isConversationId(conversationId)) return;
+    sendLock.current = true;
+    setSending(true);
+    try {
+      const file = await chooseMedia('image/*,video/*,audio/*');
+      if (!file) return;
+
+      if (!encryptionReady) {
+        throw new Error(
+          'Secure encryption is not ready. Open KONNEKT on both accounts first.'
+        );
+      }
+
+      const cryptoKey = isGroup
+        ? await getGroupKonnektCryptoKey(conversationId, user.id)
+        : await getKonnektConversationCryptoKey(
+            user.id,
+            otherMember?.encryption_public_key
+          );
+
+      if (!cryptoKey) {
+        throw new Error('Could not load the conversation encryption key.');
+      }
+
+      const encryptedFile = await encryptKonnektBinary(
+        cryptoKey,
+        file
+      );
+
+      const encryptedUpload = new File(
+        [encryptedFile.blob],
+        `${file.name}.enc`,
+        { type: file.type }
+      );
+
+      const uploaded = await uploadMedia(
+        encryptedUpload,
+        'konnekt-chat-media',
+        `${conversationId}/${user.id}`
+      );
+
+      const sent = await send({
+        media_path: uploaded.path,
+        media_type: uploaded.type,
+        media_encrypted: true,
+        media_encryption_iv: encryptedFile.iv,
+        media_mime_type: file.type
+      }, true);
+
+      if (!sent) {
+        // The upload succeeded but no message references it. Best-effort cleanup.
+        const { error: cleanupError } = await supabase.storage
+          .from('konnekt-chat-media').remove([uploaded.path]);
+        if (cleanupError) {
+          setNotice('Message failed and its unused attachment could not be removed.');
+        }
+      }
+    } catch (e) {
+      setNotice(e.message || 'Attachment could not be sent.');
+ main
     } finally {
       sendLock.current = false;
       setSending(false);
@@ -449,6 +552,10 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
   // =======================================================
 
   const startCall = async callType => {
+    if (loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) {
+      setNotice('Wait for the conversation to load before starting a call.');
+      return;
+    }
     try {
       if (isGroup) {
         const session = await createGroupCall({
@@ -586,7 +693,11 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
       )}
 
       <View style={s.composer}>
+ fix/messaging-milestone
         <TouchableOpacity onPress={() => send(true)} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={!canCompose}>
+
+        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || loadedConversationId !== conversationId}>
+ main
           <Text style={{ fontSize: 21 }}>📎</Text>
         </TouchableOpacity>
 
@@ -602,7 +713,11 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         />
 
         <TouchableOpacity
+ fix/messaging-milestone
           disabled={!canCompose || !message.trim()}
+
+          disabled={sending || busy || loadedConversationId !== conversationId || !message.trim()}
+ main
           accessibilityRole="button"
           accessibilityLabel="Send message"
           style={[
@@ -642,18 +757,21 @@ function ChatAttachment({
   useEffect(() => {
     let live = true;
     let objectUrl = '';
+    setUrl('');
+    setLoadError('');
 
     if (isGroup && mediaEncrypted && !encryptionReady) return;
     setLoadError('');
     (async () => {
       try {
+        const { data, error } = await supabase.storage
+          .from('konnekt-chat-media')
+          .download(path);
+
+        if (error) throw error;
+
+        let attachment = data;
         if (mediaEncrypted) {
-          const { data, error } = await supabase.storage
-            .from('konnekt-chat-media')
-            .download(path);
-
-          if (error) throw error;
-
           const key = isGroup
             ? await getGroupKonnektCryptoKey(conversationId, userId)
             : await getKonnektConversationCryptoKey(
@@ -665,24 +783,18 @@ function ChatAttachment({
             throw new Error('Encryption key is unavailable on this device.');
           }
 
-          const plainBlob = await decryptKonnektBinary(
+          attachment = await decryptKonnektBinary(
             key,
             data,
             mediaIv,
             mediaMimeType || 'application/octet-stream'
           );
 
-          objectUrl = URL.createObjectURL(plainBlob);
+        }
 
-          if (live) setUrl(objectUrl);
-        } else {
-          const { data, error } = await supabase.storage
-            .from('konnekt-chat-media')
-            .createSignedUrl(path, 3600);
-
-          if (error) throw error;
-
-          if (live) setUrl(data.signedUrl);
+        if (live) {
+          objectUrl = URL.createObjectURL(attachment);
+          setUrl(objectUrl);
         }
       } catch (e) {
         if (live) setLoadError(e.message || 'Attachment unavailable.');
