@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -7,7 +8,6 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 
 const initialSettings = [

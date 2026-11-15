@@ -11,6 +11,7 @@ import { supabase } from './lib_supabase';
 import { initialisePushNotifications } from './pushNotifications';
 import { setMyPresence } from './presence';
 import { App } from '@capacitor/app';
+import { ensureKonnektIdentity } from './services/konnektEncryption';
 
 const AuthContext = createContext({
   session: null,
@@ -111,6 +112,12 @@ export function AuthProvider({ children }) {
     const userId = session?.user?.id;
 
     if (!userId || typeof document === 'undefined') return;
+
+    // Prepare keys outside onAuthStateChange; awaited auth/client calls in that
+    // callback can deadlock the Supabase auth lock.
+    ensureKonnektIdentity(userId).catch(error => {
+      console.warn('KONNEKT encryption identity:', error.message);
+    });
 
     const updateBrowserPresence = () => {
       publishPresence(

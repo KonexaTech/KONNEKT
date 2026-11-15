@@ -7,6 +7,7 @@ export function chooseMedia(accept = 'image/*,video/*') {
     input.type = 'file';
     input.accept = accept;
     input.onchange = () => resolve(input.files?.[0] || null);
+    input.oncancel = () => resolve(null);
     input.onerror = () => reject(new Error('Could not open the file picker.'));
     input.click();
   });
@@ -16,7 +17,7 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   if (!file) return null;
   const isVideo = file.type.startsWith('video/');
   const isAudio = file.type.startsWith('audio/');
-  const maxBytes = isVideo ? 50 * 1024 * 1024 : 15 * 1024 * 1024;
+  const maxBytes = isVideo ? 45 * 1024 * 1024 : 15 * 1024 * 1024;
   if (file.size > maxBytes) throw new Error(isVideo ? 'Videos must be 45 MB or smaller on this free-tier setup.' : 'Images and audio must be 15 MB or smaller.');
   if (!isVideo && !isAudio && !file.type.startsWith('image/')) throw new Error('Choose an image, video or audio file.');
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');

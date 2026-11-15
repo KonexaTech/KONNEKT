@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -6,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
   ActivityIndicator
 } from 'react-native';
 

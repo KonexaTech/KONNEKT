@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 import React,{useCallback,useEffect,useState} from 'react';
-import {View,Text,StyleSheet,ScrollView,TouchableOpacity,TextInput,Image,ActivityIndicator,Alert} from 'react-native';
+import {View,Text,StyleSheet,ScrollView,TouchableOpacity,TextInput,Image,ActivityIndicator,} from 'react-native';
 import {supabase} from '../lib_supabase';
 export default function TwoStepVerificationScreen({navigation}){const [factor,setFactor]=useState(null);const [qr,setQr]=useState('');const [secret,setSecret]=useState('');const [code,setCode]=useState('');const [busy,setBusy]=useState(false);const [notice,setNotice]=useState('');const [pending,setPending]=useState(false);
  const load=useCallback(async()=>{setBusy(true);try{const {data,error}=await supabase.auth.mfa.listFactors();if(error)throw error;const verified=(data?.totp||[]).find(x=>x.status==='verified');setFactor(verified||null);}catch(e){setNotice(e.message||'Could not load authenticator settings.');}finally{setBusy(false);}},[]);useEffect(()=>{load();},[load]);

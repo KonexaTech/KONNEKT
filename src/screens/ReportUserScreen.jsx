@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -7,7 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   ActivityIndicator
 } from 'react-native';
 import { submitKonnektReport } from '../services/safety';

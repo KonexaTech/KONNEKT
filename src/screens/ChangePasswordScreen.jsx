@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -7,8 +8,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+
+import { supabase } from '../lib_supabase';
+import { useAuth } from '../AuthContext';
 
 export default function ChangePasswordScreen({ navigation }) {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -19,7 +22,11 @@ export default function ChangePasswordScreen({ navigation }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const changePassword = () => {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  const changePassword = async () => {
+    if (busy) return;
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert(
         'Missing information',
@@ -52,10 +59,18 @@ export default function ChangePasswordScreen({ navigation }) {
       return;
     }
 
-    Alert.alert(
-      'Password not changed',
-      'Password updates are handled through your signed-in account. Use the account password recovery option if you cannot change it here.'
-    );
+    setBusy(true);
+    try {
+      if (!user?.email) throw new Error('Sign in again before changing your password.');
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+      if (authError) throw authError;
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+      Alert.alert('Password changed', 'Your account password has been updated.');
+    } catch (error) {
+      Alert.alert('Password not changed', error.message || 'Please try again.');
+    } finally { setBusy(false); }
   };
 
   return (
@@ -173,6 +188,7 @@ export default function ChangePasswordScreen({ navigation }) {
         <TouchableOpacity
           style={styles.saveButton}
           onPress={changePassword}
+          disabled={busy}
         >
           <Text style={styles.saveButtonText}>
             Update password

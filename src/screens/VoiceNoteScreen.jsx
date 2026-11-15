@@ -1,8 +1,8 @@
+import { Alert } from '../components/Alert';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useAuth } from '../AuthContext';
-import { supabase } from '../lib_supabase';
-import { uploadMedia } from '../services/media';
+import { sendEncryptedVoiceMessage } from '../services/voiceMessages';
 
 export default function VoiceNoteScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -29,10 +29,8 @@ export default function VoiceNoteScreen({ navigation, route }) {
     if(!blobRef.current||!conversationId||!user?.id)return setNotice('Record a voice note from an active conversation first.');
     setSaving(true);setNotice('');
     try{
-      const file=new File([blobRef.current],`voice-note-${Date.now()}.webm`,{type:blobRef.current.type||'audio/webm'});
-      const uploaded=await uploadMedia(file,'konnekt-chat-media',`${conversationId}/${user.id}`);
-      const {error}=await supabase.from('messages').insert({conversation_id:conversationId,sender_id:user.id,body:'Voice note',media_path:uploaded.path,media_type:'audio',media_mime_type:file.type});
-      if(error)throw error;
+      const file=new File([blobRef.current],`voice-note-${Date.now()}.webm`,{type:(blobRef.current.type||'audio/webm').split(';')[0]});
+      await sendEncryptedVoiceMessage(file,conversationId,user.id);
       Alert.alert('Voice note sent','Your voice note has been sent.',[{text:'OK',onPress:()=>navigation.goBack()}]);
     }catch(e){setNotice(e.message||'The voice note could not be sent.');}finally{setSaving(false);}
   };

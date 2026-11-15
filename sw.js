@@ -1,5 +1,5 @@
 
-const CACHE = 'konnekt-pwa-v3';
+const CACHE = 'konnekt-pwa-v4';
 const APP_ROOT = new URL('./', self.location.href).pathname;
 
 const CORE = [
@@ -95,10 +95,13 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  const target = new URL(
+  const candidate = new URL(
     event.notification.data?.url || APP_ROOT,
     self.registration.scope
-  ).href;
+  );
+  const scope = new URL(self.registration.scope);
+  const target = candidate.origin === scope.origin && candidate.pathname.startsWith(scope.pathname)
+    ? candidate.href : scope.href;
 
   event.waitUntil(
     self.clients.matchAll({

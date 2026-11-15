@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -8,7 +9,6 @@ import {
   ScrollView,
   Share,
   Clipboard,
-  Alert,
 } from 'react-native';
 
 export default function GroupInviteScreen({ navigation, route }) {

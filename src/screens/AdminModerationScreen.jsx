@@ -1,8 +1,9 @@
+import { Alert } from '../components/Alert';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, ActivityIndicator, Alert
+  StyleSheet, ActivityIndicator
 } from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';

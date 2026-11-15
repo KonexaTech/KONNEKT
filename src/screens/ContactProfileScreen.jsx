@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image,} from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { createDirectConversation } from '../services/social';

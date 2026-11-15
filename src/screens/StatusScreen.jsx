@@ -77,7 +77,7 @@ export default function StatusScreen({ navigation }) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <View>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.title}>Status</Text>
           <Text style={s.sub}>Photos, videos and text updates that expire after 24 hours</Text>
         </View>

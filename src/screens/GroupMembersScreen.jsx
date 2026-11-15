@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -7,7 +8,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 
 const demoMembers = [];

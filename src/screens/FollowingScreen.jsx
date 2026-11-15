@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,14 +8,27 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 
 const initialFollowing = [];
 
+import { useAuth } from '../AuthContext';
+import { getConnections, setFollowing as persistFollowing } from '../services/connections';
+
 export default function FollowingScreen({ navigation }) {
   const [following, setFollowing] = useState([]);
   const [search, setSearch] = useState('');
+  const { user } = useAuth();
+  const [notice, setNotice] = useState('Loading connections…');
+  const [working, setWorking] = useState(false);
+  useEffect(() => {
+    let active = true;
+    getConnections(user?.id, 'following').then(rows => {
+      if (active) { setFollowing(rows); setNotice(''); }
+    }).catch(error => { if (active) setNotice(error.message); });
+    return () => { active = false; };
+  }, [user?.id]);
+
 
   const filteredFollowing = following.filter((person) =>
     `${person.name} ${person.username}`
@@ -34,23 +48,22 @@ export default function FollowingScreen({ navigation }) {
         {
           text: 'Unfollow',
           style: 'destructive',
-          onPress: () => {
-            setFollowing((previous) =>
-              previous.filter((item) => item.id !== person.id)
-            );
+          onPress: async () => {
+            if (working) return;
+            setWorking(true);
+            try {
+              await persistFollowing(user?.id, person.id, false);
+              setFollowing(previous => previous.filter(row => row.id !== person.id));
+              setNotice('');
+            } catch (error) { setNotice(error.message); }
+            finally { setWorking(false); }
           },
         },
       ]
     );
   };
 
-  const openProfile = (person) => {
-    Alert.alert(
-      person.name,
-      `${person.username}\n\nConnect this action to the KONNEKT public profile screen.`,
-      [{ text: 'OK' }]
-    );
-  };
+  const openProfile = person => navigation.navigate('ContactProfile', { contact: person });
 
   const renderPerson = ({ item }) => (
     <View style={styles.personCard}>
@@ -85,6 +98,7 @@ export default function FollowingScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {!!notice && <Text accessibilityRole="status" style={{ color: '#D8B8F5', padding: 12 }}>{notice}</Text>}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>‹</Text>

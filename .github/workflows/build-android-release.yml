@@ -26,18 +26,12 @@ jobs:
           test -n "${{ secrets.ANDROID_KEY_PASSWORD }}"
       - name: Install dependencies and build web assets
         run: |
-          npm install
+          npm ci
           npm run build:mobile
       - name: Generate Android project
         run: npx cap add android
       - name: Install KONNEKT Android icon and splash assets
-        run: |
-          mkdir -p android/app/src/main/res
-          cp -R android-res/mipmap-* android/app/src/main/res/
-          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/values
-          cp android-res/drawable/splash.png android/app/src/main/res/drawable/splash.png
-          cp android-res/drawable-nodpi/splash.png android/app/src/main/res/drawable-nodpi/splash.png
-          cp android-res/values/colors.xml android/app/src/main/res/values/colors.xml
+        run: node scripts/android-assets.mjs
       - name: Sync Capacitor
         run: npx cap sync android
       - name: Configure release signing key

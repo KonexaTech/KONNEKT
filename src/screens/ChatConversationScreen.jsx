@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform,
@@ -38,16 +38,21 @@ export default function ChatConversationScreen({ navigation, route }) {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
   const [encryptionReady, setEncryptionReady] = useState(false);
+  const sendLock = useRef(false);
 
   const load = useCallback(async () => {
-    if (!conversationId || !user?.id) return;
+    if (!conversationId || !user?.id) {
+      setNotice('Open a conversation before sending messages.');
+      setBusy(false);
+      return;
+    }
 
     setBusy(true);
 
     try {
       const [
         { data: memberRows, error: memberError },
-        { data: rows, error },
+        { data: newestRows, error },
         { data: conversation, error: conversationError }
       ] = await Promise.all([
         supabase.from('conversation_members')
@@ -57,7 +62,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         supabase.from('messages')
           .select('*')
           .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: false })
           .limit(300),
 
         supabase.from('conversations')
@@ -69,6 +74,8 @@ export default function ChatConversationScreen({ navigation, route }) {
       if (memberError) throw memberError;
       if (error) throw error;
       if (conversationError) throw conversationError;
+      // Fetch the latest window, then display it chronologically.
+      const rows = [...(newestRows || [])].reverse();
 
       const members = memberRows || [];
       const memberIds = members.map(row => row.user_id);
@@ -148,6 +155,9 @@ export default function ChatConversationScreen({ navigation, route }) {
 
           setNotice('');
         } else {
+          decoded = (rows || []).map(row => row.is_encrypted
+            ? { ...row, display_body: '🔒 Group encryption key unavailable on this device.' }
+            : row);
           setNotice(
             'Secure group messaging is waiting for every member to open KONNEKT once.'
           );
@@ -363,8 +373,9 @@ export default function ChatConversationScreen({ navigation, route }) {
     const body = message.trim();
 
     if ((!body && !extra.media_path) || !user?.id) return;
-    if (sending) return;
+    if (sendLock.current) return;
 
+    sendLock.current = true;
     setSending(true);
     setNotice('');
 
@@ -419,7 +430,6 @@ export default function ChatConversationScreen({ navigation, route }) {
             groupKey,
             contentToEncrypt
           )),
-          encryption_version: 1
         };
       } else {
         const encrypted = await encryptKonnektText({
@@ -446,6 +456,7 @@ export default function ChatConversationScreen({ navigation, route }) {
     } catch (e) {
       setNotice(e?.message || 'Message could not be sent.');
     } finally {
+      sendLock.current = false;
       setSending(false);
     }
   };
@@ -455,6 +466,7 @@ export default function ChatConversationScreen({ navigation, route }) {
   // =======================================================
 
   const attach = async () => {
+    if (sendLock.current) return;
     try {
       const file = await chooseMedia('image/*,video/*,audio/*');
       if (!file) return;
@@ -465,6 +477,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         );
       }
 
+      sendLock.current = true;
       setSending(true);
 
       const cryptoKey = isGroup
@@ -495,6 +508,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         `${conversationId}/${user.id}`
       );
 
+      sendLock.current = false;
       await send({
         media_path: uploaded.path,
         media_type: uploaded.type,
@@ -505,6 +519,7 @@ export default function ChatConversationScreen({ navigation, route }) {
     } catch (e) {
       setNotice(e.message || 'Attachment could not be sent.');
     } finally {
+      sendLock.current = false;
       setSending(false);
     }
   };
@@ -650,7 +665,7 @@ export default function ChatConversationScreen({ navigation, route }) {
       )}
 
       <View style={s.composer}>
-        <TouchableOpacity onPress={attach} style={s.clip}>
+        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending}>
           <Text style={{ fontSize: 21 }}>📎</Text>
         </TouchableOpacity>
 
@@ -668,6 +683,8 @@ export default function ChatConversationScreen({ navigation, route }) {
             Actual sending still requires successful encryption. */}
         <TouchableOpacity
           disabled={sending || !message.trim()}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
           style={[
             s.send,
             !message.trim() && s.disabled

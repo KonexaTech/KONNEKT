@@ -39,7 +39,7 @@ export async function blockKonnektUser(userId) {
 
   const { error } = await supabase
     .from('user_blocks')
-    .upsert({ blocker_id: user.id, blocked_id: userId }, { onConflict: 'blocker_id,blocked_id' });
+    .upsert({ blocker_id: user.id, blocked_id: userId }, { onConflict: 'blocker_id,blocked_id', ignoreDuplicates: true });
   if (error) throw error;
 }
 
