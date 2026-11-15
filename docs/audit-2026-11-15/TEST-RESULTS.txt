@@ -166,3 +166,12 @@ cap-sync-confirmed.log
 
 Final npm audit: 0 info, 0 low, 0 moderate, 0 high, 0 critical advisories.
 Edge artifacts: 7 TypeScript syntax checks passed; import resolution/runtime not verified.
+
+Approved live deployment follow-up — 15 November 2026
+Compatibility migration: 20261115104812, success.
+Security migration: 20261115104836, success.
+Live catalog/permission checks: 18/18 passed.
+Live API checks: 3/3 passed.
+Storage bucket settings unchanged. RLS remains enabled.
+After aligning source filenames to recorded versions, local unit/SQL suite: 6/6 tests, including 28 SQL checks.
+No PR merge or frontend deployment performed. See DATABASE-DEPLOYMENT.md and database-verification.json.

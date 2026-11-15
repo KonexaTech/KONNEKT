@@ -4,37 +4,37 @@ Repository: `siboniisozulu-alt/KONNEKT` Â· inspected base: `8159a31` Â· repair b
 
 ## Decision
 
-**Not ready for public release.** Source repairs are prepared for review. Production `main`, the live Pages deployment and the live Supabase database were not modified by this audit. Two SQL migrations are proposals requiring explicit approval. Critical production defects remain until reviewed database repairs are applied and live tests pass.
+**Not ready for public release.** The user approved both database migrations after a fresh schema check, and both are now applied to the connected KONNEKT project. All 18 live catalog checks and 3 API checks passed. Source repairs remain in unmerged PR #3; production `main` and the Pages deployment were not changed. Real two-account acceptance and the remaining security/configuration findings are still outstanding. See [the deployment record](DATABASE-DEPLOYMENT.md).
 
 Readiness estimate: **40%**, a planning assessment rather than a measured completion percentage: source/build 18/20, functional evidence 10/30, security 6/25, device/end-to-end testing 4/15, operations/legal 2/10. Mocked browser and isolated SQL successes do not establish live multi-user reliability.
 
 ## Publication status
 
-The repair branch is published to GitHub after a successful permission retry. The initial Git push and connector branch-creation attempts returned HTTP 403; the retry succeeded. Changes remain on the separate repair branch for draft review. Production and the live database remain unchanged.
+The repair branch is published to GitHub after a successful permission retry. The initial Git push and connector branch-creation attempts returned HTTP 403; the retry succeeded. Changes remain on the separate repair branch in open PR #3. The database has now received the two explicitly approved migrations; production main and the live frontend remain unchanged.
 
 ## A. Audit results
 
-**41 grouped findings: 2 critical, 16 high, 18 medium, 5 low.** Statuses: 18 repaired in source, 11 covered by unapplied SQL proposals, 12 open. These counts describe the review branch; none imply the production deployment is repaired. Individual advisor warnings are grouped, not added repeatedly to the issue count.
+**41 grouped findings: 2 critical, 16 high, 18 medium, 5 low.** Statuses: 18 repaired in source, 11 covered by applied SQL repairs awaiting live acceptance, 12 open. These counts describe the review branch; none imply the production deployment is repaired. Individual advisor warnings are grouped, not added repeatedly to the issue count.
 
 Inspected the inventory of 384 tracked repository files, entry points, canonical JSX screen/import graph, shared services, duplicate source artifacts, SQL, seven Edge Function artifacts, PWA files, Capacitor configuration, dependencies, documentation and three active workflows. Build/lint cover the active application; legacy duplicate `.js` screens are not loaded by the app registry and are excluded from lint. Source review does not certify every placeholder as functional.
 
-Live backend confirmed: project `itkoagpigiifodfhoujt` (`konnekt`), PostgreSQL 17.11.0.018. Inspected public columns/defaults, keys/constraints, functions/ACLs, triggers, RLS policies, storage policies/buckets, realtime publication, advisors and aggregate logs. All 30 public tables have RLS enabled. The project has **zero deployed Edge Functions and no recorded CLI migration history**. Historical schema changes appear to have been applied outside CLI migration history; do not reset or replay the old root SQL files.
+Live backend confirmed: project `itkoagpigiifodfhoujt` (`konnekt`), PostgreSQL 17.11.0.018. Inspected public columns/defaults, keys/constraints, functions/ACLs, triggers, RLS policies, storage policies/buckets, realtime publication, advisors and aggregate logs. All 30 public tables have RLS enabled. The project has **zero deployed Edge Functions at audit time; the two approved audit migrations are now recorded in migration history**. Historical schema changes appear to have been applied outside CLI migration history; do not reset or replay the old root SQL files.
 
 Email provider is enabled and email confirmation is required; phone provider is disabled in public Auth settings. SMTP delivery, redirect allowlist, CAPTCHA/rate limits, backup restore and secret configuration were not verified. Anonymous REST probes returned no visible profile/message/membership/report rows (count 0) and denied key-backup table access. Phone privacy finding is authenticated access confirmed through catalog privileges/policy review; no personal phone values were retrieved. Live Pages returned HTTP 200.
 
 Health advisor returned no findings. Security advisor warnings include callable definer functions: they were reviewed as endpoints, not all treated as vulnerabilities, since checked RPCs and trigger functions have different behavior. Performance advisories remain. Aggregate logs were read for the default preceding 24 hours; a zero count for a particular `level` attribute is not proof of no service errors.
 
-| ID | Severity | Verified finding | Status | Evidence / correction |
+| ID | Severity | Audited finding (baseline) | Status | Evidence / correction |
 | --- | --- | --- | --- | --- |
-| K01 | Critical | Notification helper references nonexistent entity_type/entity_id columns | Proposed SQL | Live notifications has reference_id. Isolated execution reproduced failed message/follow inserts through their triggers; compatibility SQL repairs the shared helper. |
-| K02 | Critical | Direct-chat creator can insert a third member and expose the conversation | Proposed SQL | Live conversation_members INSERT policy checks creator only. Isolated baseline insertion succeeded. Proposed grants reserve conversation/member creation to atomic RPCs. |
+| K01 | Critical | Notification helper references nonexistent entity_type/entity_id columns | Applied SQL; acceptance pending | Baseline: Live notifications has reference_id. Isolated execution reproduced failed message/follow inserts through their triggers; compatibility SQL repairs the shared helper. |
+| K02 | Critical | Direct-chat creator can insert a third member and expose the conversation | Applied SQL; acceptance pending | Baseline: Live conversation_members INSERT policy checks creator only. Isolated baseline insertion succeeded. Proposed grants reserve conversation/member creation to atomic RPCs. |
 | K03 | High | All authenticated accounts can read optional profile phone numbers | Open | profiles SELECT policy is true and authenticated has phone SELECT privilege, confirmed via catalogs. No private phone values were read. Requires a private-data model and compatible profile queries. |
-| K04 | High | Legacy direct-conversation RPC bypasses blocking | Proposed SQL | Inspected create_direct_conversation(uuid) creates chats without block checks; anonymous execution is also granted, although its auth.uid guard prevents anonymous creation. Proposal delegates to the checked username RPC and revokes anonymous execution. |
-| K05 | High | Blocking does not stop existing direct-message sends or calls | Proposed SQL | Live messages/call_sessions INSERT policies omit block-pair checks. Proposed restrictive guards were tested with synthetic blocked users. |
-| K06 | High | Group key envelopes lack recipient membership and creator restrictions | Proposed SQL | Live INSERT repeats the sender membership check twice, without checking target user membership. Proposal restricts distribution to creator and real members; positive and negative isolated tests pass. |
-| K07 | High | Call invitations and mutable participant identities lack sufficient restrictions | Proposed SQL | Group-call invites do not require target conversation membership; broad UPDATE permits call identity changes. Proposed membership checks and column UPDATE grants preserve lifecycle updates. |
-| K08 | High | Encrypted attachment columns are missing in the live messages table | Proposed SQL | Client writes media_encrypted, media_encryption_iv and media_mime_type; live catalog has none. Proposal adds them without rewriting existing messages. |
-| K09 | High | Atomic group creation references missing conversations.description | Proposed SQL | Live function definition and catalog mismatch. Isolated baseline RPC failed, then passed after additive column repair. |
+| K04 | High | Legacy direct-conversation RPC bypasses blocking | Applied SQL; acceptance pending | Baseline: Inspected create_direct_conversation(uuid) creates chats without block checks; anonymous execution is also granted, although its auth.uid guard prevents anonymous creation. Proposal delegates to the checked username RPC and revokes anonymous execution. |
+| K05 | High | Blocking does not stop existing direct-message sends or calls | Applied SQL; acceptance pending | Baseline: Live messages/call_sessions INSERT policies omit block-pair checks. Proposed restrictive guards were tested with synthetic blocked users. |
+| K06 | High | Group key envelopes lack recipient membership and creator restrictions | Applied SQL; acceptance pending | Baseline: Live INSERT repeats the sender membership check twice, without checking target user membership. Proposal restricts distribution to creator and real members; positive and negative isolated tests pass. |
+| K07 | High | Call invitations and mutable participant identities lack sufficient restrictions | Applied SQL; acceptance pending | Baseline: Group-call invites do not require target conversation membership; broad UPDATE permits call identity changes. Proposed membership checks and column UPDATE grants preserve lifecycle updates. |
+| K08 | High | Encrypted attachment columns are missing in the live messages table | Applied SQL; acceptance pending | Baseline: Client writes media_encrypted, media_encryption_iv and media_mime_type; live catalog has none. Proposal adds them without rewriting existing messages. |
+| K09 | High | Atomic group creation references missing conversations.description | Applied SQL; acceptance pending | Baseline: Live function definition and catalog mismatch. Isolated baseline RPC failed, then passed after additive column repair. |
 | K10 | High | Chat list selects nonexistent messages.media_encrypted | Repaired on branch | src/services/social.js now selects only existing preview fields and preserves encrypted-message/attachment placeholders. |
 | K11 | High | Recipient encryption identity is not prepared at sign-in | Repaired on branch | Only opening a chat prepared keys, preventing send-to-new-user flows. Auth lifecycle now prepares the identity outside the Supabase auth callback. |
 | K12 | High | Concurrent identity setup or a mismatched local key can replace a registered identity | Repaired on branch | Identity initialization is serialized per user; conflicting registered/local identities fail closed. Browser tests confirm refusal to replace a key and backup recovery behavior. |
@@ -43,13 +43,13 @@ Health advisor returned no findings. Security advisor warnings include callable 
 | K15 | High | Session restoration and signout leave the wrong screen visible | Repaired on branch | App shell previously reset to Welcome without user identity dependency. It now routes by user/recovery state. Refresh and signout browser tests pass. |
 | K16 | High | Pinned Vite version has reported security advisories | Repaired on branch | Baseline npm audit: one high Vite finding and one moderate esbuild finding. Compatible Vite 6.4.6 update, lockfile and Supabase version pin yield zero npm audit advisories. |
 | K17 | High | Authenticator enrollment is not enforced during ordinary sign-in or by RLS | Open | MFA enrollment exists, but LoginScreen does not challenge enrolled factors and protected policies do not require aal2. Do not advertise enforced two-factor protection until challenge/recovery and policy changes are designed and tested. |
-| K18 | High | Report submitter can forge moderation outcome fields on INSERT | Proposed SQL | Live INSERT checks reporter_id only. Isolated baseline accepted an actioned report with forged moderator_id. Proposed restrictive submission policy requires untouched moderation fields. |
+| K18 | High | Report submitter can forge moderation outcome fields on INSERT | Applied SQL; acceptance pending | Baseline: Live INSERT checks reporter_id only. Isolated baseline accepted an actioned report with forged moderator_id. Proposed restrictive submission policy requires untouched moderation fields. |
 | K19 | Medium | Change-password screen never calls the authentication backend | Repaired on branch | Existing form now validates, reauthenticates with the current password and calls updateUser; rejected and successful mocked flows are tested. |
 | K20 | Medium | Followers/Following screens use empty local arrays | Repaired on branch | Existing layouts now load profiles through follows records, persist follow/unfollow, and open real profile routes. Follow-back is tested with mocked backend responses. |
 | K21 | Medium | Conversations over 300 messages load the oldest window | Repaired on branch | Query now fetches latest 300 descending and reverses for display. Browser fixture with 305 messages verifies the retained window begins with message 6. |
-| K22 | Medium | Reels uploads use a folder rejected by storage policy | Proposed SQL | Live public-media INSERT allows statuses/posts; WatchScreen uploads reels/user-id. Proposal adds the existing Reels folder to the owner-scoped policy, with isolated ownership tests. |
+| K22 | Medium | Reels uploads use a folder rejected by storage policy | Applied SQL; acceptance pending | Baseline: Live public-media INSERT allows statuses/posts; WatchScreen uploads reels/user-id. Proposal adds the existing Reels folder to the owner-scoped policy, with isolated ownership tests. |
 | K23 | Medium | Privacy switches do not enforce account/status/media privacy | Open | Account/Status privacy controls are local selections. Active statuses are readable by authenticated users; the media bucket is public and URLs survive row expiry. Requires product rules, private media authorization and cleanup design; changing bucket publicity alone would break current URLs. |
-| K24 | Medium | Notification trigger copies private message bodies | Proposed SQL | Inspected konnekt_notify_message copies body into notification records. Proposal emits a generic message notification; isolated checks confirm no plaintext duplication. |
+| K24 | Medium | Notification trigger copies private message bodies | Applied SQL; acceptance pending | Baseline: Inspected konnekt_notify_message copies body into notification records. Proposal emits a generic message notification; isolated checks confirm no plaintext duplication. |
 | K25 | Medium | Edge Function artifacts are not deployable or schema-compatible as laid out | Open | Seven index*.ts artifacts are at repository root, import missing ../_shared/cors.ts, and several reference absent reports/blocked_users/other staging tables. Live project lists zero Edge Functions. Syntax transpilation alone does not validate these imports or services. |
 | K26 | Medium | Account deletion is a request-only workflow | Open | UI correctly states requests require administrator/backend completion. No trusted media erasure/session revocation/final-deletion workflow is deployed. Destructive deletion was not attempted. |
 | K27 | Medium | Signed Android release workflow copies absent android-res files | Repaired on branch | Workflow now installs existing repository icon/splash assets using scripts/android-assets.mjs. Generation, asset installation and Capacitor sync were executed successfully; no signed package was built. |
@@ -74,12 +74,12 @@ The change preserves branding, navigation destinations and existing screen layou
 
 The client prepares encryption keys after sign-in, prevents conflicting identity replacement, encrypts voice notes using the existing crypto implementation, and keeps ciphertext out of chat previews. This is not a Signal-style ratchet: forward secrecy, membership key rotation, cross-tab initialization races, key-authenticity guarantees and an independent cryptographic review remain launch work. Historical plaintext messages are not retroactively encrypted. Older non-exportable keys cannot be recovered through the new backup flow.
 
-### Unapplied database proposals
+### Applied database repairs
 
-1. `supabase/migrations/20261115095238_audit_compatibility_repairs.sql`: adds group description and encrypted-media metadata columns; fixes notification helper to use `reference_id`; allows owner-scoped Reels uploads. Existing rows and RLS remain intact.
-2. `supabase/migrations/20261115095256_audit_security_hardening.sql`: delegates legacy chat creation to the checked RPC; restricts direct conversation/member writes to RPCs; limits call/notification UPDATE columns; adds restrictive checks for blocks, receipts, group keys, group invites and report moderation fields; revokes unnecessary trigger-function execution; makes message notifications generic.
+1. `supabase/migrations/20261115104812_audit_compatibility_repairs.sql`: adds group description and encrypted-media metadata columns; fixes notification helper to use `reference_id`; allows owner-scoped Reels uploads. Existing rows and RLS remain intact.
+2. `supabase/migrations/20261115104836_audit_security_hardening.sql`: delegates legacy chat creation to the checked RPC; restricts direct conversation/member writes to RPCs; limits call/notification UPDATE columns; adds restrictive checks for blocks, receipts, group keys, group invites and report moderation fields; revokes unnecessary trigger-function execution; makes message notifications generic.
 
-Both run inside transactions with a 5-second lock timeout and were applied twice in an isolated PostgreSQL reconstruction. **Neither was applied to the connected project.** Grant reductions can affect other clients or integrations that write these tables directly; review those consumers and take a backup before approval. The proposals do not fix phone privacy, public-media access, MFA enforcement, every possible group-signal lifecycle abuse, or all definer-function access. Do not treat them as a complete security certification.
+Both run inside transactions with a 5-second lock timeout and were applied twice in an isolated PostgreSQL reconstruction before the approved live application. The source filenames now match the versions recorded by Supabase; the approved SQL contents are unchanged. **Both have now been applied with explicit user approval, following a fresh catalog comparison.** Grant reductions can affect other clients or integrations that write these tables directly; review those consumers during acceptance. A pre-change schema/permission snapshot was saved; this is not a data-backup/restore verification. The proposals do not fix phone privacy, public-media access, MFA enforcement, every possible group-signal lifecycle abuse, or all definer-function access. Do not treat them as a complete security certification.
 
 `tests/fixtures/live-schema-2026-11-15.sql` reconstructs catalog-derived application tables/functions/policies with synthetic Auth/Storage helpers and test grants. It contains no user rows or credentials. It is only for the in-memory test engine and must never be applied to Supabase. Hosted Auth, JWT issuance, PostgREST behavior, actual Storage objects and realtime are not simulated by those SQL checks.
 
@@ -97,6 +97,7 @@ Both run inside transactions with a 5-second lock timeout and were applied twice
 | Mobile production build | Passed | `npm run build:mobile`; relative build and PWA assets emitted. |
 | Android preparation | Passed | `npx cap add android`, asset installer, `npx cap sync android`; generated project is ignored, not committed. |
 | Edge Function syntax | Passed | Seven root TypeScript artifacts transpiled without syntax errors; missing imports/schema mismatches and Deno runtime remain unresolved. |
+| Approved live database deployment | Passed | Both migrations recorded; 18 live catalog/permission checks and 3 API checks passed; see DATABASE-DEPLOYMENT.md. |
 | Live read-only backend probes | Passed within stated scope | Schema/policy/function inspection, Auth settings, advisors, aggregate logs and anonymous negative reads; not signed-in feature tests. |
 | Configured typecheck/unit suite before repair | Absent | No original lint/test/typecheck scripts or project tsconfig. New checks added; no claim of full TypeScript type safety. |
 | Existing GitHub Actions history | Inspected | Recent main Pages and debug-APK runs succeeded; the signed-release workflow was not validated by those debug runs. Repair-branch CI was triggered by the successful publication retry; local passing results are recorded below. Remote results should be checked on the draft PR. |
@@ -120,22 +121,22 @@ Status applies to the review branch, with live prerequisites shown explicitly. â
 | Password recovery | Implemented but needs testing | Reset request and Pages redirect tested with intercepted Auth; real mailbox/link round-trip untested. |
 | Change password | Broken and repaired | Existing form now reauthenticates and updates; mocked negative/positive tests pass. |
 | Profiles | Implemented but needs testing | Existing read/save integration; phone privacy must be resolved before public release. |
-| Following/unfollowing | Broken and repaired | Connection lists persist through service calls; live notifications require proposed trigger repair. |
-| Private conversation creation | Implemented but needs testing | Checked username RPC exists; legacy/membership holes require unapplied security proposal and live concurrency tests. |
-| Sending/receiving messages | Broken and repaired | Source and isolated trigger repairs tested; live trigger remains broken until approval; realtime receipt/delivery unverified. |
+| Following/unfollowing | Broken and repaired | Connection lists persist through service calls; the live trigger repair is applied; real-user follow/notification acceptance remains. |
+| Private conversation creation | Implemented but needs testing | Checked username RPC exists; legacy/membership repairs are applied; live concurrency/real-account tests remain. |
+| Sending/receiving messages | Broken and repaired | Source and isolated trigger repairs tested; live helper definition and permissions are now verified; real-account acceptance pending; realtime receipt/delivery unverified. |
 | Conversation history | Broken and repaired | Latest 300-message window tested; older-history pagination remains absent. |
-| Reels uploads/playback | Partially implemented | Upload UI exists; live storage folder policy rejects uploads until SQL repair. Real codec/playback/device tests remain. |
-| Reel likes/comments | Implemented but needs testing | Client and RLS present; notification-trigger repair and live interactions needed. |
+| Reels uploads/playback | Partially implemented | Upload UI exists; live storage folder policy is now repaired; real upload/playback remains untested. Real codec/playback/device tests remain. |
+| Reel likes/comments | Implemented but needs testing | Client and RLS present; notification-trigger repair is applied; live interactions still needed. |
 | Status updates | Implemented but needs testing | Mock text publish/expiry and mobile layout pass; private audience controls/expired-object cleanup incomplete. |
 | Discover | Implemented but needs testing | Data queries/navigation render at tested sizes; live search/follow/block behavior still needed. |
-| Notifications | Broken and repaired | Mock read/rollback and isolated trigger checks pass; live trigger repair unapplied. |
+| Notifications | Broken and repaired | Mock read/rollback and isolated trigger checks pass; live helper repair applied and verified; real delivery acceptance pending. |
 | Voice/video calling | Blocked by external configuration | WebRTC signaling exists; reliable TURN service and real-device/network transport tests needed. |
-| Group conversations | Broken and repaired | Missing description fixed in proposed SQL and isolated group RPC checks; live migration pending. |
-| Group calls | Partially implemented | Four-person P2P implementation; invitation/lifecycle checks proposed, no real group media test. |
+| Group conversations | Broken and repaired | Missing description fixed in proposed SQL and isolated group RPC checks; live migration is applied; real-account acceptance pending. |
+| Group calls | Partially implemented | Four-person P2P implementation; invitation/lifecycle checks applied, no real group media test. |
 | Encryption/key recovery | Implemented but needs testing | AES-GCM/ECDH and passphrase backup exercised with mocked persistence; cryptographic/security review and real multi-device lifecycle remain. |
 | Voice notes | Broken and repaired | Previously plaintext path now encrypts; microphone capture/device recording not certified. |
-| Blocking/reporting | Broken and repaired | Client API paths exist; isolated access restrictions pass, but live policies still need approval. |
-| Moderation | Partially implemented | Moderator screen and tables exist; report forgery guard proposed; no live moderator workflow test. |
+| Blocking/reporting | Broken and repaired | Client API paths exist; isolated access restrictions pass, live policy/grant changes are applied and verified; real-user acceptance remains. |
+| Moderation | Partially implemented | Moderator screen and tables exist; report forgery guard applied; no live moderator workflow test. |
 | Account deletion | Partially implemented | Request submission tested; final erasure/media cleanup/session revocation not deployed. |
 | Creator monetisation | Blocked by external configuration | Payment, subscription/ledger/payout and verification backend not active. |
 | Live video streaming | Blocked by external configuration | Local preview and room chat exist; no broadcast transport. |
@@ -146,8 +147,8 @@ Status applies to the review branch, with live prerequisites shown explicitly. â
 
 ## E. Remaining launch requirements
 
-1. Review this branch and the SQL proposals. Resolve phone privacy, real audience rules/public media, MFA challenge enforcement, key lifecycle and remaining authorization edges before inviting public users.
-2. Approve/apply only reviewed migrations against the inspected project, with a backup and catalog preflight; do not run old reset/base SQL. Rerun live advisors and authenticated two-/three-account RLS/storage tests afterwards.
+1. Review this branch and the database deployment record. Resolve phone privacy, real audience rules/public media, MFA challenge enforcement, key lifecycle and remaining authorization edges before inviting public users.
+2. The two approved migrations are applied and live advisors were rerun. Complete authenticated two-/three-account RLS/storage acceptance and backup/restore verification. Do not reset the project or replay old root SQL. Further migrations require separate review/approval.
 3. Supply dedicated test accounts through a secure sign-in flow. Verify registration, confirmation/recovery email, profiles, duplicate usernames, follows, direct/group chat concurrency, realtime, receipts, block/report behavior, moderator access and two-device key recovery.
 4. Verify SMTP, Auth redirect allowlist, rate limits/CAPTCHA and optional SMS. Phone authentication is currently disabled. No delivery claims can be made from provider settings alone.
 5. Configure short-lived TURN credentials and test audio/video/group media across separate networks, denied/revoked permissions and disconnect/reconnect cases. Streaming/SFU requires its own provider.
@@ -160,7 +161,7 @@ Status applies to the review branch, with live prerequisites shown explicitly. â
 
 ## F. Review gates
 
-**Approval required:** applying either migration, modifying live storage/public access, deploying provider credentials/functions, payment activation, destructive erasure, or production merge/deployment. The user brief (section 2 and final instruction) explicitly reserves these actions for approval. Source repairs and draft review do not grant production approval.
+**Approval used:** the user explicitly approved applying these two migrations. That does not authorize further database/storage changes, provider-function deployment, payment activation, destructive erasure, or production merge/deployment; those still require approval. The user brief (section 2 and final instruction) explicitly reserves these actions for approval. Source repairs and draft review do not grant production approval.
 
 Supabase references reviewed: changelog index and current security/RLS documentation. Advisor remediation: [security-definer exposure](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [RLS auth-call optimization](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select), [duplicate indexes](https://supabase.com/docs/guides/database/database-linter?lint=0009_duplicate_index).
 
@@ -178,6 +179,8 @@ Every changed/new file is listed below. For alert-only rows, the safety rational
 | `.gitignore` | Keep dependencies, builds, local secrets, generated native projects and test artifacts out of commits. |
 | `App.jsx` | Correct session/recovery navigation; await call-decline updates; use working alerts; dismiss stale prompts on account changes; expose selected tab semantics. |
 | `README.md` | Link the current audit, correct tab order/encryption limitations and document reproducible checks. |
+| `docs/audit-2026-11-15/DATABASE-DEPLOYMENT.md` | Approval, execution and verification record for the two live migrations; no application merge/deployment. |
+| `docs/audit-2026-11-15/database-verification.json` | Machine-readable live check outcomes and migration content hashes; no user rows or credentials. |
 | `docs/audit-2026-11-15/REPORT.md` | Audit evidence, finding register, reproduction instructions or tracked-file inventory; contains no user records or secret credentials. |
 | `docs/audit-2026-11-15/TEST-RESULTS.txt` | Audit evidence, finding register, reproduction instructions or tracked-file inventory; contains no user records or secret credentials. |
 | `docs/audit-2026-11-15/TESTING.md` | Audit evidence, finding register, reproduction instructions or tracked-file inventory; contains no user records or secret credentials. |
@@ -248,8 +251,8 @@ Every changed/new file is listed below. For alert-only rows, the safety rational
 | `src/services/safety.js` | Make repeated blocking use ignoreDuplicates rather than an UPDATE path unsupported by current block policies. |
 | `src/services/social.js` | Remove a chat-preview select of an absent column while preserving encrypted preview labeling. |
 | `src/services/voiceMessages.js` | Encrypt voice body/media with existing direct/group crypto; refuse missing keys; retain private bucket ownership paths. |
-| `supabase/migrations/20261115095238_audit_compatibility_repairs.sql` | Unapplied, transaction-scoped, rerunnable proposal for the inspected live schema; requires approval and is tested only in isolated PostgreSQL. |
-| `supabase/migrations/20261115095256_audit_security_hardening.sql` | Unapplied, transaction-scoped, rerunnable proposal for the inspected live schema; requires approval and is tested only in isolated PostgreSQL. |
+| `supabase/migrations/20261115104812_audit_compatibility_repairs.sql` | Approved and applied migration; SQL contents unchanged, filename aligned with actual Supabase migration version. Verified by live catalog/API checks and isolated regression tests. |
+| `supabase/migrations/20261115104836_audit_security_hardening.sql` | Approved and applied migration; SQL contents unchanged, filename aligned with actual Supabase migration version. Verified by live catalog/API checks and isolated regression tests. |
 | `sw.js` | Restrict notification navigation to the app scope; bump the cache version. |
 | `tests/browser/app.test.mjs` | Reproducible regression harness/fixture; uses synthetic sessions, intercepted HTTP or an isolated in-memory database, never live mutations. |
 | `tests/browser/helpers.mjs` | Reproducible regression harness/fixture; uses synthetic sessions, intercepted HTTP or an isolated in-memory database, never live mutations. |
@@ -257,4 +260,4 @@ Every changed/new file is listed below. For alert-only rows, the safety rational
 | `tests/fixtures/live-schema-2026-11-15.sql` | Reproducible regression harness/fixture; uses synthetic sessions, intercepted HTTP or an isolated in-memory database, never live mutations. |
 | `tests/service-worker.test.mjs` | Reproducible regression harness/fixture; uses synthetic sessions, intercepted HTTP or an isolated in-memory database, never live mutations. |
 
-Total changed/new files in this review: **85**.
+Total changed/new files in this review: **87**.

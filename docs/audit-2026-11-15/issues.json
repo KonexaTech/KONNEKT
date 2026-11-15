@@ -3,15 +3,17 @@
     "id": "K01",
     "severity": "Critical",
     "title": "Notification helper references nonexistent entity_type/entity_id columns",
-    "status": "Proposed SQL",
-    "evidence": "Live notifications has reference_id. Isolated execution reproduced failed message/follow inserts through their triggers; compatibility SQL repairs the shared helper."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live notifications has reference_id. Isolated execution reproduced failed message/follow inserts through their triggers; compatibility SQL repairs the shared helper.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K02",
     "severity": "Critical",
     "title": "Direct-chat creator can insert a third member and expose the conversation",
-    "status": "Proposed SQL",
-    "evidence": "Live conversation_members INSERT policy checks creator only. Isolated baseline insertion succeeded. Proposed grants reserve conversation/member creation to atomic RPCs."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live conversation_members INSERT policy checks creator only. Isolated baseline insertion succeeded. Proposed grants reserve conversation/member creation to atomic RPCs.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K03",
@@ -24,43 +26,49 @@
     "id": "K04",
     "severity": "High",
     "title": "Legacy direct-conversation RPC bypasses blocking",
-    "status": "Proposed SQL",
-    "evidence": "Inspected create_direct_conversation(uuid) creates chats without block checks; anonymous execution is also granted, although its auth.uid guard prevents anonymous creation. Proposal delegates to the checked username RPC and revokes anonymous execution."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Inspected create_direct_conversation(uuid) creates chats without block checks; anonymous execution is also granted, although its auth.uid guard prevents anonymous creation. Proposal delegates to the checked username RPC and revokes anonymous execution.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K05",
     "severity": "High",
     "title": "Blocking does not stop existing direct-message sends or calls",
-    "status": "Proposed SQL",
-    "evidence": "Live messages/call_sessions INSERT policies omit block-pair checks. Proposed restrictive guards were tested with synthetic blocked users."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live messages/call_sessions INSERT policies omit block-pair checks. Proposed restrictive guards were tested with synthetic blocked users.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K06",
     "severity": "High",
     "title": "Group key envelopes lack recipient membership and creator restrictions",
-    "status": "Proposed SQL",
-    "evidence": "Live INSERT repeats the sender membership check twice, without checking target user membership. Proposal restricts distribution to creator and real members; positive and negative isolated tests pass."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live INSERT repeats the sender membership check twice, without checking target user membership. Proposal restricts distribution to creator and real members; positive and negative isolated tests pass.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K07",
     "severity": "High",
     "title": "Call invitations and mutable participant identities lack sufficient restrictions",
-    "status": "Proposed SQL",
-    "evidence": "Group-call invites do not require target conversation membership; broad UPDATE permits call identity changes. Proposed membership checks and column UPDATE grants preserve lifecycle updates."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Group-call invites do not require target conversation membership; broad UPDATE permits call identity changes. Proposed membership checks and column UPDATE grants preserve lifecycle updates.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K08",
     "severity": "High",
     "title": "Encrypted attachment columns are missing in the live messages table",
-    "status": "Proposed SQL",
-    "evidence": "Client writes media_encrypted, media_encryption_iv and media_mime_type; live catalog has none. Proposal adds them without rewriting existing messages."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Client writes media_encrypted, media_encryption_iv and media_mime_type; live catalog has none. Proposal adds them without rewriting existing messages.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K09",
     "severity": "High",
     "title": "Atomic group creation references missing conversations.description",
-    "status": "Proposed SQL",
-    "evidence": "Live function definition and catalog mismatch. Isolated baseline RPC failed, then passed after additive column repair."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live function definition and catalog mismatch. Isolated baseline RPC failed, then passed after additive column repair.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K10",
@@ -122,8 +130,9 @@
     "id": "K18",
     "severity": "High",
     "title": "Report submitter can forge moderation outcome fields on INSERT",
-    "status": "Proposed SQL",
-    "evidence": "Live INSERT checks reporter_id only. Isolated baseline accepted an actioned report with forged moderator_id. Proposed restrictive submission policy requires untouched moderation fields."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live INSERT checks reporter_id only. Isolated baseline accepted an actioned report with forged moderator_id. Proposed restrictive submission policy requires untouched moderation fields.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K19",
@@ -150,8 +159,9 @@
     "id": "K22",
     "severity": "Medium",
     "title": "Reels uploads use a folder rejected by storage policy",
-    "status": "Proposed SQL",
-    "evidence": "Live public-media INSERT allows statuses/posts; WatchScreen uploads reels/user-id. Proposal adds the existing Reels folder to the owner-scoped policy, with isolated ownership tests."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live public-media INSERT allows statuses/posts; WatchScreen uploads reels/user-id. Proposal adds the existing Reels folder to the owner-scoped policy, with isolated ownership tests.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K23",
@@ -164,8 +174,9 @@
     "id": "K24",
     "severity": "Medium",
     "title": "Notification trigger copies private message bodies",
-    "status": "Proposed SQL",
-    "evidence": "Inspected konnekt_notify_message copies body into notification records. Proposal emits a generic message notification; isolated checks confirm no plaintext duplication."
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Inspected konnekt_notify_message copies body into notification records. Proposal emits a generic message notification; isolated checks confirm no plaintext duplication.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
   },
   {
     "id": "K25",

@@ -16,7 +16,7 @@ npm run build:mobile
 
 `npm test` creates an in-memory PGlite database and reconstructs the catalog-derived schema using `tests/fixtures/live-schema-2026-11-15.sql`. Auth/Storage helpers and grants are test scaffolding, not a replica of the hosted platform. It reproduces baseline defects, applies each proposed migration twice locally and checks permitted/forbidden operations with synthetic account IDs. The fixture contains no user rows or credentials. Never run it on Supabase.
 
-The two files under `supabase/migrations/` remain **unapplied proposals**. These test commands do not run Supabase CLI migration, database push or deployment commands.
+The two files under `supabase/migrations/` were approved and applied to the connected project; their filenames match the recorded Supabase migration versions. See DATABASE-DEPLOYMENT.md. The in-memory fixture still reconstructs the pre-migration baseline to test both repairs and reruns. These test commands do not run Supabase CLI migration, database push or deployment commands.
 
 To prepare Android locally, run `npx cap add android`, `node scripts/android-assets.mjs`, then `npx cap sync android` after the mobile build. Signed packaging needs the required SDK/signing configuration; the audit only verified project generation/assets/sync.
 

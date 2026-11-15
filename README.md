@@ -6,7 +6,7 @@ This repository is the existing React 18/Vite application with React Native Web 
 
 ## Audit and review branch
 
-See [the 15 November 2026 audit](docs/audit-2026-11-15/REPORT.md) for verified defects, source repairs, test evidence and unapplied database proposals. The application is not ready for public release. Do not apply SQL or deploy the repair branch without review and approval.
+See [the 15 November 2026 audit](docs/audit-2026-11-15/REPORT.md) for verified defects, source repairs, test evidence and the approved database deployment record. The application is not ready for public release. The two approved database migrations are applied; the frontend repairs remain in unmerged PR #3. Further SQL changes or deployment require review and approval.
 
 ## Current application capabilities
 
