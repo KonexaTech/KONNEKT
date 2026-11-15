@@ -3,6 +3,8 @@
 This branch is not authorization to launch. Keep production Supabase unchanged until staging tests and approval.
 
 ## Staging isolation (required)
+- For Android device acceptance, set the GitHub Actions repository variables `KONNEKT_STAGING_SUPABASE_URL` and `KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY` to the separate project’s API URL and publishable key. Set `KONNEKT_STAGING_TURN_CREDENTIALS_URL` to the staging endpoint issuing short-lived relay credentials and `KONNEKT_STAGING_ONESIGNAL_APP_ID` to the staging OneSignal app ID. These values are embedded in the client bundle. Keep provider secrets and private keys on the server.
+- Dispatch **Build and Verify KONNEKT Android APK** with **Build an isolated staging APK** enabled. Install the `KONNEKT-Android-API26-Staging` artifact on dedicated test devices. Missing or production Supabase settings cause the staging build to fail. TURN and OneSignal settings are required to exercise their respective acceptance cases.
 - Create a **separate** Supabase staging project, with a different project URL, publishable key, database, auth users, storage buckets, and secrets. Never reuse production service-role keys.
 - Configure a staging deployment on a distinct hostname and use staging-only environment variables. Keep production GitHub Pages deployment bound to main.
 - Apply reviewed migrations to staging once, in migration order; verify RLS, policies, indexes, triggers and storage permissions before populating test accounts.
