@@ -747,16 +747,19 @@ function ChatAttachment({
   useEffect(() => {
     let live = true;
     let objectUrl = '';
+    setUrl('');
+    setLoadError('');
 
     (async () => {
       try {
+        const { data, error } = await supabase.storage
+          .from('konnekt-chat-media')
+          .download(path);
+
+        if (error) throw error;
+
+        let attachment = data;
         if (mediaEncrypted) {
-          const { data, error } = await supabase.storage
-            .from('konnekt-chat-media')
-            .download(path);
-
-          if (error) throw error;
-
           const key = isGroup
             ? await getGroupKonnektCryptoKey(conversationId, userId)
             : await getKonnektConversationCryptoKey(
@@ -768,24 +771,18 @@ function ChatAttachment({
             throw new Error('Encryption key is unavailable on this device.');
           }
 
-          const plainBlob = await decryptKonnektBinary(
+          attachment = await decryptKonnektBinary(
             key,
             data,
             mediaIv,
             mediaMimeType || 'application/octet-stream'
           );
 
-          objectUrl = URL.createObjectURL(plainBlob);
+        }
 
-          if (live) setUrl(objectUrl);
-        } else {
-          const { data, error } = await supabase.storage
-            .from('konnekt-chat-media')
-            .createSignedUrl(path, 3600);
-
-          if (error) throw error;
-
-          if (live) setUrl(data.signedUrl);
+        if (live) {
+          objectUrl = URL.createObjectURL(attachment);
+          setUrl(objectUrl);
         }
       } catch (e) {
         if (live) setLoadError(e.message || 'Attachment unavailable.');
