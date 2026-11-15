@@ -2,6 +2,7 @@
 import React, {
   useCallback,
   useEffect,
+  useRef,
   useState
 } from 'react';
 
@@ -17,6 +18,7 @@ import {
 
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
+import { isConversationId } from '../services/conversationId';
 
 export default function CreateGroupScreen({ navigation }) {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export default function CreateGroupScreen({ navigation }) {
 
   const [busy, setBusy] = useState(true);
   const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [notice, setNotice] = useState('');
 
   const load = useCallback(async () => {
@@ -73,6 +76,7 @@ export default function CreateGroupScreen({ navigation }) {
   };
 
   const create = async () => {
+    if (saveLock.current) return;
     if (!user?.id) {
       setNotice('Please sign in before creating a group.');
       return;
@@ -93,6 +97,7 @@ export default function CreateGroupScreen({ navigation }) {
       return;
     }
 
+    saveLock.current = true;
     setSaving(true);
     setNotice('');
 
@@ -111,9 +116,9 @@ export default function CreateGroupScreen({ navigation }) {
 
       if (error) throw error;
 
-      if (!conversationId) {
+      if (!isConversationId(conversationId)) {
         throw new Error(
-          'Supabase did not return a group conversation ID.'
+          'Supabase did not return a valid group conversation ID.'
         );
       }
 
@@ -126,6 +131,7 @@ export default function CreateGroupScreen({ navigation }) {
         error.message || 'Could not create the group.'
       );
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };

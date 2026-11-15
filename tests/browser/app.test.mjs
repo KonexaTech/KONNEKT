@@ -97,6 +97,57 @@ test('notification read failure rolls back and then success persists', async () 
   assert.equal(requests.filter(r => r.method === 'PATCH' && r.path.endsWith('/notifications')).length, 2);
 }));
 
+test('direct creation rejects a malformed RPC ID before opening the conversation', async () => run({}, async ({ page, rpcResults }) => {
+  const rpc = 'konnekt_start_direct_conversation';
+  rpcResults.set(rpc, { id: CHAT });
+  await page.getByRole('tab', { name: 'Chats', exact: true }).click();
+  await page.getByRole('button', { name: 'New conversation' }).click();
+  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByText(/did not return a valid conversation ID/).waitFor();
+  assert.equal(await page.getByPlaceholder('Message securely…').count(), 0);
+  rpcResults.set(rpc, CHAT);
+  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByPlaceholder('Message securely…').waitFor();
+}));
+
+test('group creation checks the RPC ID and messages can retry key setup in the open chat', async () => run({
+  db: { conversations: [{ id: CHAT, title: 'Fixture group', is_group: true, created_by: ME }] }
+}, async ({ page, db, rpcResults, requests, failures }) => {
+  const rpc = 'konnekt_create_group_conversation';
+  rpcResults.set(rpc, 'invalid');
+  await openFeature(page, 'Create a group');
+  await page.getByPlaceholder('Enter group name').fill('Fixture group');
+  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByText('Create', { exact: true }).click();
+  await page.getByText(/did not return a valid group conversation ID/).waitFor();
+  rpcResults.set(rpc, CHAT);
+  await page.getByText('Create', { exact: true }).click();
+  await page.getByText(/waiting for every member/).waitFor();
+
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  const input = page.getByPlaceholder('Message securely…');
+  await input.fill('Group fixture message');
+  const sent = page.waitForResponse(response => response.url().includes('/rest/v1/messages') && response.request().method() === 'POST', { timeout: 7000 });
+  await page.getByRole('button', { name: 'Send message', exact: true }).click();
+  assert.ok((await sent).ok());
+  await page.getByText('Group fixture message', { exact: true }).waitFor();
+  assert.deepEqual(db.group_key_envelopes.map(row => row.user_id).sort(), [ME, OTHER].sort());
+  assert.equal(db.messages[0].conversation_id, CHAT);
+  assert.equal(db.messages[0].is_encrypted, true);
+  assert.notEqual(db.messages[0].body, 'Group fixture message');
+
+  failures.set('POST:group_key_envelopes', { code: '23505', message: 'Duplicate group key' });
+  const recovered = await page.evaluate(async ({ chat, profiles }) => {
+    const { createGroupKeyEnvelopes } = await import('/KONNEKT/src/services/konnektEncryption.js');
+    return createGroupKeyEnvelopes(chat, profiles);
+  }, { chat: CHAT, profiles: db.profiles });
+  assert.equal(recovered, true);
+  assert.equal(requests.filter(row => row.method === 'POST' && row.path.endsWith('/messages')).length, 1);
+}));
+
 test('encrypted message and attachment send preserve ciphertext and do not duplicate', async () => run({}, async ({ page, db, requests }) => {
   await page.getByRole('tab', { name: 'Chats', exact: true }).click();
   await page.getByText('Other Member', { exact: true }).click();
@@ -114,6 +165,12 @@ test('encrypted message and attachment send preserve ciphertext and do not dupli
   assert.equal(writes.length, 1);
   assert.equal(writes[0].body.is_encrypted, true);
   assert.notEqual(writes[0].body.body, 'Secret fixture message');
+  // The recipient publishes a fresh key after the chat loaded.
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  const beforeAttachment = requests.length;
   const attached = page.waitForResponse(response => response.url().includes('/rest/v1/messages') && response.request().method() === 'POST');
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Attach media', exact: true }).click();
@@ -123,6 +180,13 @@ test('encrypted message and attachment send preserve ciphertext and do not dupli
   assert.equal(writes.length, 2);
   assert.equal(writes[1].body.media_encrypted, true);
   assert.ok(writes[1].body.media_encryption_iv);
+  const attachmentRequests = requests.slice(beforeAttachment);
+  const refreshedKey = attachmentRequests.findIndex(row => row.path.endsWith('/profiles') &&
+    new URLSearchParams(row.search).get('id') === `eq.${OTHER}`);
+  const upload = attachmentRequests.findIndex(row => row.method === 'POST' && row.path.includes('/object/konnekt-chat-media/'));
+  assert.ok(refreshedKey >= 0 && upload > refreshedKey);
+  assert.ok(writes[1].body.media_path.startsWith(`${CHAT}/${ME}/`));
+  assert.equal(requests.some(row => row.path.includes('/object/sign/konnekt-chat-media/')), false);
 }));
 
 test('key backup restores, rejects wrong passphrase and refuses key replacement', async () => run({}, async ({ page, db }) => {

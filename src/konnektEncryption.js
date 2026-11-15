@@ -126,7 +126,12 @@ export async function createGroupKeyEnvelopes(conversationId, memberProfiles, ke
     });
   }
   const { error } = await supabase.from('group_key_envelopes').insert(envelopes);
-  if (error) throw error;
+  if (error) {
+    // A concurrent creator session may already have saved the whole group batch.
+    if (error.code !== '23505' || !await getGroupKonnektCryptoKey(conversationId, user.id)) {
+      throw error;
+    }
+  }
   return true;
 }
 

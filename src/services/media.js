@@ -26,6 +26,7 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type });
   if (error) throw error;
   const type = isVideo ? 'video' : isAudio ? 'audio' : 'image';
+  if (bucket === 'konnekt-chat-media') return { path, type };
   if (bucket === 'konnekt-public-media') {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return { path, url: data.publicUrl, type };

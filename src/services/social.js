@@ -1,5 +1,6 @@
 
 import { supabase } from '../lib_supabase';
+import { isConversationId } from './conversationId';
 
 export async function getMyProfile(userId) {
   const { data, error } = await supabase
@@ -164,9 +165,9 @@ export async function createDirectConversation(myId, otherId) {
 
   if (error) throw error;
 
-  if (!data) {
+  if (!isConversationId(data)) {
     throw new Error(
-      'Supabase did not return a conversation ID.'
+      'Supabase did not return a valid conversation ID.'
     );
   }
 
