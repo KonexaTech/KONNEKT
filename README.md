@@ -4,6 +4,10 @@
 
 This repository is the existing React 18/Vite application with React Native Web screens, Supabase authentication/data/storage/realtime and Capacitor Android support. Upgrade work preserves the existing project and adds no database reset, account removal or service-role key.
 
+## Audit and review branch
+
+See [the 15 November 2026 audit](docs/audit-2026-11-15/REPORT.md) for verified defects, source repairs, test evidence and the approved database deployment record. The application is not ready for public release. The two approved database migrations are applied; the frontend repairs remain in unmerged PR #3. Further SQL changes or deployment require review and approval.
+
 ## Current application capabilities
 
 - Supabase email/password authentication and profile persistence.
@@ -13,7 +17,7 @@ This repository is the existing React 18/Vite application with React Native Web 
 - Status updates with 24-hour expiry and photo/video upload paths.
 - Supabase-backed posts/Reels, likes, comments, follows, user discovery and notifications.
 - User blocking/reporting, moderation screens and local content/notification preferences.
-- Six main navigation destinations in order: Chats, Updates, Reels, Calls, Discover, Profile.
+- Six main navigation destinations in order: Reels, Chats, Status, Discover, Calls, Profile.
 
 These features depend on correct Supabase schema, RLS, storage and deployment configuration. A screen or signalling record is not proof of a successful real-world call or push delivery.
 
@@ -30,16 +34,17 @@ These features depend on correct Supabase schema, RLS, storage and deployment co
 - Configure a secure TURN credential endpoint for reliable calls. Set `VITE_TURN_CREDENTIALS_URL` to an endpoint issuing short-lived credentials; never ship permanent TURN credentials in browser variables.
 - Configure OneSignal/FCM for background push. In-app notifications and call prompts while the app is open are not background push.
 - Live video broadcasting needs a streaming provider/SFU; a local camera preview is not a broadcast.
-- Ordinary messages are not end-to-end encrypted. Do not claim that they are.
+- The current client encrypts new chat text and media using Web Crypto; older plaintext records remain plaintext. Encrypted media needs the proposed compatibility migration. The implementation has not received an independent cryptographic review and does not implement a forward-secrecy ratchet.
 - Creator verification, subscriptions, earnings, payouts and brand campaigns must not be presented as active unless their real backend workflows are configured.
 - Legal terms and privacy materials remain drafts that require review before public launch.
 
 ## Build
 
 1. Install dependencies with `npm ci` (or `npm install` if no lockfile is present).
-2. Run `npm run build` for web.
-3. Run `npm run build:mobile`, then `npx cap sync android` for Android assets.
-4. Build and verify on real target devices before controlled testing.
+2. Run `npm run lint`, `npm test` and `npm run test:browser` (install Chromium with `npx playwright install chromium`, or set `CHROMIUM_PATH` to an installed browser). Browser tests intercept Supabase traffic and SQL tests use an isolated in-memory database.
+3. Run `npm run build` for web.
+4. Run `npm run build:mobile`, then `npx cap sync android` for Android assets.
+5. Build and verify on real target devices before controlled testing.
 
 ## Existing project protection
 

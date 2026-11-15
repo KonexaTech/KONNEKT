@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -6,7 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Alert,
 } from 'react-native';
 
 const giftList = [];
@@ -14,7 +14,7 @@ const giftList = [];
 export default function LiveStreamGiftsScreen({ navigation }) {
   const [balance] = useState(0);
   const [selectedGift, setSelectedGift] = useState(null);
-  const [sentGifts, setSentGifts] = useState([]);
+  const [sentGifts] = useState([]);
 
   const sendGift = () => {
     if (!selectedGift) {
@@ -30,22 +30,8 @@ export default function LiveStreamGiftsScreen({ navigation }) {
       return;
     }
 
-    setBalance((previous) => previous - selectedGift.price);
+    Alert.alert('Gifts unavailable', 'Paid gifts require a configured payment service. No balance was changed.');
 
-    setSentGifts((previous) => [
-      {
-        ...selectedGift,
-        id: Date.now().toString(),
-      },
-      ...previous,
-    ]);
-
-    Alert.alert(
-      'Gift sent!',
-      `You sent ${selectedGift.emoji} ${selectedGift.name}.`
-    );
-
-    setSelectedGift(null);
   };
 
   const renderGift = ({ item }) => {

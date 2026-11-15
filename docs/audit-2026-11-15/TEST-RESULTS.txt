@@ -1,0 +1,177 @@
+KONNEKT verification record — 15 November 2026
+
+SQL/unit tests
+> konnekt-real-world-test@0.1.0 test
+> node --test tests/*.test.mjs
+
+PASS baseline group creation reproduces missing description
+PASS baseline follow reproduces notification trigger error
+PASS baseline message reproduces notification trigger error
+PASS baseline confirms report submission can forge moderation fields
+PASS baseline confirms creator can inject a third member into a direct chat
+PASS migration applies and reruns: 20261115095238_audit_compatibility_repairs.sql
+PASS migration applies and reruns: 20261115095256_audit_security_hardening.sql
+PASS follow persists after compatibility repair
+PASS message persists after compatibility repair
+PASS atomic group creation preserves description
+PASS direct chat membership injection denied
+PASS notification triggers succeed without leaking message plaintext
+PASS member can acknowledge message
+PASS outsider cannot read private messages
+PASS outsider cannot forge message receipt
+PASS legacy direct-chat RPC now enforces blocking
+PASS blocked pair cannot send in existing direct chat
+PASS blocked caller cannot ring recipient
+PASS anonymous role cannot execute legacy RPC
+PASS Reels upload folder accepted for owner
+PASS Reels upload rejected for another owner
+PASS creator can distribute group key to a real member
+PASS group key cannot be addressed to outsider
+PASS group caller can invite real conversation members
+PASS group caller cannot invite outsider
+PASS legitimate caller can update lifecycle state
+PASS call participant identity cannot be reassigned
+PASS report submitter cannot forge moderation outcome
+SQL CHECKS PASSED: 28
+✔ isolated schema: reproduce defects, rerun proposed migrations and enforce access boundaries (5269.277459ms)
+✔ push link stays in app scope: https://attacker.test/phishing (35.200178ms)
+✔ push link stays in app scope: javascript:alert(1) (1.356724ms)
+✔ push link stays in app scope: /other-app/ (1.251982ms)
+✔ valid in-app push link is retained (1.325782ms)
+✔ worker leaves backend requests and mutations to the network (1.546268ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5592.131648
+
+Browser regression tests
+> konnekt-real-world-test@0.1.0 test:browser
+> node --test tests/browser/*.test.mjs
+
+✔ public forms validate empty inputs and show rejected login; successful login opens app (7471.213824ms)
+✔ signup validates passwords and recovery request targets this Pages base (3170.282411ms)
+✔ six tabs and retained session work at 320px (3224.888242ms)
+✔ six tabs and retained session work at 390px (3204.829103ms)
+✔ six tabs and retained session work at 1280px (3381.914585ms)
+✔ signout removes protected content (2472.667198ms)
+✔ account deletion confirmation cancels safely and submits only after confirmation (2953.067327ms)
+✔ followers use backend records and follow-back persists (2382.513417ms)
+✔ notification read failure rolls back and then success persists (2907.703937ms)
+✔ encrypted message and attachment send preserve ciphertext and do not duplicate (2921.110931ms)
+✔ key backup restores, rejects wrong passphrase and refuses key replacement (2788.916891ms)
+✔ voice-note send encrypts media and body; missing peer key prevents upload (2196.790567ms)
+✔ status validates empty content and publishes a text update with expiry (2398.9418ms)
+✔ password change reauthenticates and handles rejected and successful changes (2517.642209ms)
+✔ long conversations load the latest 300 messages rather than the oldest 300 (2222.147875ms)
+✔ incoming group-call decline executes its update and session change dismisses stale dialogs (2129.644915ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49153.103962
+
+Final package checks
+
+npm-ci-confirmed.log
+
+added 273 packages in 6s
+
+lint-confirmed.log
+
+> konnekt-real-world-test@0.1.0 lint
+> eslint App.jsx main.jsx src sw.js
+
+
+web-confirmed.log
+
+> konnekt-real-world-test@0.1.0 build
+> vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 470 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/konnekt.svg                  0.74 kB │ gzip:   0.42 kB
+dist/manifest.webmanifest         0.85 kB
+dist/index.html                   1.11 kB │ gzip:   0.51 kB
+dist/sw.js                        2.91 kB
+dist/konnekt-192.png             14.14 kB
+dist/konnekt-512.png             41.22 kB
+dist/assets/index-B6dimrGH.css    3.06 kB │ gzip:   1.14 kB
+dist/assets/web--MbH8t8-.js       0.76 kB │ gzip:   0.35 kB
+dist/assets/index-lpuki4QC.js   970.03 kB │ gzip: 262.24 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.08s
+
+mobile-confirmed.log
+
+> konnekt-real-world-test@0.1.0 build:mobile
+> vite build --base=./
+
+vite v6.4.6 building for production...
+transforming...
+✓ 470 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/konnekt-C0jNgEPj.svg             0.74 kB │ gzip:   0.42 kB
+dist/konnekt.svg                             0.74 kB │ gzip:   0.42 kB
+dist/assets/manifest-CiLhXY_K.webmanifest    0.85 kB
+dist/manifest.webmanifest                    0.85 kB
+dist/index.html                              1.12 kB │ gzip:   0.54 kB
+dist/sw.js                                   2.91 kB
+dist/assets/konnekt-192-CtQT_8F4.png        14.14 kB
+dist/konnekt-192.png                        14.14 kB
+dist/konnekt-512.png                        41.22 kB
+dist/assets/index-B6dimrGH.css               3.06 kB │ gzip:   1.14 kB
+dist/assets/web-uudHZPRu.js                  0.76 kB │ gzip:   0.35 kB
+dist/assets/index-DjdSbxqT.js              970.15 kB │ gzip: 262.29 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.95s
+
+cap-sync-confirmed.log
+✔ Copying web assets from dist to android/app/src/main/assets/public in 23.81ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 1.01ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.6.3
+✔ copy android in 95.23ms
+✔ Updating Android plugins in 8.04ms
+[info] Found 7 Capacitor plugins for android:
+       @capacitor/app@7.1.2
+       @capacitor/browser@7.0.5
+       @capacitor/camera@7.0.5
+       @capacitor/filesystem@7.1.9
+       @capacitor/haptics@7.0.5
+       @capacitor/keyboard@7.0.6
+       @capacitor/status-bar@7.0.6
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.6.3
+✔ update android in 184.67ms
+[info] Sync finished in 0.368s
+
+Final npm audit: 0 info, 0 low, 0 moderate, 0 high, 0 critical advisories.
+Edge artifacts: 7 TypeScript syntax checks passed; import resolution/runtime not verified.
+
+Approved live deployment follow-up — 15 November 2026
+Compatibility migration: 20261115104812, success.
+Security migration: 20261115104836, success.
+Live catalog/permission checks: 18/18 passed.
+Live API checks: 3/3 passed.
+Storage bucket settings unchanged. RLS remains enabled.
+After aligning source filenames to recorded versions, local unit/SQL suite: 6/6 tests, including 28 SQL checks.
+No PR merge or frontend deployment performed. See DATABASE-DEPLOYMENT.md and database-verification.json.

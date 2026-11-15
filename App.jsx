@@ -1,3 +1,4 @@
+import { Alert } from './src/components/Alert';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthProvider, useAuth } from './src/AuthContext';
@@ -8,7 +9,6 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  Alert
 } from 'react-native';
 import { supabase } from './src/lib_supabase';
 import './src/konnekt-theme.css';
@@ -62,13 +62,18 @@ function AppShell() {
   const seenIncomingCalls = React.useRef(new Set());
 
   useEffect(() => {
+    Alert.dismissAll();
+    seenIncomingCalls.current.clear();
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!loading) {
       setStack([{
-        name: recovery ? 'PasswordReset' : 'Welcome',
+        name: recovery ? 'PasswordReset' : user?.id ? 'Reels' : 'Welcome',
         params: {}
       }]);
     }
-  }, [loading, recovery]);
+  }, [loading, recovery, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -91,11 +96,12 @@ function AppShell() {
           {
             text: 'Decline',
             style: 'cancel',
-            onPress: () => {
-              supabase
+            onPress: async () => {
+              const { error } = await supabase
                 .from('call_sessions')
                 .update({ status: 'declined' })
                 .eq('id', call.id);
+              if (error) throw error;
             }
           },
           {
@@ -163,12 +169,13 @@ function AppShell() {
           {
             text: 'Decline',
             style: 'cancel',
-            onPress: () => {
-              supabase
+            onPress: async () => {
+              const { error } = await supabase
                 .from('group_call_participants')
                 .update({ status: 'declined' })
                 .eq('call_id', call.id)
                 .eq('user_id', user.id);
+              if (error) throw error;
             }
           },
           {
@@ -329,9 +336,10 @@ function AppShell() {
               return (
                 <TouchableOpacity
                   key={tab.name}
-                  accessibilityRole="button"
+                  accessibilityRole="tab"
                   accessibilityLabel={tab.name}
                   accessibilityState={{ selected: active }}
+                  aria-selected={active}
                   style={[styles.tab, active && styles.activeTab]}
                   onPress={() => openTab(tab.name)}
                 >

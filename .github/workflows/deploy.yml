@@ -30,7 +30,10 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Validate code and regression tests
+        run: npm run lint && npm test
 
       - name: Build KONNEKT
         run: npm run build

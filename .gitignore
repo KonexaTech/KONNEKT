@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+android/
+ios/
+test-results/
+playwright-report/
+.supabase/
+supabase/.temp/

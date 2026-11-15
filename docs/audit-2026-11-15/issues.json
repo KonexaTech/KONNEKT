@@ -1,0 +1,300 @@
+[
+  {
+    "id": "K01",
+    "severity": "Critical",
+    "title": "Notification helper references nonexistent entity_type/entity_id columns",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live notifications has reference_id. Isolated execution reproduced failed message/follow inserts through their triggers; compatibility SQL repairs the shared helper.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K02",
+    "severity": "Critical",
+    "title": "Direct-chat creator can insert a third member and expose the conversation",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live conversation_members INSERT policy checks creator only. Isolated baseline insertion succeeded. Proposed grants reserve conversation/member creation to atomic RPCs.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K03",
+    "severity": "High",
+    "title": "All authenticated accounts can read optional profile phone numbers",
+    "status": "Open",
+    "evidence": "profiles SELECT policy is true and authenticated has phone SELECT privilege, confirmed via catalogs. No private phone values were read. Requires a private-data model and compatible profile queries."
+  },
+  {
+    "id": "K04",
+    "severity": "High",
+    "title": "Legacy direct-conversation RPC bypasses blocking",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Inspected create_direct_conversation(uuid) creates chats without block checks; anonymous execution is also granted, although its auth.uid guard prevents anonymous creation. Proposal delegates to the checked username RPC and revokes anonymous execution.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K05",
+    "severity": "High",
+    "title": "Blocking does not stop existing direct-message sends or calls",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live messages/call_sessions INSERT policies omit block-pair checks. Proposed restrictive guards were tested with synthetic blocked users.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K06",
+    "severity": "High",
+    "title": "Group key envelopes lack recipient membership and creator restrictions",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live INSERT repeats the sender membership check twice, without checking target user membership. Proposal restricts distribution to creator and real members; positive and negative isolated tests pass.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K07",
+    "severity": "High",
+    "title": "Call invitations and mutable participant identities lack sufficient restrictions",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Group-call invites do not require target conversation membership; broad UPDATE permits call identity changes. Proposed membership checks and column UPDATE grants preserve lifecycle updates.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K08",
+    "severity": "High",
+    "title": "Encrypted attachment columns are missing in the live messages table",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Client writes media_encrypted, media_encryption_iv and media_mime_type; live catalog has none. Proposal adds them without rewriting existing messages.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K09",
+    "severity": "High",
+    "title": "Atomic group creation references missing conversations.description",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live function definition and catalog mismatch. Isolated baseline RPC failed, then passed after additive column repair.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K10",
+    "severity": "High",
+    "title": "Chat list selects nonexistent messages.media_encrypted",
+    "status": "Repaired on branch",
+    "evidence": "src/services/social.js now selects only existing preview fields and preserves encrypted-message/attachment placeholders."
+  },
+  {
+    "id": "K11",
+    "severity": "High",
+    "title": "Recipient encryption identity is not prepared at sign-in",
+    "status": "Repaired on branch",
+    "evidence": "Only opening a chat prepared keys, preventing send-to-new-user flows. Auth lifecycle now prepares the identity outside the Supabase auth callback."
+  },
+  {
+    "id": "K12",
+    "severity": "High",
+    "title": "Concurrent identity setup or a mismatched local key can replace a registered identity",
+    "status": "Repaired on branch",
+    "evidence": "Identity initialization is serialized per user; conflicting registered/local identities fail closed. Browser tests confirm refusal to replace a key and backup recovery behavior."
+  },
+  {
+    "id": "K13",
+    "severity": "High",
+    "title": "Voice-note path sends unencrypted media and plaintext body",
+    "status": "Repaired on branch",
+    "evidence": "VoiceNoteScreen now uses existing ECDH/AES-GCM helpers for both body and media, with no plaintext fallback. Mocked browser integration verifies encrypted writes and missing-key rejection."
+  },
+  {
+    "id": "K14",
+    "severity": "High",
+    "title": "React Native Web Alert.alert is a no-op",
+    "status": "Repaired on branch",
+    "evidence": "Installed react-native-web implementation has an empty alert method. Shared accessible browser dialog now executes existing callbacks, including delete-request confirmation; cancel and confirm are browser-tested."
+  },
+  {
+    "id": "K15",
+    "severity": "High",
+    "title": "Session restoration and signout leave the wrong screen visible",
+    "status": "Repaired on branch",
+    "evidence": "App shell previously reset to Welcome without user identity dependency. It now routes by user/recovery state. Refresh and signout browser tests pass."
+  },
+  {
+    "id": "K16",
+    "severity": "High",
+    "title": "Pinned Vite version has reported security advisories",
+    "status": "Repaired on branch",
+    "evidence": "Baseline npm audit: one high Vite finding and one moderate esbuild finding. Compatible Vite 6.4.6 update, lockfile and Supabase version pin yield zero npm audit advisories."
+  },
+  {
+    "id": "K17",
+    "severity": "High",
+    "title": "Authenticator enrollment is not enforced during ordinary sign-in or by RLS",
+    "status": "Open",
+    "evidence": "MFA enrollment exists, but LoginScreen does not challenge enrolled factors and protected policies do not require aal2. Do not advertise enforced two-factor protection until challenge/recovery and policy changes are designed and tested."
+  },
+  {
+    "id": "K18",
+    "severity": "High",
+    "title": "Report submitter can forge moderation outcome fields on INSERT",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live INSERT checks reporter_id only. Isolated baseline accepted an actioned report with forged moderator_id. Proposed restrictive submission policy requires untouched moderation fields.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K19",
+    "severity": "Medium",
+    "title": "Change-password screen never calls the authentication backend",
+    "status": "Repaired on branch",
+    "evidence": "Existing form now validates, reauthenticates with the current password and calls updateUser; rejected and successful mocked flows are tested."
+  },
+  {
+    "id": "K20",
+    "severity": "Medium",
+    "title": "Followers/Following screens use empty local arrays",
+    "status": "Repaired on branch",
+    "evidence": "Existing layouts now load profiles through follows records, persist follow/unfollow, and open real profile routes. Follow-back is tested with mocked backend responses."
+  },
+  {
+    "id": "K21",
+    "severity": "Medium",
+    "title": "Conversations over 300 messages load the oldest window",
+    "status": "Repaired on branch",
+    "evidence": "Query now fetches latest 300 descending and reverses for display. Browser fixture with 305 messages verifies the retained window begins with message 6."
+  },
+  {
+    "id": "K22",
+    "severity": "Medium",
+    "title": "Reels uploads use a folder rejected by storage policy",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Live public-media INSERT allows statuses/posts; WatchScreen uploads reels/user-id. Proposal adds the existing Reels folder to the owner-scoped policy, with isolated ownership tests.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K23",
+    "severity": "Medium",
+    "title": "Privacy switches do not enforce account/status/media privacy",
+    "status": "Open",
+    "evidence": "Account/Status privacy controls are local selections. Active statuses are readable by authenticated users; the media bucket is public and URLs survive row expiry. Requires product rules, private media authorization and cleanup design; changing bucket publicity alone would break current URLs."
+  },
+  {
+    "id": "K24",
+    "severity": "Medium",
+    "title": "Notification trigger copies private message bodies",
+    "status": "Applied SQL; live acceptance pending",
+    "evidence": "Baseline finding: Inspected konnekt_notify_message copies body into notification records. Proposal emits a generic message notification; isolated checks confirm no plaintext duplication.",
+    "deployment_record": "DATABASE-DEPLOYMENT.md"
+  },
+  {
+    "id": "K25",
+    "severity": "Medium",
+    "title": "Edge Function artifacts are not deployable or schema-compatible as laid out",
+    "status": "Open",
+    "evidence": "Seven index*.ts artifacts are at repository root, import missing ../_shared/cors.ts, and several reference absent reports/blocked_users/other staging tables. Live project lists zero Edge Functions. Syntax transpilation alone does not validate these imports or services."
+  },
+  {
+    "id": "K26",
+    "severity": "Medium",
+    "title": "Account deletion is a request-only workflow",
+    "status": "Open",
+    "evidence": "UI correctly states requests require administrator/backend completion. No trusted media erasure/session revocation/final-deletion workflow is deployed. Destructive deletion was not attempted."
+  },
+  {
+    "id": "K27",
+    "severity": "Medium",
+    "title": "Signed Android release workflow copies absent android-res files",
+    "status": "Repaired on branch",
+    "evidence": "Workflow now installs existing repository icon/splash assets using scripts/android-assets.mjs. Generation, asset installation and Capacitor sync were executed successfully; no signed package was built."
+  },
+  {
+    "id": "K28",
+    "severity": "Medium",
+    "title": "Dependency installs are not reproducible",
+    "status": "Repaired on branch",
+    "evidence": "Original repository has no lockfile and workflows use npm install. Committed lockfile, exact Supabase pin and npm ci make checked installations repeatable."
+  },
+  {
+    "id": "K29",
+    "severity": "Medium",
+    "title": "No executable lint/regression suite or pull-request CI",
+    "status": "Repaired on branch",
+    "evidence": "Added lint rules for runtime errors in canonical JSX/services, isolated PostgreSQL tests, service-worker tests and intercepted-browser tests. CI validates web/mobile builds and tests without deploying."
+  },
+  {
+    "id": "K30",
+    "severity": "Medium",
+    "title": "Narrow-screen Reels and Status headers overflow",
+    "status": "Repaired on branch",
+    "evidence": "Reels header wraps; Status text column shrinks. All six tabs pass horizontal-overflow checks at 320, 390 and 1280 pixels."
+  },
+  {
+    "id": "K31",
+    "severity": "Medium",
+    "title": "PWA manifest hardcodes GitHub Pages paths in mobile builds",
+    "status": "Repaired on branch",
+    "evidence": "Manifest id/scope/start_url/icons now resolve relative to its location, preserving /KONNEKT/ web hosting and relative Capacitor assets."
+  },
+  {
+    "id": "K32",
+    "severity": "Medium",
+    "title": "Push notification click can navigate outside application scope",
+    "status": "Repaired on branch",
+    "evidence": "Service worker now limits targets to the same origin and registration path. Tests reject external, javascript and sibling-app destinations."
+  },
+  {
+    "id": "K33",
+    "severity": "Medium",
+    "title": "Live room video is only a local camera preview",
+    "status": "Open",
+    "evidence": "Source explicitly states no broadcast transport is configured. Room chat is separate from streaming. Requires streaming/SFU provider and real host/viewer tests."
+  },
+  {
+    "id": "K34",
+    "severity": "Medium",
+    "title": "Creator monetisation has no transaction/payment backend",
+    "status": "Open",
+    "evidence": "Subscriptions, funded earnings, payouts, gifts and verification workflows remain partial or explicitly unavailable. No payment credentials or transactions were invented."
+  },
+  {
+    "id": "K35",
+    "severity": "Medium",
+    "title": "Reliable cross-network calling lacks supplied TURN configuration",
+    "status": "Open",
+    "evidence": "Default build uses STUN; no VITE_TURN_CREDENTIALS_URL is supplied by the deployment workflow. Requires short-lived credential service and real two-device/two-network verification."
+  },
+  {
+    "id": "K36",
+    "severity": "Medium",
+    "title": "Background push is not configured in the deployment",
+    "status": "Open",
+    "evidence": "No OneSignal app ID is supplied by the workflow; no push Edge Function is deployed. Browser alerts while open do not prove background push delivery."
+  },
+  {
+    "id": "K37",
+    "severity": "Low",
+    "title": "File picker cancellation can leave a pending promise",
+    "status": "Repaired on branch",
+    "evidence": "Media chooser now resolves null on the browser cancel event, while retaining change/error handling."
+  },
+  {
+    "id": "K38",
+    "severity": "Low",
+    "title": "Media helper permits 50 MB while promising a 45 MB video limit",
+    "status": "Repaired on branch",
+    "evidence": "Shared validation now enforces the existing 45 MB product limit consistently."
+  },
+  {
+    "id": "K39",
+    "severity": "Low",
+    "title": "Eager screen registry creates a large entry bundle",
+    "status": "Open",
+    "evidence": "Production build warns about an approximately 1 MB JavaScript entry chunk. Warning remains visible; no arbitrary threshold increase or broad architecture rewrite was made."
+  },
+  {
+    "id": "K40",
+    "severity": "Low",
+    "title": "Duplicate source trees and obsolete package notes obscure the canonical app",
+    "status": "Open",
+    "evidence": "Root screens and many src/screens/*.js duplicate the active JSX tree. Main entry uses App.jsx and src/screens/*.jsx. Duplicates were inventoried and retained to avoid deleting potentially needed artifacts."
+  },
+  {
+    "id": "K41",
+    "severity": "Low",
+    "title": "Database has redundant policies/indexes and optimization advisories",
+    "status": "Open",
+    "evidence": "Live advisors report duplicate indexes, multiple permissive policies, unindexed FKs and per-row auth calls. These are grouped as one performance finding; no speculative index deletion was performed."
+  }
+]

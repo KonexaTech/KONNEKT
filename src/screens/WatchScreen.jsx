@@ -391,7 +391,7 @@ export default function WatchScreen({ navigation }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, minHeight: 0, backgroundColor: '#10091B', paddingHorizontal: 14, paddingTop: 8 },
-  header: { marginTop: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  header: { marginTop: 12, marginBottom: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { color: '#FFF', fontSize: 27, fontWeight: 'bold' },
   sub: { color: '#BBA9CC', marginTop: 3, fontSize: 11 },
   upload: { backgroundColor: '#6A0DAD', paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11 },

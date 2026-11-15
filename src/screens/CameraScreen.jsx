@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -5,7 +6,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 
 export default function CameraScreen({ navigation, route }) {

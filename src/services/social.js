@@ -68,7 +68,7 @@ export async function getConversationList(userId) {
       const { data: last, error: lastError } =
         await supabase
           .from('messages')
-          .select('body,created_at,is_encrypted,media_path,media_encrypted')
+          .select('body,created_at,is_encrypted,media_path')
           .eq('conversation_id', conversation.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -81,8 +81,6 @@ export async function getConversationList(userId) {
       if (last) {
         if (last.is_encrypted) {
           lastMessage = '🔒 Encrypted message';
-        } else if (last.media_path && last.media_encrypted) {
-          lastMessage = '🔒 Encrypted attachment';
         } else if (last.media_path) {
           lastMessage = '📎 Attachment';
         } else {

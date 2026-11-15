@@ -40,7 +40,17 @@ function fromBase64(value) {
   return Uint8Array.from(binary, char => char.charCodeAt(0));
 }
 
-export async function ensureKonnektIdentity(userId) {
+const pendingIdentities = new Map();
+export function ensureKonnektIdentity(userId) {
+  if (!userId) return Promise.reject(new Error('Sign in before preparing encryption.'));
+  if (!pendingIdentities.has(userId)) {
+    const pending = prepareKonnektIdentity(userId).finally(() => pendingIdentities.delete(userId));
+    pendingIdentities.set(userId, pending);
+  }
+  return pendingIdentities.get(userId);
+}
+
+async function prepareKonnektIdentity(userId) {
   if (!globalThis.crypto?.subtle) throw new Error('Secure encryption is unavailable. Open KONNEKT using HTTPS on a supported browser.');
   let identity = await readKey(userId);
   const { data: profile, error: readError } = await supabase.from('profiles').select('encryption_public_key').eq('id', userId).maybeSingle();
@@ -56,6 +66,9 @@ export async function ensureKonnektIdentity(userId) {
     await saveKey(userId, identity);
   }
   const publicKey = JSON.stringify(identity.publicJwk);
+  if (profile?.encryption_public_key && profile.encryption_public_key !== publicKey) {
+    throw new Error('The encryption identity on this device differs from your registered key. No key was changed. Restore the matching backup before sending messages.');
+  }
   if (profile?.encryption_public_key !== publicKey) {
     const { error } = await supabase.from('profiles').update({ encryption_public_key: publicKey }).eq('id', userId);
     if (error) throw new Error(`Could not publish your encryption public key. Apply the database upgrade first. ${error.message}`);

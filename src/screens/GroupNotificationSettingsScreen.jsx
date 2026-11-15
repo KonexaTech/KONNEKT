@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -7,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
-  Alert,
 } from 'react-native';
 
 export default function GroupNotificationSettingsScreen({

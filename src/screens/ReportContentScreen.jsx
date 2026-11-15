@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { submitKonnektReport } from '../services/safety';
 
 const reasons = ['Spam or misleading content', 'Harassment or bullying', 'Hate speech', 'Violence or dangerous behaviour', 'Nudity or sexual content', 'Scam or fraud', 'Copyright violation', 'Child safety concern', 'Other'];

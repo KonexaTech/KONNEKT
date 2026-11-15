@@ -1,0 +1,116 @@
+{
+  "project_id": "itkoagpigiifodfhoujt",
+  "migrations": [
+    {
+      "version": "20261115104812",
+      "name": "audit_compatibility_repairs",
+      "source_sha256": "e2adfe75de4bfa47a538817d7f43ab83402fa3bc868fb2b9ce4d02f79abcde72"
+    },
+    {
+      "version": "20261115104836",
+      "name": "audit_security_hardening",
+      "source_sha256": "ba5ebbb9a0cc928840f4964935cdfa5c81134a344115d9a2c964bcfaf01b5a7f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "call_identity_immutable",
+      "passed": true
+    },
+    {
+      "name": "call_lifecycle_updates_allowed",
+      "passed": true
+    },
+    {
+      "name": "direct_conversation_inserts_denied",
+      "passed": true
+    },
+    {
+      "name": "direct_membership_inserts_denied",
+      "passed": true
+    },
+    {
+      "name": "encrypted_media_columns",
+      "passed": true
+    },
+    {
+      "name": "group_call_identity_immutable",
+      "passed": true
+    },
+    {
+      "name": "group_description_column",
+      "passed": true
+    },
+    {
+      "name": "group_participant_identity_immutable",
+      "passed": true
+    },
+    {
+      "name": "legacy_rpc_anonymous_denied_authenticated_allowed",
+      "passed": true
+    },
+    {
+      "name": "legacy_rpc_checks_delegated",
+      "passed": true
+    },
+    {
+      "name": "message_notifications_generic",
+      "passed": true
+    },
+    {
+      "name": "notification_helper_not_client_callable",
+      "passed": true
+    },
+    {
+      "name": "notification_helper_uses_reference_id",
+      "passed": true
+    },
+    {
+      "name": "notifications_only_read_at_updatable",
+      "passed": true
+    },
+    {
+      "name": "reels_owner_upload_policy",
+      "passed": true
+    },
+    {
+      "name": "rls_remains_enabled",
+      "passed": true
+    },
+    {
+      "name": "six_restrictive_insert_guards",
+      "passed": true
+    },
+    {
+      "name": "trigger_functions_not_client_callable",
+      "passed": true
+    }
+  ],
+  "bucket_settings_unchanged": true,
+  "date": "2026-11-15",
+  "user_approval": "Explicit approval in chat for both migrations after a fresh schema check; excludes PR merge/deployment.",
+  "api_checks": [
+    {
+      "check": "PostgREST recognizes messages columns",
+      "passed": true,
+      "http_status": 200
+    },
+    {
+      "check": "PostgREST recognizes conversations columns",
+      "passed": true,
+      "http_status": 200
+    },
+    {
+      "check": "Anonymous legacy RPC denied",
+      "passed": true,
+      "http_status": 401
+    }
+  ],
+  "remaining_security_advisories": {
+    "anon_security_definer_function_executable": 2,
+    "authenticated_security_definer_function_executable": 8,
+    "auth_leaked_password_protection": 1
+  },
+  "health_advisor_findings": 0,
+  "functional_acceptance_limit": "No real two-account, email, media playback, realtime or device calling test was performed."
+}

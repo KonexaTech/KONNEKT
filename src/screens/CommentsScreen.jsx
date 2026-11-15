@@ -1,3 +1,4 @@
+import { Alert } from '../components/Alert';
 
 import React, { useState } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 
 const initialComments = [];

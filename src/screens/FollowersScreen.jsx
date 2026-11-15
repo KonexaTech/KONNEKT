@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,14 +8,27 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 
 const initialFollowers = [];
 
+import { useAuth } from '../AuthContext';
+import { getConnections, setFollowing } from '../services/connections';
+
 export default function FollowersScreen({ navigation }) {
   const [followers, setFollowers] = useState(initialFollowers);
   const [search, setSearch] = useState('');
+  const { user } = useAuth();
+  const [notice, setNotice] = useState('Loading connections…');
+  const [working, setWorking] = useState(false);
+  useEffect(() => {
+    let active = true;
+    getConnections(user?.id, 'followers').then(rows => {
+      if (active) { setFollowers(rows); setNotice(''); }
+    }).catch(error => { if (active) setNotice(error.message); });
+    return () => { active = false; };
+  }, [user?.id]);
+
 
   const filteredFollowers = followers.filter((person) =>
     `${person.name} ${person.username}`
@@ -22,23 +36,20 @@ export default function FollowersScreen({ navigation }) {
       .includes(search.toLowerCase())
   );
 
-  const toggleFollowBack = (id) => {
-    setFollowers((previous) =>
-      previous.map((person) =>
-        person.id === id
-          ? { ...person, followingBack: !person.followingBack }
-          : person
-      )
-    );
+  const toggleFollowBack = async id => {
+    if (working) return;
+    const person = followers.find(row => row.id === id);
+    if (!person) return;
+    setWorking(true);
+    try {
+      await setFollowing(user?.id, id, !person.followingBack);
+      setFollowers(previous => previous.map(row => row.id === id ? { ...row, followingBack: !row.followingBack } : row));
+      setNotice('');
+    } catch (error) { setNotice(error.message); }
+    finally { setWorking(false); }
   };
 
-  const openProfile = (person) => {
-    Alert.alert(
-      person.name,
-      `${person.username}\n\nConnect this screen to the public profile system to view their videos and profile.`,
-      [{ text: 'OK' }]
-    );
-  };
+  const openProfile = person => navigation.navigate('ContactProfile', { contact: person });
 
   const renderFollower = ({ item }) => (
     <View style={styles.personRow}>
@@ -83,6 +94,7 @@ export default function FollowersScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {!!notice && <Text accessibilityRole="status" style={{ color: '#D8B8F5', padding: 12 }}>{notice}</Text>}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>‹</Text>

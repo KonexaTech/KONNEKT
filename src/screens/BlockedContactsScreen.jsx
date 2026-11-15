@@ -1,5 +1,6 @@
+import { Alert } from '../components/Alert';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { getKonnektBlockedUsers, unblockKonnektUser } from '../services/safety';
 export default function BlockedContactsScreen({navigation}){
  const [rows,setRows]=useState([]);const [query,setQuery]=useState('');const [busy,setBusy]=useState(true);const [working,setWorking]=useState('');const [notice,setNotice]=useState('');
