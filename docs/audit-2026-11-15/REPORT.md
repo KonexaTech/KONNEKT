@@ -10,7 +10,7 @@ Readiness estimate: **40%**, a planning assessment rather than a measured comple
 
 ## Publication status
 
-The repair branch is committed locally. Git push returned HTTP 403, and GitHub connector branch creation returned `Resource not accessible by integration` (403). No remote repair branch or pull request was created. A portable source/patch/bundle review package is supplied instead. Publishing requires GitHub integration write access; production remains unchanged.
+The repair branch is published to GitHub after a successful permission retry. The initial Git push and connector branch-creation attempts returned HTTP 403; the retry succeeded. Changes remain on the separate repair branch for draft review. Production and the live database remain unchanged.
 
 ## A. Audit results
 
@@ -99,7 +99,7 @@ Both run inside transactions with a 5-second lock timeout and were applied twice
 | Edge Function syntax | Passed | Seven root TypeScript artifacts transpiled without syntax errors; missing imports/schema mismatches and Deno runtime remain unresolved. |
 | Live read-only backend probes | Passed within stated scope | Schema/policy/function inspection, Auth settings, advisors, aggregate logs and anonymous negative reads; not signed-in feature tests. |
 | Configured typecheck/unit suite before repair | Absent | No original lint/test/typecheck scripts or project tsconfig. New checks added; no claim of full TypeScript type safety. |
-| Existing GitHub Actions history | Inspected | Recent main Pages and debug-APK runs succeeded; the signed-release workflow was not validated by those debug runs. Repair-branch CI could not run remotely because publication was rejected with HTTP 403; equivalent checks were run locally. |
+| Existing GitHub Actions history | Inspected | Recent main Pages and debug-APK runs succeeded; the signed-release workflow was not validated by those debug runs. Repair-branch CI was triggered by the successful publication retry; local passing results are recorded below. Remote results should be checked on the draft PR. |
 | Signed Android release / iOS / physical device | Not performed | No signing secrets, SDK/device validation or App Store/Play deployment. |
 | Live two-account end-to-end | Not performed | No dedicated test accounts supplied during this run. No real email/SMS, message receipt, call transport, storage playback or background push delivery certified. |
 | Payments and destructive erasure | Not performed | Provider/trusted backend absent; financial and destructive operations intentionally left unapplied. |
