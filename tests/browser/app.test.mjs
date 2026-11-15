@@ -258,3 +258,30 @@ test('sending an attachment preserves a newer composer draft', async () => run({
   assert.equal(await page.getByPlaceholder('Message securely…').inputValue(), 'Next message draft');
   assert.equal(requests.filter(r => r.path === '/rest/v1/messages' && r.method === 'POST').length, 1);
 }));
+
+
+test('voice-note failures clean unused uploads and invalid conversation IDs make no requests', async () => run({}, async ({ page, db, requests, failures }) => {
+  await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor();
+  const attempt = chat => page.evaluate(async ({ me, chat }) => {
+    try {
+      const { sendEncryptedVoiceMessage } = await import('/KONNEKT/src/services/voiceMessages.js');
+      await sendEncryptedVoiceMessage(new File(['fixture voice'], 'failed.webm', { type: 'audio/webm' }), chat, me);
+    } catch (error) { return error.message; }
+  }, { me: ME, chat });
+  const before = requests.length;
+  assert.match(await attempt('undefined'), /active conversation/);
+  // Unrelated initial feed requests may finish in the background.
+  assert.equal(requests.slice(before).filter(r => r.search.includes('undefined') || r.path.includes('/storage/')).length, 0);
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  failures.set('POST:messages', { message: 'Fixture message rejected' });
+  assert.match(await attempt(CHAT), /Fixture message rejected/);
+  const uploads = requests.filter(r => r.method === 'POST' && r.path.includes('/storage/v1/object/'));
+  const removals = requests.filter(r => r.method === 'DELETE' && r.path.includes('/storage/v1/object/'));
+  assert.equal(uploads.length, 1);
+  assert.equal(removals.length, 1);
+  assert.equal(removals[0].body.prefixes[0], uploads[0].path.split('/konnekt-chat-media/')[1]);
+  assert.equal(db.messages.length, 0);
+}));
