@@ -3,6 +3,11 @@ name: Build and Verify KONNEKT Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      staging:
+        description: Build an isolated staging APK
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -49,7 +54,17 @@ jobs:
         run: npm ci
 
       - name: Build mobile website
+        if: ${{ !inputs.staging }}
         run: npm run build:mobile
+
+      - name: Build staging mobile website
+        if: ${{ inputs.staging }}
+        env:
+          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
+          VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
+        run: npm run build:mobile -- --mode staging
 
       - name: Verify website assets
         run: |
@@ -122,7 +137,7 @@ jobs:
       - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: KONNEKT-Android-API26-Test
+          name: ${{ inputs.staging && 'KONNEKT-Android-API26-Staging' || 'KONNEKT-Android-API26-Test' }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
