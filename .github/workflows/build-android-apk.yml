@@ -94,6 +94,9 @@ jobs:
       - name: Install existing KONNEKT brand assets
         run: node scripts/android-assets.mjs
 
+      - name: Configure optional call device permissions
+        run: node scripts/android-permissions.mjs
+
       - name: Synchronise Capacitor
         run: npx cap sync android
 

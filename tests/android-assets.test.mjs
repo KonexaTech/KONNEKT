@@ -24,3 +24,18 @@ test('branding assets replace generated launcher color and install idempotently'
     assert.match(await readFile(join(values, 'strings.xml'), 'utf8'), /KONNEKT Staging/);
   } finally { await rm(fixture, { recursive: true, force: true }); }
 });
+
+
+test('native call permissions are declared once and hardware stays optional', async () => {
+  const fixture = await mkdtemp(join(tmpdir(), 'konnekt-permissions-'));
+  try {
+    const directory = join(fixture, 'android/app/src/main');
+    await mkdir(directory, { recursive: true });
+    const manifest = join(directory, 'AndroidManifest.xml');
+    await writeFile(manifest, '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application /></manifest>');
+    for (let n = 0; n < 2; n++) execFileSync(process.execPath, [resolve('scripts/android-permissions.mjs')], { cwd: fixture });
+    const xml = await readFile(manifest, 'utf8');
+    for (const permission of ['CAMERA','RECORD_AUDIO','MODIFY_AUDIO_SETTINGS']) assert.equal(xml.split('android.permission.' + permission).length - 1, 1);
+    for (const device of ['camera','microphone']) assert(xml.includes('android:name="android.hardware.' + device + '" android:required="false"'));
+  } finally { await rm(fixture, { recursive: true, force: true }); }
+});
