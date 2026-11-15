@@ -32,3 +32,7 @@ The workflow uses staging-only public API settings. Optional dispatch inputs avo
 - Staging TURN credential endpoint and configured relay provider. Permanent relay secrets must stay on the server.
 - Staging OneSignal application plus Android delivery credentials, then foreground/background/closed-app delivery, permission denial, logout isolation, and token rotation checks.
 - Explicit release acceptance and go/no-go approval. No production database changes were made and no paid services were added.
+
+## Prepared messaging acceptance runner
+
+The three-account browser runner and private setup instructions are in [STAGING_MESSAGING_TESTS.md](STAGING_MESSAGING_TESTS.md). Its configuration/isolation evidence guards have local tests; the runner has not been executed against staging. Account access is intentionally deferred until supplied. Production app/navigation code is unchanged by this preparation.
