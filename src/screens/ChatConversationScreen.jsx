@@ -461,7 +461,8 @@ export default function ChatConversationScreen({ navigation, route }) {
 
       if (error) throw error;
 
-      setMessage('');
+      // Keep a newer draft typed while this message or attachment was sending.
+      setMessage(current => current.trim() === body ? '' : current);
       await load();
       return true;
     } catch (e) {

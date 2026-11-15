@@ -229,3 +229,32 @@ test('incoming group-call decline executes its update and session change dismiss
   await page.getByText('SIGN UP', { exact: true }).waitFor();
   assert.equal(await page.getByRole('alertdialog').count(), 0);
 }));
+
+
+test('sending an attachment preserves a newer composer draft', async () => run({}, async ({ page, db, requests }) => {
+  await page.getByRole('tab', { name: 'Chats', exact: true }).click();
+  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  });
+  await page.getByText('Other Member', { exact: true }).click();
+  await page.waitForFunction(() => !document.querySelector('[aria-label="Attach media"]')?.getAttribute('aria-disabled'));
+  let release, started;
+  const began = new Promise(resolve => { started = resolve; });
+  const pending = new Promise(resolve => { release = resolve; });
+  await page.route('**/rest/v1/messages', async route => {
+    if (route.request().method() === 'POST') { started(); await pending; }
+    await route.fallback();
+  });
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Attach media', exact: true }).click();
+  await (await chooser).setFiles({ name: 'draft.png', mimeType: 'image/png', buffer: Buffer.from('fixture-image') });
+  await began;
+  await page.getByPlaceholder('Message securely…').fill('Next message draft');
+  const response = page.waitForResponse(r => r.url().includes('/rest/v1/messages') && r.request().method() === 'POST');
+  release();
+  await response;
+  await page.waitForTimeout(300);
+  assert.equal(await page.getByPlaceholder('Message securely…').inputValue(), 'Next message draft');
+  assert.equal(requests.filter(r => r.path === '/rest/v1/messages' && r.method === 'POST').length, 1);
+}));
