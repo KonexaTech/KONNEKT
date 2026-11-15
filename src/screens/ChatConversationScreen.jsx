@@ -369,11 +369,11 @@ export default function ChatConversationScreen({ navigation, route }) {
   // SEND MESSAGE
   // =======================================================
 
-  const send = async (extra = {}) => {
+  const send = async (extra = {}, lockHeld = false) => {
     const body = message.trim();
 
     if ((!body && !extra.media_path) || !user?.id) return;
-    if (sendLock.current) return;
+    if (sendLock.current && !lockHeld) return false;
 
     sendLock.current = true;
     setSending(true);
@@ -453,11 +453,15 @@ export default function ChatConversationScreen({ navigation, route }) {
 
       setMessage('');
       await load();
+      return true;
     } catch (e) {
       setNotice(e?.message || 'Message could not be sent.');
+      return false;
     } finally {
-      sendLock.current = false;
-      setSending(false);
+      if (!lockHeld) {
+        sendLock.current = false;
+        setSending(false);
+      }
     }
   };
 
@@ -467,6 +471,8 @@ export default function ChatConversationScreen({ navigation, route }) {
 
   const attach = async () => {
     if (sendLock.current) return;
+    sendLock.current = true;
+    setSending(true);
     try {
       const file = await chooseMedia('image/*,video/*,audio/*');
       if (!file) return;
@@ -476,9 +482,6 @@ export default function ChatConversationScreen({ navigation, route }) {
           'Secure encryption is not ready. Open KONNEKT on both accounts first.'
         );
       }
-
-      sendLock.current = true;
-      setSending(true);
 
       const cryptoKey = isGroup
         ? await getGroupKonnektCryptoKey(conversationId, user.id)
@@ -508,14 +511,22 @@ export default function ChatConversationScreen({ navigation, route }) {
         `${conversationId}/${user.id}`
       );
 
-      sendLock.current = false;
-      await send({
+      const sent = await send({
         media_path: uploaded.path,
         media_type: uploaded.type,
         media_encrypted: true,
         media_encryption_iv: encryptedFile.iv,
         media_mime_type: file.type
-      });
+      }, true);
+
+      if (!sent) {
+        // The upload succeeded but no message references it. Best-effort cleanup.
+        const { error: cleanupError } = await supabase.storage
+          .from('konnekt-chat-media').remove([uploaded.path]);
+        if (cleanupError) {
+          setNotice('Message failed and its unused attachment could not be removed.');
+        }
+      }
     } catch (e) {
       setNotice(e.message || 'Attachment could not be sent.');
     } finally {
