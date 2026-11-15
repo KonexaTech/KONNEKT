@@ -42,6 +42,25 @@ try {
  await as(C);
  assert.equal((await db.query(`select id from messages where conversation_id='${chat}'`)).rows.length,0);pass('outsider cannot read private messages');
  await rejects(`insert into message_receipts(message_id,user_id,read_at) values('${message}','${C}',now())`,/row-level security/,'outsider cannot forge message receipt');
+ const attachmentPath = `${chat}/${A}/encrypted-fixture.bin`;
+ const attachmentFilter = `bucket_id='konnekt-chat-media' and name='${attachmentPath}'`;
+ await as(A);
+ await db.exec(`insert into storage.objects(bucket_id,name) values('konnekt-chat-media','${attachmentPath}')`);
+ pass('chat member can upload an attachment in their own folder');
+ await rejects(
+  `insert into storage.objects(bucket_id,name) values('konnekt-chat-media','${chat}/${B}/wrong-owner.bin')`,
+  /row-level security/, 'chat member cannot upload in another member’s folder'
+ );
+ await as(B);
+ assert.equal((await db.query(`select name from storage.objects where ${attachmentFilter}`)).rows.length, 1);
+ pass('recipient can read the attachment object');
+ await as(C);
+ assert.equal((await db.query(`select name from storage.objects where ${attachmentFilter}`)).rows.length, 0);
+ pass('nonmember cannot read the attachment object');
+ await rejects(
+  `insert into storage.objects(bucket_id,name) values('konnekt-chat-media','${chat}/${C}/nonmember.bin')`,
+  /row-level security/, 'nonmember cannot upload to the conversation even in their own folder'
+ );
  await as(A);
  await db.exec(`insert into user_blocks(blocker_id,blocked_id) values('${A}','${B}')`);
  await as(B);

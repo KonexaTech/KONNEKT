@@ -56,15 +56,10 @@ export function AuthProvider({ children }) {
 
       if (nextUserId) {
         publishPresence(nextUserId, true);
+      }
 
-        Promise.resolve(
-          initialisePushNotifications(nextUserId)
-        ).catch((error) => {
-          console.error(
-            'KONNEKT push notification initialisation failed:',
-            error
-          );
-        });
+      if (nextUserId !== previousUserId) {
+        void initialisePushNotifications(nextUserId);
       }
     };
 
