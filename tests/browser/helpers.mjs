@@ -77,7 +77,14 @@ export async function setup(base, options = {}) {
     if (method === 'HEAD') return route.fulfill({ status: 200, headers: { ...headers, 'content-range': `0-0/${matches.length}` } });
     if (method === 'POST') {
       const values = (Array.isArray(body) ? body : [body]).map((row, i) => ({ id: row.id || `44444444-4444-4444-8444-${String(rows.length + i).padStart(12, '0')}`, created_at: '2026-11-15T00:00:00Z', ...row }));
-      db[table] = [...rows, ...values]; matches = values;
+      if (table === 'profiles' && (req.headers().prefer || '').includes('resolution=merge-duplicates')) {
+        for (const value of values) {
+          const existing = rows.find(row => row.id === value.id);
+          if (existing) Object.assign(existing, value); else rows.push(value);
+        }
+        db[table] = rows;
+      } else db[table] = [...rows, ...values];
+      matches = values;
     }
     if (method === 'PATCH') { matches.forEach(row => Object.assign(row, body)); }
     if (method === 'DELETE') db[table] = rows.filter(row => !matches.includes(row));

@@ -1,7 +1,8 @@
+import { PUBLIC_PROFILE_FIELDS } from './services/profileFields';
 import { supabase } from '../lib_supabase';
 
 export async function getMyProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+  const { data, error } = await supabase.from('profiles').select(PUBLIC_PROFILE_FIELDS).eq('id', userId).maybeSingle();
   if (error) throw error;
   return data;
 }

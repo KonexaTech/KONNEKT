@@ -1,3 +1,4 @@
+import { PUBLIC_PROFILE_FIELDS } from './profileFields';
 
 import { supabase } from '../lib_supabase';
 import { isConversationId } from './conversationId';
@@ -5,7 +6,7 @@ import { isConversationId } from './conversationId';
 export async function getMyProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PUBLIC_PROFILE_FIELDS)
     .eq('id', userId)
     .maybeSingle();
 

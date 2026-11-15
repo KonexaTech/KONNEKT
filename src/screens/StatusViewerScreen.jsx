@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useExpiryTime } from '../services/useExpiryTime';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 export default function StatusViewerScreen({ navigation, route }) {
   const item = route?.params?.status;
-  if (!item) return <View style={s.root}><Text style={s.text}>This status is no longer available.</Text><TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>Go back</Text></TouchableOpacity></View>;
+  const now = useExpiryTime([item?.expires_at]);
+  const video = useRef(null);
+  const available = !!item && Date.parse(item.expires_at) > now;
+  useEffect(() => { const player = video.current; if (player && available) { player.src = item.media_url; player.load(); } return () => { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } }; }, [available, item?.media_url]);
+  if (!available) return <View style={s.root}><Text style={s.text}>This status is no longer available.</Text><TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>Go back</Text></TouchableOpacity></View>;
   const name = item.profile?.full_name || (item.profile?.username ? `@${item.profile.username}` : 'KONNEKT member');
   return <View style={s.root}>
     <TouchableOpacity onPress={() => navigation.goBack()} style={s.close}><Text style={s.back}>‹ Close</Text></TouchableOpacity>
     <View style={s.progress}><View style={s.progressFill}/></View>
     <Text style={s.name}>{name}</Text>
     <Text style={s.created}>{new Date(item.created_at).toLocaleString()}</Text>
-    <View style={s.mediaBox}>{item.media_url ? (item.media_type === 'image' ? <Image source={{ uri: item.media_url }} style={s.media} resizeMode="contain"/> : <video src={item.media_url} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
+    <View style={s.mediaBox}>{item.media_url ? (item.media_type === 'image' ? <Image source={{ uri: item.media_url }} style={s.media} resizeMode="contain"/> : <video ref={video} src={item.media_url} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
     {!!item.media_url && !!item.text_content && <Text style={s.caption}>{item.text_content}</Text>}
     <Text style={s.time}>Expires {new Date(item.expires_at).toLocaleString()}</Text>
   </View>;

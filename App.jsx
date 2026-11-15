@@ -406,7 +406,7 @@ function AppShell() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minHeight: '100vh',
+    minHeight: 0,
     backgroundColor: '#10091B'
   },
 

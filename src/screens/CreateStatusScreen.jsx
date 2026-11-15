@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
-import { chooseMedia, uploadMedia } from '../services/media';
+import { chooseMedia, uploadMedia, cleanupUnusedPublicMedia } from '../services/media';
 
 export default function CreateStatusScreen({ navigation }) {
   const { user } = useAuth();
@@ -10,24 +10,36 @@ export default function CreateStatusScreen({ navigation }) {
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const publishLock = useRef(false);
   const pick = async () => {
+    if (publishLock.current) return;
     try { const selected = await chooseMedia('image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime'); if (selected) setFile(selected); }
     catch (error) { setNotice(error.message || 'Could not select media.'); }
   };
   const publish = async () => {
+    if (publishLock.current) return;
     if (!user?.id) { setNotice('Please sign in again to publish a status.'); return; }
     if (!text.trim() && !file) { setNotice('Write an update or attach a photo or video.'); return; }
     if (file && !file.type?.startsWith('image/') && !file.type?.startsWith('video/')) { setNotice('Choose a photo or video.'); return; }
     if (file && file.size > (file.type.startsWith('video/') ? 45 : 15) * 1024 * 1024) { setNotice(file.type.startsWith('video/') ? 'Choose a video smaller than 45 MB.' : 'Choose an image smaller than 15 MB.'); return; }
+    publishLock.current = true;
     setBusy(true); setNotice('');
+    let media = null;
     try {
-      let media = null;
       if (file) media = await uploadMedia(file, 'konnekt-public-media', `statuses/${user.id}`);
       const { error } = await supabase.from('statuses').insert({ user_id: user.id, text_content: text.trim() || null, media_url: media?.url || null, media_type: media?.type || 'text', expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
       if (error) throw error;
+      media = null;
       navigation.goBack();
-    } catch (error) { setNotice(error.message || 'Could not publish your status.'); }
-    finally { setBusy(false); }
+    } catch (error) {
+      let cleanup = '';
+      if (media) {
+        try { if (!(await cleanupUnusedPublicMedia('statuses', user.id, media))) cleanup = ' The status may have completed; refresh before retrying.'; }
+        catch { cleanup = ' Unused media could not be removed.'; }
+      }
+      setNotice((error.message || 'Could not publish your status.') + cleanup);
+    }
+    finally { publishLock.current = false; setBusy(false); }
   };
   return <View style={s.container}>
     <TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back to Status</Text></TouchableOpacity>
