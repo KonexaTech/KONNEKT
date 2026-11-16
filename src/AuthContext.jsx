@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 
 import { supabase } from './lib_supabase';
-import { initialisePushNotifications } from './pushNotifications';
+import { initialisePushNotifications,retirePushSession } from './pushNotifications';
 import { setMyPresence } from './presence';
 import { App } from '@capacitor/app';
 import { useSessionSecurity } from './services/useSessionSecurity';
@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
   const [recovery, setRecovery] = useState(false);
 
   const currentUserId = useRef(null);
+  const previousSession = useRef(null);
   const security = useSessionSecurity(session?.access_token || null);
   const { accessReady } = security;
   useEffect(() => { if (accessReady && session?.user?.id) void initialisePushNotifications(session.user.id); }, [accessReady, session?.user?.id]);
@@ -50,9 +51,13 @@ export function AuthProvider({ children }) {
 
       const nextUserId = nextSession?.user?.id || null;
       const previousUserId = currentUserId.current;
+      const oldSession = previousSession.current;
+      previousSession.current = nextSession;
 
       if (previousUserId && previousUserId !== nextUserId) {
         publishPresence(previousUserId, false);
+        // Raw authenticated fetch avoids awaiting the Supabase auth lock here.
+        void retirePushSession(oldSession?.access_token);
       }
 
       currentUserId.current = nextUserId;
