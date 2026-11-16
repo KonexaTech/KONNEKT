@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useAuth } from '../AuthContext';
+import { useExpiryTime } from '../services/useExpiryTime';
 import { supabase } from '../lib_supabase';
 
 export default function StatusScreen({ navigation }) {
@@ -51,8 +52,10 @@ export default function StatusScreen({ navigation }) {
     return () => supabase.removeChannel(channel);
   }, [load, user?.id]);
 
-  const myRows = rows.filter(row => row.user_id === user?.id);
-  const otherRows = rows.filter(row => row.user_id !== user?.id);
+  const now = useExpiryTime(rows.map(row => row.expires_at));
+  const activeRows = rows.filter(row => Date.parse(row.expires_at) > now);
+  const myRows = activeRows.filter(row => row.user_id === user?.id);
+  const otherRows = activeRows.filter(row => row.user_id !== user?.id);
 
   const renderStatus = ({ item }) => {
     const name = item.profile?.full_name || (item.profile?.username ? `@${item.profile.username}` : 'KONNEKT member');

@@ -11,6 +11,7 @@ import { supabase } from './lib_supabase';
 import { initialisePushNotifications } from './pushNotifications';
 import { setMyPresence } from './presence';
 import { App } from '@capacitor/app';
+import { useSessionSecurity } from './services/useSessionSecurity';
 import { ensureKonnektIdentity } from './services/konnektEncryption';
 
 const AuthContext = createContext({
@@ -27,6 +28,9 @@ export function AuthProvider({ children }) {
   const [recovery, setRecovery] = useState(false);
 
   const currentUserId = useRef(null);
+  const security = useSessionSecurity(session?.access_token || null);
+  const { accessReady } = security;
+  useEffect(() => { if (accessReady && session?.user?.id) void initialisePushNotifications(session.user.id); }, [accessReady, session?.user?.id]);
 
   const publishPresence = async (userId, isOnline) => {
     if (!userId) return;
@@ -54,13 +58,7 @@ export function AuthProvider({ children }) {
       currentUserId.current = nextUserId;
       setSession(nextSession);
 
-      if (nextUserId) {
-        publishPresence(nextUserId, true);
-      }
-
-      if (nextUserId !== previousUserId) {
-        void initialisePushNotifications(nextUserId);
-      }
+      if (nextUserId !== previousUserId) void initialisePushNotifications(null);
     };
 
     const {
@@ -106,7 +104,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const userId = session?.user?.id;
 
-    if (!userId || typeof document === 'undefined') return;
+    if (!userId || !accessReady || typeof document === 'undefined') return;
 
     // Prepare keys outside onAuthStateChange; awaited auth/client calls in that
     // callback can deadlock the Supabase auth lock.
@@ -134,12 +132,12 @@ export function AuthProvider({ children }) {
         updateBrowserPresence
       );
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, accessReady]);
 
   useEffect(() => {
     const userId = session?.user?.id;
 
-    if (!userId) return;
+    if (!userId || !accessReady) return;
 
     let active = true;
     let listener = null;
@@ -176,12 +174,13 @@ export function AuthProvider({ children }) {
         listener.remove();
       }
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, accessReady]);
 
   const value = {
     session,
     user: session?.user || null,
     loading,
+    ...security,
     recovery,
     setRecovery,
   };

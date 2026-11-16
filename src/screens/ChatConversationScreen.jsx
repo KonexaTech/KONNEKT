@@ -8,10 +8,11 @@ import {
 
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
-import { chooseMedia, uploadMedia } from '../services/media';
+import { chooseMedia, uploadMedia, cleanupUnusedChatMedia } from '../services/media';
 import { isConversationId } from '../services/conversationId';
 import {
   ensureKonnektIdentity,
+  encryptKonnektText,
   decryptKonnektText,
   createGroupKeyEnvelopes,
   getGroupKonnektCryptoKey,
@@ -26,12 +27,7 @@ import { createCall, createGroupCall } from '../services/calls';
 export default function ChatConversationScreen({ navigation, route }) {
   const { user } = useAuth();
   const conversationId = route?.params?.chatId;
-  return <ChatConversation key={`${user?.id}:${conversationId}`}
-    navigation={navigation} conversationId={conversationId} user={user}
-    chatName={route?.params?.chatName || 'KONNEKT Friend'} />;
-}
-
-function ChatConversation({ navigation, conversationId, chatName, user }) {
+  const chatName = route?.params?.chatName || 'KONNEKT Friend';
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -45,15 +41,10 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
   const [notice, setNotice] = useState('');
   const [encryptionReady, setEncryptionReady] = useState(false);
   const sendLock = useRef(false);
-  const canCompose = !!user?.id && isConversationId(conversationId) &&
-    loadedConversationId === conversationId && !busy && !sending;
 
   const load = useCallback(async () => {
- fix/messaging-milestone
-
     setLoadedConversationId(null);
     setEncryptionReady(false);
- main
     if (!isConversationId(conversationId) || !user?.id) {
       setNotice('Open a conversation before sending messages.');
       setBusy(false);
@@ -96,20 +87,18 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         throw new Error('This conversation is unavailable.');
       }
 
-      if (!conversation || !memberIds.includes(user.id)) {
-        setLoadedConversationId(null);
-        throw new Error('This conversation is unavailable.');
-      }
-
       setGroupMemberIds(memberIds);
 
-      const isGroupChat = conversation.is_group;
+      const isGroupChat = !!conversation?.is_group;
       setIsGroup(isGroupChat);
 
-      const otherId = memberIds.find(id => id !== user.id);
-
+      let otherId = memberIds.find(id => id !== user.id);
+      let retiredPeer = null;
       if (!otherId && !isGroupChat) {
-        throw new Error('The other conversation member could not be found.');
+        const { data } = await supabase.rpc('konnekt_retired_peer', { target_conversation: conversationId });
+        if (!data?.retired || !data.id) throw new Error('The other conversation member could not be found.');
+        retiredPeer = data;
+        otherId = data.id;
       }
 
       await ensureKonnektIdentity(user.id);
@@ -194,7 +183,7 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
 
         if (profileError) throw profileError;
 
-        otherProfile = profile || { id: otherId };
+        otherProfile = retiredPeer || profile || { id: otherId };
         setOtherMember(otherProfile);
 
         const keyOwnerIds = [
@@ -221,6 +210,7 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
             row.encryption_public_key
           ])
         );
+        if (retiredPeer?.encryption_public_key) publicKeys.set(otherId, retiredPeer.encryption_public_key);
 
         decoded = await Promise.all(
           (rows || []).map(async row => {
@@ -259,20 +249,19 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         );
 
         setNotice(
-          otherProfile.encryption_public_key
+          retiredPeer ? 'This account was deleted. Your remaining messages are read-only.' : otherProfile.encryption_public_key
             ? ''
             : 'The other member must open KONNEKT once to register their secure key.'
         );
       }
 
-      setLoadedConversationId(conversationId);
       setMessages(decoded);
       setLoadedConversationId(conversationId);
 
       setEncryptionReady(
         isGroupChat
           ? !!activeGroupKey
-          : !!otherProfile?.encryption_public_key
+          : !!otherProfile?.encryption_public_key && !retiredPeer
       );
 
       const incomingIds = (rows || [])
@@ -390,79 +379,99 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
     };
   }, [load, conversationId, user?.id]);
 
- fix/messaging-milestone
-  const send = async (withAttachment = false) => {
-    const body = message.trim();
-    if (!canCompose || (!body && !withAttachment) || sendLock.current) return;
-
   // =======================================================
   // SEND MESSAGE
   // =======================================================
 
-  const send = async (extra = {}, lockHeld = false) => {
+  const send = async (extra = {}, lockHeld = false, attachmentKey = null) => {
     const body = message.trim();
 
     if ((!body && !extra.media_path) || !user?.id ||
         loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) return false;
     if (sendLock.current && !lockHeld) return false;
- main
 
     sendLock.current = true;
     setSending(true);
     setNotice('');
 
     try {
-      const file = withAttachment ? await chooseMedia('image/*,video/*,audio/*') : null;
-      if (withAttachment && !file) return;
+      let recipient = otherMember;
 
-      let key;
-      if (isGroup) {
-        key = await getGroupKonnektCryptoKey(conversationId, user.id);
-        if (!key) key = await load();
-        if (!key) {
-          throw new Error('Group encryption is pending. Ask every member to open KONNEKT and the group creator to reopen this chat.');
-        }
-      } else {
-        const { data: recipient, error } = await supabase.from('profiles')
-          .select('id,username,encryption_public_key')
-          .eq('id', otherMember.id)
-          .maybeSingle();
-        if (error) throw error;
+      // Text sends refresh now; attachments already captured a key before upload.
+      if (!isGroup && !attachmentKey) {
+        const { data: freshProfile, error: profileError } =
+          await supabase.from('profiles')
+            .select('id,username,encryption_public_key')
+            .eq('id', otherMember?.id)
+            .maybeSingle();
+
+        if (profileError) throw profileError;
+
+        recipient = freshProfile;
+        setOtherMember(freshProfile);
+
         if (!recipient?.encryption_public_key) {
-          throw new Error('Ask the other member to open KONNEKT to register their encryption key, then try again.');
+          throw new Error(
+            'Your Send button is ready, but this user has not registered an encryption key yet. Ask them to sign in and open KONNEKT, then reopen this chat.'
+          );
         }
-        setOtherMember(recipient);
-        key = await getKonnektConversationCryptoKey(user.id, recipient.encryption_public_key);
       }
 
-      const payload = {
+      const contentToEncrypt =
+        body || (extra.media_path ? 'Attachment' : '');
+
+      let payload = {
         conversation_id: conversationId,
         sender_id: user.id,
-        ...(await encryptWithKonnektCryptoKey(key, body || 'Attachment'))
+        body: contentToEncrypt,
+        ...extra
       };
-      if (file) {
-        const encrypted = await encryptKonnektBinary(key, file);
-        const upload = new File([encrypted.blob], `${file.name}.enc`, { type: file.type });
-        const { path, type } = await uploadMedia(upload, 'konnekt-chat-media', `${conversationId}/${user.id}`);
-        Object.assign(payload, {
-          media_path: path,
-          media_type: type,
-          media_encrypted: true,
-          media_encryption_iv: encrypted.iv,
-          media_mime_type: file.type
+
+      if (attachmentKey) {
+        payload = { ...payload, ...(await encryptWithKonnektCryptoKey(attachmentKey, contentToEncrypt)) };
+      } else if (isGroup) {
+        let groupKey = await getGroupKonnektCryptoKey(
+          conversationId,
+          user.id
+        );
+        if (!groupKey) groupKey = await load();
+
+        if (!groupKey) {
+          throw new Error(
+            'Secure group encryption is not ready. All group members must open KONNEKT first.'
+          );
+        }
+
+        payload = {
+          ...payload,
+          ...(await encryptWithKonnektCryptoKey(
+            groupKey,
+            contentToEncrypt
+          )),
+        };
+      } else {
+        const encrypted = await encryptKonnektText({
+          userId: user.id,
+          otherUserId: recipient.id,
+          otherPublicKey: recipient.encryption_public_key,
+          text: contentToEncrypt
         });
+
+        payload = {
+          ...payload,
+          ...encrypted
+        };
       }
 
-      const { error } = await supabase.from('messages').insert(payload);
+      const { error } = await supabase
+        .from('messages')
+        .insert(payload);
+
       if (error) throw error;
 
       // Keep a newer draft typed while this message or attachment was sending.
       setMessage(current => current.trim() === body ? '' : current);
       await load();
- fix/messaging-milestone
-    } catch (error) {
-      setNotice(error?.message || (withAttachment ? 'Attachment could not be sent.' : 'Message could not be sent.'));
-
       return true;
     } catch (e) {
       setNotice(e?.message || 'Message could not be sent.');
@@ -488,18 +497,18 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
       const file = await chooseMedia('image/*,video/*,audio/*');
       if (!file) return;
 
-      if (!encryptionReady) {
-        throw new Error(
-          'Secure encryption is not ready. Open KONNEKT on both accounts first.'
-        );
+      let cryptoKey;
+      if (isGroup) {
+        cryptoKey = await getGroupKonnektCryptoKey(conversationId, user.id);
+        if (!cryptoKey) cryptoKey = await load();
+      } else {
+        const { data: recipient, error } = await supabase.from('profiles')
+          .select('id,username,encryption_public_key').eq('id', otherMember?.id).maybeSingle();
+        if (error) throw error;
+        if (!recipient?.encryption_public_key) throw new Error('Ask the other member to open KONNEKT before sending secure attachments.');
+        setOtherMember(recipient);
+        cryptoKey = await getKonnektConversationCryptoKey(user.id, recipient.encryption_public_key);
       }
-
-      const cryptoKey = isGroup
-        ? await getGroupKonnektCryptoKey(conversationId, user.id)
-        : await getKonnektConversationCryptoKey(
-            user.id,
-            otherMember?.encryption_public_key
-          );
 
       if (!cryptoKey) {
         throw new Error('Could not load the conversation encryption key.');
@@ -528,19 +537,18 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         media_encrypted: true,
         media_encryption_iv: encryptedFile.iv,
         media_mime_type: file.type
-      }, true);
+      }, true, cryptoKey);
 
       if (!sent) {
-        // The upload succeeded but no message references it. Best-effort cleanup.
-        const { error: cleanupError } = await supabase.storage
-          .from('konnekt-chat-media').remove([uploaded.path]);
-        if (cleanupError) {
-          setNotice('Message failed and its unused attachment could not be removed.');
+        try {
+          const removed = await cleanupUnusedChatMedia(user.id, conversationId, uploaded.path);
+          if (!removed) setNotice('Your attachment was saved. Refresh the chat before retrying.');
+        } catch {
+          setNotice('Message status could not be confirmed. Its attachment was retained. Refresh the chat before retrying.');
         }
       }
     } catch (e) {
       setNotice(e.message || 'Attachment could not be sent.');
- main
     } finally {
       sendLock.current = false;
       setSending(false);
@@ -552,6 +560,10 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
   // =======================================================
 
   const startCall = async callType => {
+    if (otherMember?.retired) {
+      setNotice('This account was deleted. Calls are unavailable.');
+      return;
+    }
     if (loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) {
       setNotice('Wait for the conversation to load before starting a call.');
       return;
@@ -607,7 +619,7 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
     const mine = item.sender_id === user?.id;
 
     return (
-      <View style={[s.row, mine ? s.mine : s.theirs]}>
+      <View testID={`message-${item.id}`} style={[s.row, mine ? s.mine : s.theirs]}>
         <View style={[s.bubble, mine ? s.myBubble : s.otherBubble]}>
           {item.media_path ? (
             <ChatAttachment
@@ -619,7 +631,6 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
               userId={user?.id}
               otherPublicKey={otherMember?.encryption_public_key}
               conversationId={conversationId}
-              encryptionReady={encryptionReady}
               isGroup={isGroup}
             />
           ) : null}
@@ -633,13 +644,10 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
               hour: '2-digit',
               minute: '2-digit'
             })}
-            {mine
-              ? receiptMap[item.id]?.read_at
-                ? '  ✓✓'
-                : receiptMap[item.id]?.delivered_at
-                  ? '  ✓✓'
-                  : '  ✓'
-              : ''}
+            {mine && <Text
+              accessibilityLabel={receiptMap[item.id]?.read_at ? 'Message read' : receiptMap[item.id]?.delivered_at ? 'Message delivered' : 'Message sent'}
+              style={receiptMap[item.id]?.read_at ? {color:'#72BEFF'} : undefined}
+            >{receiptMap[item.id]?.read_at || receiptMap[item.id]?.delivered_at ? '  ✓✓' : '  ✓'}</Text>}
           </Text>
         </View>
       </View>
@@ -659,13 +667,16 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         <View style={{ flex: 1 }}>
           <Text style={s.name}>{chatName}</Text>
           <Text style={s.sub}>
-            {encryptionReady
+            {otherMember?.retired ? 'Deleted account · read-only' : encryptionReady
               ? '🔒 End-to-end encrypted'
               : 'Secure messaging setup required'}
           </Text>
         </View>
 
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Start voice call"
+          disabled={!!otherMember?.retired}
           onPress={() => startCall('voice')}
           style={s.call}
         >
@@ -673,6 +684,9 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Start video call"
+          disabled={!!otherMember?.retired}
           onPress={() => startCall('video')}
           style={s.call}
         >
@@ -693,31 +707,31 @@ function ChatConversation({ navigation, conversationId, chatName, user }) {
       )}
 
       <View style={s.composer}>
- fix/messaging-milestone
-        <TouchableOpacity onPress={() => send(true)} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={!canCompose}>
-
-        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || loadedConversationId !== conversationId}>
- main
+        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || otherMember?.retired || loadedConversationId !== conversationId}>
           <Text style={{ fontSize: 21 }}>📎</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.clip} accessibilityRole="button" accessibilityLabel="Record voice note"
+          disabled={sending || busy || !encryptionReady || loadedConversationId !== conversationId}
+          onPress={() => navigation.navigate('VoiceNote', { chatId: conversationId })}>
+          <Text style={{ fontSize: 21 }}>🎙</Text>
         </TouchableOpacity>
 
         <TextInput
           style={s.input}
+          editable={!otherMember?.retired}
           value={message}
           onChangeText={setMessage}
           placeholder="Message securely…"
           placeholderTextColor="#8293A8"
-          editable={!sending}
           maxLength={7000}
           multiline
         />
 
+        {/* Send remains clickable when encryption is being set up.
+            Actual sending still requires successful encryption. */}
         <TouchableOpacity
- fix/messaging-milestone
-          disabled={!canCompose || !message.trim()}
-
-          disabled={sending || busy || loadedConversationId !== conversationId || !message.trim()}
- main
+          disabled={sending || busy || otherMember?.retired || loadedConversationId !== conversationId || !message.trim()}
           accessibilityRole="button"
           accessibilityLabel="Send message"
           style={[
@@ -748,7 +762,6 @@ function ChatAttachment({
   userId,
   otherPublicKey,
   conversationId,
-  encryptionReady,
   isGroup
 }) {
   const [url, setUrl] = useState('');
@@ -760,8 +773,6 @@ function ChatAttachment({
     setUrl('');
     setLoadError('');
 
-    if (isGroup && mediaEncrypted && !encryptionReady) return;
-    setLoadError('');
     (async () => {
       try {
         const { data, error } = await supabase.storage
@@ -807,7 +818,7 @@ function ChatAttachment({
     };
   }, [
     path, mediaEncrypted, mediaIv, mediaMimeType,
-    userId, otherPublicKey, conversationId, isGroup, encryptionReady
+    userId, otherPublicKey, conversationId, isGroup
   ]);
 
   if (!url) {
@@ -824,6 +835,19 @@ function ChatAttachment({
         src={url}
         controls
         style={{ width: '220px', marginBottom: 8 }}
+      />
+    );
+  }
+
+  if (type === 'video') {
+    return (
+      <video
+        src={url}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label="Video attachment"
+        style={{ width: '220px', maxWidth: '100%', marginBottom: 8, borderRadius: 10 }}
       />
     );
   }

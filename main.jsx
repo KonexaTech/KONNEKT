@@ -2,13 +2,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import AppErrorBoundary from './src/components/AppErrorBoundary';
 import { AlertHost } from './src/components/Alert';
 
 const root = createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary><App /></AppErrorBoundary>
     <AlertHost />
   </React.StrictMode>
 );

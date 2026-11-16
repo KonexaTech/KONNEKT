@@ -102,11 +102,11 @@ test('direct creation rejects a malformed RPC ID before opening the conversation
   rpcResults.set(rpc, { id: CHAT });
   await page.getByRole('tab', { name: 'Chats', exact: true }).click();
   await page.getByRole('button', { name: 'New conversation' }).click();
-  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByText('@other', { exact: true }).click();
   await page.getByText(/did not return a valid conversation ID/).waitFor();
   assert.equal(await page.getByPlaceholder('Message securely…').count(), 0);
   rpcResults.set(rpc, CHAT);
-  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByText('@other', { exact: true }).click();
   await page.getByPlaceholder('Message securely…').waitFor();
 }));
 
@@ -117,7 +117,7 @@ test('group creation checks the RPC ID and messages can retry key setup in the o
   rpcResults.set(rpc, 'invalid');
   await openFeature(page, 'Create a group');
   await page.getByPlaceholder('Enter group name').fill('Fixture group');
-  await page.getByText('Other Member', { exact: true }).click();
+  await page.getByText('@other', { exact: true }).click();
   await page.getByText('Create', { exact: true }).click();
   await page.getByText(/did not return a valid group conversation ID/).waitFor();
   rpcResults.set(rpc, CHAT);
@@ -145,6 +145,12 @@ test('group creation checks the RPC ID and messages can retry key setup in the o
     return createGroupKeyEnvelopes(chat, profiles);
   }, { chat: CHAT, profiles: db.profiles });
   assert.equal(recovered, true);
+  db.group_key_envelopes=[];
+  const rejected=await page.evaluate(async({chat,profiles})=>{
+    try{await(await import('/KONNEKT/src/services/konnektEncryption.js')).createGroupKeyEnvelopes(chat,profiles);return false;}
+    catch(error){return error.code==='23505';}
+  },{chat:CHAT,profiles:db.profiles});
+  assert.equal(rejected,true,'A duplicate without a decryptable saved key must fail');
   assert.equal(requests.filter(row => row.method === 'POST' && row.path.endsWith('/messages')).length, 1);
 }));
 
@@ -165,12 +171,23 @@ test('encrypted message and attachment send preserve ciphertext and do not dupli
   assert.equal(writes.length, 1);
   assert.equal(writes[0].body.is_encrypted, true);
   assert.notEqual(writes[0].body.body, 'Secret fixture message');
-  // The recipient publishes a fresh key after the chat loaded.
-  db.profiles[1].encryption_public_key = await page.evaluate(async () => {
-    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
-    return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.publicKey));
+  // The recipient publishes its key after this chat loaded. The binary and
+  // caption must both use that refreshed key, rather than mixing snapshots.
+  const freshKey = await page.evaluate(async () => {
+    const pair = await crypto.subtle.generateKey({ name:'ECDH',namedCurve:'P-256' },true,['deriveKey']);
+    return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));
   });
-  const beforeAttachment = requests.length;
+  db.profiles[1].encryption_public_key=freshKey;
+  let uploadedBytes;
+  await page.context().route('**/storage/v1/object/konnekt-chat-media/**',async route=>{
+    const req=route.request(),type=req.headers()['content-type'];
+    const response=new Response(req.postDataBuffer(),{headers:{'content-type':type}});
+    const form=await response.formData();
+    const blob=[...form.values()].find(value=>typeof value?.arrayBuffer==='function');
+    uploadedBytes=Array.from(new Uint8Array(await blob.arrayBuffer()));
+    await route.fallback();
+  });
+  const beforeAttachment=requests.length;
   const attached = page.waitForResponse(response => response.url().includes('/rest/v1/messages') && response.request().method() === 'POST');
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Attach media', exact: true }).click();
@@ -180,13 +197,20 @@ test('encrypted message and attachment send preserve ciphertext and do not dupli
   assert.equal(writes.length, 2);
   assert.equal(writes[1].body.media_encrypted, true);
   assert.ok(writes[1].body.media_encryption_iv);
-  const attachmentRequests = requests.slice(beforeAttachment);
-  const refreshedKey = attachmentRequests.findIndex(row => row.path.endsWith('/profiles') &&
-    new URLSearchParams(row.search).get('id') === `eq.${OTHER}`);
-  const upload = attachmentRequests.findIndex(row => row.method === 'POST' && row.path.includes('/object/konnekt-chat-media/'));
-  assert.ok(refreshedKey >= 0 && upload > refreshedKey);
-  assert.ok(writes[1].body.media_path.startsWith(`${CHAT}/${ME}/`));
-  assert.equal(requests.some(row => row.path.includes('/object/sign/konnekt-chat-media/')), false);
+  const payload=writes[1].body;
+  const decrypted=await page.evaluate(async({me,freshKey,uploadedBytes,payload})=>{
+    const e=await import('/KONNEKT/src/konnektEncryption.js');
+    const key=await e.getKonnektConversationCryptoKey(me,freshKey);
+    const blob=await e.decryptKonnektBinary(key,new Blob([new Uint8Array(uploadedBytes)]),payload.media_encryption_iv,payload.media_mime_type);
+    return {file:await blob.text(),body:await e.decryptWithKonnektCryptoKey(key,payload.body,payload.encryption_iv)};
+  },{me:ME,freshKey,uploadedBytes,payload});
+  assert.deepEqual(decrypted,{file:'fixture-image-data',body:'Attachment'});
+  const attachmentRequests=requests.slice(beforeAttachment);
+  const refreshed=attachmentRequests.findIndex(r=>r.path.endsWith('/profiles')&&new URLSearchParams(r.search).get('id')===`eq.${OTHER}`);
+  const uploaded=attachmentRequests.findIndex(r=>r.method==='POST'&&r.path.includes('/object/konnekt-chat-media/'));
+  assert(refreshed>=0&&uploaded>refreshed);
+  assert.equal(requests.some(r=>r.path.includes('/object/sign/konnekt-chat-media/')),false);
+
 }));
 
 test('key backup restores, rejects wrong passphrase and refuses key replacement', async () => run({}, async ({ page, db }) => {
@@ -349,3 +373,121 @@ test('voice-note failures clean unused uploads and invalid conversation IDs make
   assert.equal(removals[0].body.prefixes[0], uploads[0].path.split('/konnekt-chat-media/')[1]);
   assert.equal(db.messages.length, 0);
 }));
+
+
+test('profile loads and saves when wildcard profile reads are denied', async () => run({}, async ({ page, context, db, requests }) => {
+  await context.route('**/rest/v1/profiles?**', route => {
+    if(route.request().method()==='GET' && new URL(route.request().url()).searchParams.get('select')==='*') return route.fulfill({status:403,json:{message:'permission denied for table profiles'}});
+    return route.fallback();
+  });
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByPlaceholder('Your name',{exact:true}).waitFor();
+  assert.equal(await page.getByPlaceholder('Your name',{exact:true}).inputValue(),'Fixture Member');
+  await page.getByPlaceholder('Your name',{exact:true}).fill('Fixture Updated');
+  await page.getByText('SAVE PROFILE',{exact:true}).click();
+  await page.getByText('Profile saved successfully.',{exact:true}).waitFor();
+  assert.equal(db.profiles.find(row=>row.id===ME).full_name,'Fixture Updated');
+  await page.reload();
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByPlaceholder('Your name',{exact:true}).waitFor();
+  assert.equal(await page.getByPlaceholder('Your name',{exact:true}).inputValue(),'Fixture Updated');
+  const read=requests.filter(r=>r.path.endsWith('/profiles')&&r.method==='GET').at(-1);
+  assert(!new URLSearchParams(read.search).get('select').split(',').includes('phone'));
+}));
+
+
+test('voice notes are reachable from chat, encrypt sends and release recording tracks', async () => run({}, async ({ page, db, requests }) => {
+  db.profiles[1].encryption_public_key=await page.evaluate(async()=>{
+    const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));
+  });
+  await page.evaluate(()=>{
+    navigator.mediaDevices.getUserMedia=async()=>{
+      const context=new AudioContext();const oscillator=context.createOscillator();const destination=context.createMediaStreamDestination();oscillator.connect(destination);oscillator.start();window.__voiceStream=destination.stream;return destination.stream;
+    };
+  });
+  await page.getByRole('tab',{name:'Chats',exact:true}).click();await page.getByText('Other Member',{exact:true}).click();
+  await page.getByRole('button',{name:'Record voice note',exact:true}).click();
+  await page.getByText('Start recording',{exact:true}).click();await page.getByText('Stop recording',{exact:true}).waitFor();
+  await page.waitForTimeout(500);await page.getByText('Stop recording',{exact:true}).click();await page.getByText('Send voice note',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.__voiceStream.getTracks().every(track=>track.readyState==='ended')),true);
+  await page.getByText('Send voice note',{exact:true}).click();await page.getByRole('alertdialog').waitFor();
+  const writes=requests.filter(r=>r.method==='POST'&&r.path.endsWith('/messages'));assert.equal(writes.length,1);assert.equal(writes[0].body.is_encrypted,true);assert.equal(writes[0].body.media_encrypted,true);assert.notEqual(writes[0].body.body,'Voice note');
+}));
+
+
+test('leaving voice recording while permission is pending stops any late-granted stream',async()=>run({},async({page,db})=>{
+  db.profiles[1].encryption_public_key=await page.evaluate(async()=>{const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));});
+  await page.evaluate(()=>{navigator.mediaDevices.getUserMedia=()=>new Promise(resolve=>{window.__grantVoice=()=>{const context=new AudioContext();const oscillator=context.createOscillator();const destination=context.createMediaStreamDestination();oscillator.connect(destination);oscillator.start();window.__lateVoice=destination.stream;resolve(destination.stream);};});});
+  await page.getByRole('tab',{name:'Chats',exact:true}).click();await page.getByText('Other Member',{exact:true}).click();await page.getByRole('button',{name:'Record voice note',exact:true}).click();
+  await page.getByText('Start recording',{exact:true}).click();await page.waitForFunction(()=>typeof window.__grantVoice==='function');
+  await page.getByText('‹ Back',{exact:true}).click();await page.getByPlaceholder('Message securely…').waitFor();
+  await page.evaluate(()=>window.__grantVoice());await page.waitForFunction(()=>window.__lateVoice.getTracks().every(track=>track.readyState==='ended'));
+}));
+
+
+test('unenforced privacy controls cannot promise restrictions and blocked count comes from data',async()=>run({db:{user_blocks:[]}},async({page,requests})=>{
+  await openFeature(page,'Account settings');
+  await page.getByRole('switch').first().waitFor();
+  assert.equal(await page.getByRole('switch').count(),3);
+  for(const control of await page.getByRole('switch').all())assert.equal(await control.isDisabled(),true);
+  await page.getByText(/^‹(?: Back.*)?$/).first().click();
+  const countResponse=page.waitForResponse(response=>response.request().method()==='HEAD'&&response.url().includes('/rest/v1/user_blocks'));
+  await page.getByRole('button',{name:'Open Privacy settings',exact:true}).click();
+  await countResponse;
+  await page.getByText(/Audience restrictions and receipt controls are unavailable/).waitFor();
+  assert.equal(await page.getByLabel('Read receipts (unavailable)',{exact:true}).isDisabled(),true);
+  assert.equal(await page.getByText('3',{exact:true}).count(),0);
+  assert(requests.some(r=>r.method==='HEAD'&&r.path.endsWith('/user_blocks')));
+}));
+
+
+for (const width of [390, 1280]) {
+ test(`deferred live and payment routes remain inert and return to core features at width ${width}`,async()=>run({width},async({page,requests})=>{
+  await page.evaluate(()=>{
+    window.testMediaRequests=0;
+    navigator.mediaDevices.getUserMedia=async()=>{window.testMediaRequests++;throw new Error('Deferred route requested media');};
+  });
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByText('☰  ALL FEATURES',{exact:true}).click();
+  for (const label of ['Live rooms','Creator earnings','Creator monetisation','Creator subscriptions','Brand partnerships']) {
+    await page.getByRole('button',{name:`Open ${label}`,exact:true}).click();
+    await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+    assert.equal(await page.getByPlaceholder(/bank|card|live title/i).count(),0);
+    await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+    await page.getByText('All features',{exact:true}).waitFor();
+  }
+  await page.getByRole('button',{name:'Open Creator studio',exact:true}).click();
+  await page.getByText('Go live (unavailable)',{exact:true}).click();
+  await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.testMediaRequests),0);
+  assert.equal(requests.filter(r=>/live_stream|payment|payout|subscription|gift/.test(r.path)).length,0);
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
+  assert(!loaded.some(url=>/\/screens\/(LiveStream|CreatorEarnings|CreatorPayout|CreatorMonetization|CreatorSubscriptions|CreatorBrandPartnerships)/.test(url)),'deferred implementations must not mount or load');
+  await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+  await page.getByText('‹ Back',{exact:true}).click();
+  await page.getByRole('button',{name:'Open Discover people',exact:true}).click();
+  await page.getByLabel('Search Discover').waitFor();
+ }));
+}
+
+
+test('route chunks load on demand and a failed screen download offers reload without replacing keys',async()=>{
+ const f=await setup(server.base);try{
+  const {page,context,db}=f;await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  const initialKey=db.profiles.find(row=>row.id===ME).encryption_public_key;
+  assert(initialKey,'registered key required before testing reload preservation');
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(item=>item.name));
+  assert(!loaded.some(url=>url.includes('/screens/DiscoverScreen.jsx')),'Discover should not load in initial route');
+  // Vite may append an HMR timestamp; the simulated outage must catch that URL too.
+  const chunk=/\/src\/screens\/DiscoverScreen\.jsx(?:\?.*)?$/;
+  let blocked=0;
+  const outage=route=>{blocked++;return route.abort();};await context.route(chunk,outage);
+  await page.getByRole('tab',{name:'Discover',exact:true}).click();await page.getByText('KONNEKT could not open this screen',{exact:true}).waitFor();
+  assert(blocked>0,'a real screen request must be blocked');
+  await context.unroute(chunk,outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  assert.equal(db.profiles.find(row=>row.id===ME).encryption_public_key,initialKey);
+  for(const error of f.errors)assert.match(error,/DiscoverScreen|dynamically imported/);
+ }finally{await f.close();}
+});

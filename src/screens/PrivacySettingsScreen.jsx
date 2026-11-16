@@ -1,6 +1,6 @@
 import { Alert } from '../components/Alert';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,9 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
+
+import { useAuth } from '../AuthContext';
+import { supabase } from '../lib_supabase';
 
 const privacyOptions = [
   {
@@ -45,16 +48,23 @@ const privacyOptions = [
 
 export default function PrivacySettingsScreen({ navigation }) {
   const [settings, setSettings] = useState({
-    lastSeen: 'My Contacts',
-    onlineStatus: 'Same as Last Seen',
-    profilePhoto: 'My Contacts',
+    lastSeen: 'Everyone',
+    onlineStatus: 'Everyone',
+    profilePhoto: 'Everyone',
     about: 'Everyone',
-    status: 'My Contacts',
+    status: 'Everyone',
   });
 
   const [readReceipts, setReadReceipts] = useState(true);
-  const [groupInvites, setGroupInvites] = useState('My Contacts');
-  const [blockedCount, setBlockedCount] = useState(3);
+  const [groupInvites, setGroupInvites] = useState('Everyone');
+  const [blockedCount, setBlockedCount] = useState(null);
+  const { user } = useAuth();
+  useEffect(() => {
+    let active = true;
+    if (user?.id) supabase.from('user_blocks').select('blocked_id', { count: 'exact', head: true }).eq('blocker_id', user.id)
+      .then(({ count, error }) => { if (active) setBlockedCount(error ? null : count); });
+    return () => { active = false; };
+  }, [user?.id]);
 
   const updateSetting = (key, value) => {
     setSettings((previous) => ({
@@ -136,6 +146,8 @@ export default function PrivacySettingsScreen({ navigation }) {
                 index !== privacyOptions.length - 1 &&
                   styles.borderBottom,
               ]}
+              disabled
+              accessibilityLabel={option.title + " (audience restrictions unavailable)"}
               onPress={() => choosePrivacy(option)}
             >
               <View style={styles.settingInfo}>
@@ -167,6 +179,8 @@ export default function PrivacySettingsScreen({ navigation }) {
             </View>
 
             <Switch
+              disabled
+              accessibilityLabel="Read receipts (unavailable)"
               value={readReceipts}
               onValueChange={setReadReceipts}
               trackColor={{ false: '#D0D5DD', true: '#8CCFC0' }}
@@ -176,6 +190,8 @@ export default function PrivacySettingsScreen({ navigation }) {
 
           <TouchableOpacity
             style={[styles.settingRow, styles.borderTop]}
+            disabled
+            accessibilityLabel="Group invitations (audience restrictions unavailable)"
             onPress={chooseGroupPrivacy}
           >
             <View style={styles.settingInfo}>
@@ -224,9 +240,10 @@ export default function PrivacySettingsScreen({ navigation }) {
         <View style={styles.infoBox}>
           <Text style={styles.infoIcon}>🛡️</Text>
           <Text style={styles.infoText}>
-            Your privacy matters. These settings are currently saved
-            only on this screen. Backend integration will be required
-            to enforce them across KONNEKT.
+            Profile details and active Status updates are visible to signed-in members.
+            Audience restrictions and receipt controls are unavailable. Uploaded Status
+            media uses public links that may remain accessible after list expiry.
+            Use Blocked contacts to manage unwanted direct contact.
           </Text>
         </View>
       </ScrollView>

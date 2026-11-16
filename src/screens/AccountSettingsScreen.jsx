@@ -39,10 +39,12 @@ export default function AccountSettingsScreen({ navigation }) {
     <View style={styles.settingItem}>
       <View style={styles.settingText}>
         <Text style={styles.settingTitle}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.description}>{description} This control is unavailable until backend enforcement is implemented.</Text>
       </View>
 
       <Switch
+        disabled
+        accessibilityLabel={title + ' (unavailable)'}
         value={value}
         onValueChange={onValueChange}
         trackColor={{

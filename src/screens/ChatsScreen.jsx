@@ -64,6 +64,15 @@ export default function ChatsScreen({ navigation }) {
         <Text style={s.discoverArrow}>›</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Create group" style={s.discoverButton} onPress={() => navigation.navigate('CreateGroup')}>
+        <Text style={s.discoverIcon}>👥</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.discoverTitle}>Create group</Text>
+          <Text style={s.discoverSub}>Start a conversation with multiple members</Text>
+        </View>
+        <Text style={s.discoverArrow}>›</Text>
+      </TouchableOpacity>
+
       <TextInput
         style={s.search}
         value={search}

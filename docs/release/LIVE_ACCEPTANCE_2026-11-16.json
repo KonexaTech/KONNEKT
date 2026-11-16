@@ -1,0 +1,195 @@
+{
+  "observedDateUTC": "2026-11-16",
+  "environment": "konnekt-staging",
+  "releaseDecision": "HOLD",
+  "results": [
+    {
+      "suite": "messaging",
+      "runId": "69ea6e9b-b4ba-401d-9933-4d82e4b022b5",
+      "decision": "PASS_SCOPED_MESSAGING_ONLY",
+      "checks": [
+        {
+          "check": "three distinct staging sessions with recoverable existing keys or first-time identities",
+          "result": "PASS"
+        },
+        {
+          "check": "read receipt changes from sent to read when the recipient opens the conversation",
+          "result": "PASS"
+        },
+        {
+          "check": "direct encrypted text/images in both directions; member Realtime delivery and outsider exclusion with positive controls",
+          "result": "PASS"
+        },
+        {
+          "check": "authenticated outsider cannot download direct attachments or obtain signed links",
+          "result": "PASS"
+        },
+        {
+          "check": "group encrypted text/images in both directions; actual membership and outsider Realtime exclusion",
+          "result": "PASS"
+        },
+        {
+          "check": "authenticated outsider cannot download group attachments or obtain signed links",
+          "result": "PASS"
+        },
+        {
+          "check": "both independent browser refreshes retain keys and decrypt group history",
+          "result": "PASS"
+        }
+      ],
+      "privateReportSHA256": "886b75f335b2010d438d1a9d160be10921c999eed7ba97e0d82f522647caaade"
+    },
+    {
+      "suite": "security",
+      "runId": "5ecc33cb-4684-4646-acd4-cbcab7793714",
+      "decision": "PASS_SCOPED_LIVE_SECURITY_ONLY",
+      "checks": [
+        {
+          "check": "actual UI saved an encrypted backup of the original registered identity",
+          "result": "PASS"
+        },
+        {
+          "check": "authenticated outsider cannot read the encrypted key backup",
+          "result": "PASS"
+        },
+        {
+          "check": "actual Auth factor enrolled and verified through the application",
+          "result": "PASS"
+        },
+        {
+          "check": "real signed AAL1 session is gated in-app and denied direct message/RPC access for an enrolled account",
+          "result": "PASS"
+        },
+        {
+          "check": "wrong real authenticator code does not open protected screens",
+          "result": "PASS"
+        },
+        {
+          "check": "correct real code upgrades to AAL2 and restores legitimate direct API access",
+          "result": "PASS"
+        },
+        {
+          "check": "wrong recovery passphrase fails without writing an identity in the isolated browser",
+          "result": "PASS"
+        },
+        {
+          "check": "correct passphrase recovers the same identity and decrypts original live ciphertext in a new isolated browser",
+          "result": "PASS"
+        },
+        {
+          "check": "fresh-code removal succeeds and the dedicated account is left without the test factor",
+          "result": "PASS"
+        }
+      ],
+      "privateReportSHA256": "2a3a4ce365a0ca7aa13a2c395e727c2a249bb78d8c1bd541543a46c78d643f9d"
+    },
+    {
+      "suite": "syntheticMediaAndBlocking",
+      "runId": "ab9b3940-b116-4210-9827-1ab408064814",
+      "decision": "PASS_SCOPED_SYNTHETIC_MEDIA_AND_BLOCKING",
+      "checks": [
+        {
+          "check": "direct encrypted synthetic voice note A to B: remote bytes and playback, stopped recording tracks, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "direct encrypted video attachment A to B: remote bytes and playback, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "direct encrypted synthetic voice note B to A: remote bytes and playback, stopped recording tracks, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "direct encrypted video attachment B to A: remote bytes and playback, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "group encrypted synthetic voice note A to B: remote bytes and playback, stopped recording tracks, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "group encrypted video attachment A to B: remote bytes and playback, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "group encrypted synthetic voice note B to A: remote bytes and playback, stopped recording tracks, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "group encrypted video attachment B to A: remote bytes and playback, outsider file denial",
+          "result": "PASS"
+        },
+        {
+          "check": "live blocking denies direct-conversation RPC, message insertion and call creation by the blocked account",
+          "result": "PASS"
+        },
+        {
+          "check": "UI unblock removes the block and legitimate direct-conversation creation works again",
+          "result": "PASS"
+        }
+      ],
+      "privateReportSHA256": "770021ad29e3490de0dc511feae97ceedcd9d02b4fdcf2d6a11a86caade3ba4e"
+    },
+    {
+      "suite": "liveSocialAndRPC",
+      "runId": "2c8fbba4-eb4f-4411-bc45-1fb568d730b2",
+      "decision": "PASS_SCOPED_LIVE_SOCIAL_AND_RPC",
+      "checks": [
+        {
+          "check": "after legacy RPC revocation, signed legacy caller is denied while actual direct and group UI callers succeed",
+          "result": "PASS"
+        },
+        {
+          "check": "profile bio persists after an actual browser refresh",
+          "result": "PASS"
+        },
+        {
+          "check": "Discover username search opens the real peer profile and persisted bio",
+          "result": "PASS"
+        },
+        {
+          "check": "actual short video upload is discoverable and playable by the other account",
+          "result": "PASS"
+        },
+        {
+          "check": "real Reel like and comment persist after browser refresh",
+          "result": "PASS"
+        },
+        {
+          "check": "actual text status publishes and is viewable by the other account",
+          "result": "PASS"
+        },
+        {
+          "check": "actual image status publishes and is viewable by the other account",
+          "result": "PASS"
+        },
+        {
+          "check": "actual video status publishes and is viewable by the other account",
+          "result": "PASS"
+        }
+      ],
+      "privateReportSHA256": "3492836a04735fd01361f8d4905183cf942dec526abde2c24303bbb4f2365d72"
+    },
+    {
+      "suite": "failedUploadAndRetry",
+      "runId": "57ef55ed-9f4d-42f6-97e2-a7f817160ea1",
+      "decision": "PASS_SCOPED_LIVE_RETRY_AND_LOST_RESPONSE",
+      "checks": [
+        {
+          "check": "real encrypted upload followed by an injected pre-insert rejection removes the unused file and preserves the draft",
+          "result": "PASS"
+        },
+        {
+          "check": "retry uploads a new encrypted file and delivers exactly one real message to B",
+          "result": "PASS"
+        },
+        {
+          "check": "actual server-committed message with injected lost-success response retains its file and remote decrypted image; no cleanup DELETE or duplicate row",
+          "result": "PASS"
+        }
+      ],
+      "privateReportSHA256": "3b5b59082291448d4db8f58500abec630572dc7a4805725c1c522ec369f9caf2"
+    }
+  ]
+}
