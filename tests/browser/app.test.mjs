@@ -391,9 +391,13 @@ test('route chunks load on demand and a failed screen download offers reload wit
   assert(initialKey,'registered key required before testing reload preservation');
   const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(item=>item.name));
   assert(!loaded.some(url=>url.includes('/screens/DiscoverScreen.jsx')),'Discover should not load in initial route');
-  const outage=route=>route.abort();await context.route('**/src/screens/DiscoverScreen.jsx',outage);
+  // Vite may append an HMR timestamp; the simulated outage must catch that URL too.
+  const chunk=/\/src\/screens\/DiscoverScreen\.jsx(?:\?.*)?$/;
+  let blocked=0;
+  const outage=route=>{blocked++;return route.abort();};await context.route(chunk,outage);
   await page.getByRole('tab',{name:'Discover',exact:true}).click();await page.getByText('KONNEKT could not open this screen',{exact:true}).waitFor();
-  await context.unroute('**/src/screens/DiscoverScreen.jsx',outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  assert(blocked>0,'a real screen request must be blocked');
+  await context.unroute(chunk,outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
   await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
   assert.equal(db.profiles.find(row=>row.id===ME).encryption_public_key,initialKey);
   for(const error of f.errors)assert.match(error,/DiscoverScreen|dynamically imported/);

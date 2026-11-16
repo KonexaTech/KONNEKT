@@ -92,10 +92,13 @@ export default function ChatConversationScreen({ navigation, route }) {
       const isGroupChat = !!conversation?.is_group;
       setIsGroup(isGroupChat);
 
-      const otherId = memberIds.find(id => id !== user.id);
-
+      let otherId = memberIds.find(id => id !== user.id);
+      let retiredPeer = null;
       if (!otherId && !isGroupChat) {
-        throw new Error('The other conversation member could not be found.');
+        const { data } = await supabase.rpc('konnekt_retired_peer', { target_conversation: conversationId });
+        if (!data?.retired || !data.id) throw new Error('The other conversation member could not be found.');
+        retiredPeer = data;
+        otherId = data.id;
       }
 
       await ensureKonnektIdentity(user.id);
@@ -180,7 +183,7 @@ export default function ChatConversationScreen({ navigation, route }) {
 
         if (profileError) throw profileError;
 
-        otherProfile = profile || { id: otherId };
+        otherProfile = retiredPeer || profile || { id: otherId };
         setOtherMember(otherProfile);
 
         const keyOwnerIds = [
@@ -207,6 +210,7 @@ export default function ChatConversationScreen({ navigation, route }) {
             row.encryption_public_key
           ])
         );
+        if (retiredPeer?.encryption_public_key) publicKeys.set(otherId, retiredPeer.encryption_public_key);
 
         decoded = await Promise.all(
           (rows || []).map(async row => {
@@ -245,7 +249,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         );
 
         setNotice(
-          otherProfile.encryption_public_key
+          retiredPeer ? 'This account was deleted. Your remaining messages are read-only.' : otherProfile.encryption_public_key
             ? ''
             : 'The other member must open KONNEKT once to register their secure key.'
         );
@@ -257,7 +261,7 @@ export default function ChatConversationScreen({ navigation, route }) {
       setEncryptionReady(
         isGroupChat
           ? !!activeGroupKey
-          : !!otherProfile?.encryption_public_key
+          : !!otherProfile?.encryption_public_key && !retiredPeer
       );
 
       const incomingIds = (rows || [])
@@ -552,6 +556,10 @@ export default function ChatConversationScreen({ navigation, route }) {
   // =======================================================
 
   const startCall = async callType => {
+    if (otherMember?.retired) {
+      setNotice('This account was deleted. Calls are unavailable.');
+      return;
+    }
     if (loadedConversationId !== conversationId || busy || !isConversationId(conversationId)) {
       setNotice('Wait for the conversation to load before starting a call.');
       return;
@@ -658,13 +666,16 @@ export default function ChatConversationScreen({ navigation, route }) {
         <View style={{ flex: 1 }}>
           <Text style={s.name}>{chatName}</Text>
           <Text style={s.sub}>
-            {encryptionReady
+            {otherMember?.retired ? 'Deleted account · read-only' : encryptionReady
               ? '🔒 End-to-end encrypted'
               : 'Secure messaging setup required'}
           </Text>
         </View>
 
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Start voice call"
+          disabled={!!otherMember?.retired}
           onPress={() => startCall('voice')}
           style={s.call}
         >
@@ -672,6 +683,9 @@ export default function ChatConversationScreen({ navigation, route }) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Start video call"
+          disabled={!!otherMember?.retired}
           onPress={() => startCall('video')}
           style={s.call}
         >
@@ -692,7 +706,7 @@ export default function ChatConversationScreen({ navigation, route }) {
       )}
 
       <View style={s.composer}>
-        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || loadedConversationId !== conversationId}>
+        <TouchableOpacity onPress={attach} style={s.clip} accessibilityRole="button" accessibilityLabel="Attach media" disabled={sending || busy || otherMember?.retired || loadedConversationId !== conversationId}>
           <Text style={{ fontSize: 21 }}>📎</Text>
         </TouchableOpacity>
 
@@ -704,6 +718,7 @@ export default function ChatConversationScreen({ navigation, route }) {
 
         <TextInput
           style={s.input}
+          editable={!otherMember?.retired}
           value={message}
           onChangeText={setMessage}
           placeholder="Message securely…"
@@ -715,7 +730,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         {/* Send remains clickable when encryption is being set up.
             Actual sending still requires successful encryption. */}
         <TouchableOpacity
-          disabled={sending || busy || loadedConversationId !== conversationId || !message.trim()}
+          disabled={sending || busy || otherMember?.retired || loadedConversationId !== conversationId || !message.trim()}
           accessibilityRole="button"
           accessibilityLabel="Send message"
           style={[

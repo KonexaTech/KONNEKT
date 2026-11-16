@@ -19,11 +19,16 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Validate signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
-          test -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
-          test -n "${{ secrets.ANDROID_KEY_ALIAS }}"
-          test -n "${{ secrets.ANDROID_KEY_PASSWORD }}"
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
       - name: Install dependencies and build web assets
         run: |
           npm ci
@@ -41,18 +46,39 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/konnekt-release.keystore"
-      - name: Build signed Android App Bundle
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/konnekt-release.keystore"
+      - name: Build signed Android App Bundle and installable APK
         working-directory: android
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/konnekt-release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file="$ANDROID_KEYSTORE_PATH" -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+        run: ./gradlew bundleRelease assembleRelease -Pandroid.injected.signing.store.file="$ANDROID_KEYSTORE_PATH" -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+      - name: Verify signed release artifacts
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$APK"
+          test -s "$AAB"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          LC_ALL=C jarsigner -verify "$AAB" > "$RUNNER_TEMP/konnekt-aab-signature.txt"
+          grep -q 'jar verified.' "$RUNNER_TEMP/konnekt-aab-signature.txt"
       - uses: actions/upload-artifact@v4
         with:
           name: KONNEKT-Signed-Android-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KONNEKT-Signed-Android-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Remove release keystore
+        if: ${{ always() }}
+        run: rm -f -- "$RUNNER_TEMP/konnekt-release.keystore"

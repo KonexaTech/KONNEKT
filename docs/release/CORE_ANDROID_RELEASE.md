@@ -2,6 +2,8 @@
 
 Public release remains **HOLD**. The owner agreed to defer live rooms and payments from the initial release. This reduces scope; it does not waive privacy, recovery, device or operational acceptance.
 
+Subsequent blocker repairs and current evidence: [BLOCKERS_PROGRESS_2026-11-16.md](BLOCKERS_PROGRESS_2026-11-16.md). Owner policy for sent content is now agreed, and deletion/signing/backup tooling is implemented; operational/live acceptance remains separate.
+
 ## Included
 
 Existing navigation and core features: authentication, profiles/discovery/following, encrypted direct/group messaging, attachments and voice notes, Reels, Status, calls, notifications, blocking/reporting, account security and recovery. These are included in acceptance scope, not automatically declared ready.
