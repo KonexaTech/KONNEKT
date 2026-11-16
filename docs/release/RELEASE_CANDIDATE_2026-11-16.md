@@ -24,11 +24,11 @@ Applied only to `konnekt-staging` (`oiwtfkgrnpzirghbsvim`), after inspecting its
 | --- | --- |
 | `release_profile_phone_and_function_grants` | `phone` SELECT false for anonymous/authenticated; public fields true; profile RLS remains enabled; all eight anonymous EXECUTE grants false and authenticated grants true |
 | `release_live_room_audience_privacy` | Two restrictive policies recorded; local owner/nonowner/public-room/comment tests passed |
-| `release_opt_in_mfa_enforcement` | **NOT APPLIED**. Automatic approval review rejected its broader policy/function changes. Final catalog check: zero `release_opt_in_mfa` policies and no `konnekt_private` schema |
+| `release_opt_in_mfa_enforcement` | **APPLIED after explicit owner approval**, version `20261116040341`. Catalogs confirm 31 restrictive MFA policies, eight guarded public functions, and denied client execution for all three internal conversation implementations. Private schema excluded from the Data API (HTTP 406 / `PGRST106`) |
 
 The reviewed source SQL is under this directory. CLI migration generation was unavailable in this environment, so staging-only proposals/deployment scripts are deliberately kept outside automatically applied production migrations.
 
-The MFA proposal passes local AAL1/AAL2 RLS/storage/RPC tests, but client prompts alone do not enforce second-factor security for direct API callers. Explicit staging review/approval is still required; see [MFA_STAGING_REVIEW.md](MFA_STAGING_REVIEW.md). No real factors, account passwords or user encryption keys were reset.
+MFA enforcement is now installed in staging after owner approval, current-schema inspection, a private schema-only snapshot and a successful local restoration rehearsal. Local AAL1/AAL2 RLS/storage/RPC tests passed again, and live read-only simulated-role probes checked missing-identity denial and no-factor/nonmember behavior. Real enrolled-account AAL1/AAL2 acceptance remains blocked on staging account/authenticator access; see [MFA_STAGING_REVIEW.md](MFA_STAGING_REVIEW.md). No real factors, account passwords or user encryption keys were reset.
 
 ## Automated validation
 
@@ -46,10 +46,11 @@ A local fixture pass is not a live staging or device pass.
 | Phone privacy and unnecessary anonymous grants in staging | PASS | Post-change catalogs/advisor results plus role tests; no private values were read |
 | Restricted live-room metadata/comment privacy in staging | PASS | Applied restrictive policies and owner/nonowner local tests |
 | MFA client/enrollment behavior | PASS | Browser fixtures: wrong/correct OTP, refresh, retry, QR, pending setup, fresh-code removal and AAL2 password confirmation |
-| MFA enforcement for direct API access | BLOCKED | Automatic approval review rejected the staging proposal; review/approve function/policy changes and restoration plan before application and live tests |
+| Staging MFA migration deployment and schema restoration rehearsal | PASS | Owner-approved migration applied; 31 restrictive policies, eight guarded public functions, internal RPC grants denied, private schema not exposed; captured definitions/grants/policies restored in a local rehearsal |
+| MFA enforcement for actual enrolled accounts | BLOCKED | Dedicated staging account/authenticator access needed to prove real AAL1 API denial, AAL2 access and factor-removal behavior; local tests and simulated role probes do not substitute |
 | Three-account in-app direct/group text, voice and attachment exchange; C denied history, events and file downloads; blocking/retry/cleanup/key recovery | BLOCKED | Usable dedicated staging sessions and original keys/backups are still unavailable. The owner deferred account access. Local encryption/cleanup/backup tests pass, but the live runner has not run. Supply private ignored test configuration; do not send passwords in PR/chat |
 | Live Reels/Status/Discover acceptance | BLOCKED | Browser playback/search/like/comment/status tests pass; repeat with real staging accounts/permissions and actual uploads after access is supplied |
-| Staging APK compilation/signature/API 26 setup | PASS for prior artifact; final build required | Final proposed-commit workflow/artifact linked in PR. Debug signing and minSdk configuration do not prove physical Android 8.0 compatibility |
+| Staging APK compilation/signature/API 26 setup | PASS | Application commit `6672194`: workflow `43798610402` and artifact `14195466629` linked in PR. Subsequent MFA evidence edits are documentation only. Debug signing and minSdk configuration do not prove physical Android 8.0 compatibility |
 | Signed installation and two-way voice/video, Wi-Fi↔cellular, reconnect, ringing, hang-up | BLOCKED | Two physical Android devices, test networks/SIM data, staging account access and a configured short-lived TURN endpoint/relay. No paid relay was provisioned |
 | Live-room media and moderator controls | BLOCKED | No real broadcast/SFU/moderation provider integration is configured. Need an owner-selected R0-compatible provider, its credentials/integration and multiple devices; SQL room/chat records or local camera preview are not broadcast evidence |
 | Push foreground/background/closed-app and old-account isolation | BLOCKED | Matching staging OneSignal app ID, Android FCM/server credentials and sender integration, plus physical devices. Credentials must remain server-side; SDK registration logic is not delivery evidence |

@@ -1,10 +1,20 @@
 # Staging MFA migration: approval review
 
-**Not applied. Public release remains on HOLD.**
+**Approved by the owner and applied to staging on 16 November 2026. Public release remains on HOLD.**
 
-The client challenge/enrollment changes and local database tests are on the repair branch. `staging-opt-in-mfa.sql` is a proposal, not a production migration or a completed staging gate.
+The client challenge/enrollment changes and local database tests are on the repair branch. The exact `staging-opt-in-mfa.sql` was applied only to `konnekt-staging` (`oiwtfkgrnpzirghbsvim`) as migration `20261116040341_release_opt_in_mfa_enforcement`. It is not a production migration. Live authenticated-account acceptance remains incomplete.
 
-Automatic approval review rejected staging application because the proposal moves/replaces database functions and adds restrictive policies across public tables and storage objects. Although staging changes were authorized generally, the reviewer identified service-disruption and rollback risk beyond a narrow guard. The action was not retried through another tool.
+Automatic approval review initially rejected staging application because the proposal moves/replaces database functions and adds restrictive policies across public tables and storage objects. The reviewer identified service-disruption and rollback risk beyond a narrow guard. The owner subsequently explicitly approved this exact migration and restoration plan. After reinspection and a successful local restoration rehearsal, the migration was applied through the normal migration tool; no alternative tool was used to bypass the rejection.
+
+## Deployment evidence
+
+- Immediately before application: all 31 affected tables had RLS enabled; no existing MFA guard/schema; zero verified factors. All eight original function definitions, ACLs and current policies were captured privately outside Git. No account records, Auth secrets or encryption keys were exported.
+- Local MFA database regression passed again. A separate local rehearsal used the captured live definitions/grants, applied the proposed migration, then executed the restoration script. Original definitions, anonymous/authenticated/service-role access and existing policies matched the pre-change state, and the private schema was removed. This was a schema restoration rehearsal, not a full backup/restore drill.
+- Application succeeded. Post-change catalogs confirm 31 restrictive authenticated-role policies (30 public tables plus `storage.objects`), eight guarded public functions, and no anonymous execution of those public functions. Authenticated access to the public entry points remains granted.
+- The three internal conversation implementations deny EXECUTE to anonymous and authenticated roles. A real staging Data API request with `Accept-Profile: konnekt_private` returned HTTP 406 / `PGRST106`, listing only `public` and `graphql_public` as exposed schemas.
+- Transaction-scoped read-only SQL role probes reject a missing identity, allow the MFA guard for a synthetic no-factor AAL1 identity, and return false for nonmember/nonowner/nonmoderator helper checks. These simulated claims are not real login, signed-token or enrolled-factor evidence.
+- Phone SELECT remains denied and both earlier restrictive live-room policies remain present. Advisors still report the eight reviewed authenticated definer endpoints/helpers and disabled leaked-password protection; no claim is made that all advisories are cleared.
+- No production changes, real factor enrollment/removal, passwords, messages or encryption keys were modified. Dedicated staging accounts and an authenticator are still required for actual enrolled AAL1 rejection, AAL2 access, direct/group RPCs, attachments, receipts, recovery and sign-out acceptance.
 
 ## Exact proposal
 
@@ -25,4 +35,4 @@ Local tests cover repeated application, normal users, unverified factors, verifi
 4. The transaction rolls back automatically on execution error. For an unexpected behavioral regression after a successful commit, restore the captured original function definitions/ACLs and RPC locations/signatures, and remove only the `release_opt_in_mfa` policies. Preserve the separately applied phone and live-room privacy guards. Do not drop the internal helper until dependent policies/functions have been removed or restored; never use broad CASCADE or a database reset.
 5. Exercise AAL1/AAL2, normal users, all direct/group RPCs, attachments, backups, receipts and sign-out. Capture evidence before permitting further acceptance.
 
-Explicit approval of this proposal and its restoration plan is still required. A complete owner-agreed backup/restore drill is a separate blocked release gate. Nothing in this document authorizes a production deployment.
+Owner approval for this staging application has been received and fulfilled. A complete owner-agreed backup/restore drill and live MFA acceptance remain separate blocked release gates. Nothing in this document authorizes a production deployment.
