@@ -10,12 +10,12 @@ export const user = { id: ME, aud: 'authenticated', role: 'authenticated', email
 const segment = value => Buffer.from(JSON.stringify(value)).toString('base64url');
 export const session = { access_token: `${segment({ alg: 'HS256', typ: 'JWT' })}.${segment({ sub: ME, exp: 4102444800, role: 'authenticated', aal: 'aal1' })}.${segment('fixture-signature')}`, refresh_token: 'fixture-refresh-token', expires_in: 3600, expires_at: 4102444800, token_type: 'bearer', user };
 
-export async function startServer() {
+export async function startServer({ preview = false } = {}) {
   const probe = createServer();
   await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
   const port = probe.address().port;
   await new Promise(resolve => probe.close(resolve));
-  const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'pipe' });
+  const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', ...(preview ? ['preview'] : []), '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'pipe' });
   let logs = '';
   server.stdout.on('data', b => logs += b);
   server.stderr.on('data', b => logs += b);

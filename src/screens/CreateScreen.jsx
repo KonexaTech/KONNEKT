@@ -1,5 +1,3 @@
-import { Alert } from '../components/Alert';
-
 import React, { useState } from 'react';
 import {
   View,
@@ -22,10 +20,6 @@ export default function CreateScreen({ navigation }) {
   ];
 
   const handleCreate = () => {
-    if (selectedType === 'Live') {
-      navigation.navigate('LiveStreamSetup');
-      return;
-    }
     if (selectedType === 'Status') {
       navigation.navigate('CreateStatus');
       return;
@@ -55,6 +49,9 @@ export default function CreateScreen({ navigation }) {
         {contentTypes.map(type => (
           <TouchableOpacity
             key={type.name}
+            disabled={type.name === 'Live'}
+            accessibilityRole="button"
+            accessibilityLabel={type.name === 'Live' ? 'Live unavailable in this release' : type.name}
             style={[
               styles.typeCard,
               selectedType === type.name && styles.selectedCard
@@ -62,7 +59,7 @@ export default function CreateScreen({ navigation }) {
             onPress={() => setSelectedType(type.name)}
           >
             <Text style={styles.typeIcon}>{type.icon}</Text>
-            <Text style={styles.typeName}>{type.name}</Text>
+            <Text style={styles.typeName}>{type.name === 'Live' ? 'Live (unavailable)' : type.name}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -88,7 +85,7 @@ export default function CreateScreen({ navigation }) {
         onPress={handleCreate}
       >
         <Text style={styles.createButtonText}>
-          {selectedType === 'Live' ? 'START LIVE' : 'CONTINUE'}
+          CONTINUE
         </Text>
       </TouchableOpacity>
 

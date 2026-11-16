@@ -12,7 +12,7 @@ const quickActions = [
   { icon: '💬', title: 'Messages', description: 'Chat with friends' },
   { icon: '📸', title: 'Status', description: 'Share your moments' },
   { icon: '🎬', title: 'Watch', description: 'Discover videos' },
-  { icon: '🔴', title: 'Go Live', description: 'Stream with everyone' }
+  { icon: '🔴', title: 'Go Live (unavailable)', description: 'Not included in this release' }
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -33,7 +33,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.welcomeTitle}>Stay connected.</Text>
         <Text style={styles.welcomeTitle}>Stay creative.</Text>
         <Text style={styles.welcomeDescription}>
-          Chat, share moments, watch videos and connect live.
+          Chat, share moments and watch videos.
         </Text>
       </View>
 
@@ -49,10 +49,10 @@ export default function HomeScreen({ navigation }) {
                 navigation.navigate('Chats');
               } else if (action.title === 'Watch') {
                 navigation.navigate('Watch');
-              } else if (action.title === 'Go Live') {
-                navigation.navigate('Watch');
-              } else {
-                AlertPlaceholder();
+              } else if (action.title === 'Go Live (unavailable)') {
+                navigation.navigate('LiveStreamSetup');
+              } else if (action.title === 'Status') {
+                navigation.navigate('Status');
               }
             }}
           >
@@ -73,11 +73,6 @@ export default function HomeScreen({ navigation }) {
       </View>
     </ScrollView>
   );
-}
-
-function AlertPlaceholder() {
-  // Status creation will be connected in a later file.
-  return null;
 }
 
 const styles = StyleSheet.create({

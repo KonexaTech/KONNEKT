@@ -353,12 +353,34 @@ test('unenforced privacy controls cannot promise restrictions and blocked count 
 }));
 
 
-test('live setup does not offer unenforced private or follower audiences',async()=>run({},async({page})=>{
-  await openFeature(page,'Live rooms');
-  assert.equal(await page.getByRole('button',{name:'Private rooms unavailable',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'Followers rooms unavailable',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'Public room audience',exact:true}).isDisabled(),false);
-}));
+for (const width of [390, 1280]) {
+ test(`deferred live and payment routes remain inert and return to core features at width ${width}`,async()=>run({width},async({page,requests})=>{
+  await page.evaluate(()=>{
+    window.testMediaRequests=0;
+    navigator.mediaDevices.getUserMedia=async()=>{window.testMediaRequests++;throw new Error('Deferred route requested media');};
+  });
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByText('☰  ALL FEATURES',{exact:true}).click();
+  for (const label of ['Live rooms','Creator earnings','Creator monetisation','Creator subscriptions','Brand partnerships']) {
+    await page.getByRole('button',{name:`Open ${label}`,exact:true}).click();
+    await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+    assert.equal(await page.getByPlaceholder(/bank|card|live title/i).count(),0);
+    await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+    await page.getByText('All features',{exact:true}).waitFor();
+  }
+  await page.getByRole('button',{name:'Open Creator studio',exact:true}).click();
+  await page.getByText('Go live (unavailable)',{exact:true}).click();
+  await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.testMediaRequests),0);
+  assert.equal(requests.filter(r=>/live_stream|payment|payout|subscription|gift/.test(r.path)).length,0);
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
+  assert(!loaded.some(url=>/\/screens\/(LiveStream|CreatorEarnings|CreatorPayout|CreatorMonetization|CreatorSubscriptions|CreatorBrandPartnerships)/.test(url)),'deferred implementations must not mount or load');
+  await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+  await page.getByText('‹ Back',{exact:true}).click();
+  await page.getByRole('button',{name:'Open Discover people',exact:true}).click();
+  await page.getByLabel('Search Discover').waitFor();
+ }));
+}
 
 
 test('route chunks load on demand and a failed screen download offers reload without replacing keys',async()=>{

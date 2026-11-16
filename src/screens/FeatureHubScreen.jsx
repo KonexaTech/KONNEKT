@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { deferredFeatures } from '../services/releaseScope';
 
 const sections = [
   {
@@ -25,8 +26,8 @@ const sections = [
     ],
   },
   {
-    title: 'Live and creator tools',
-    description: 'Creator workspace, live sessions, analytics and monetisation tools.',
+    title: 'Creator tools',
+    description: 'Manage content and analytics. Live rooms and paid services are unavailable in this release.',
     items: [
       ['Creator studio', 'CreatorStudio', 'Open creator tools and published content'],
       ['My content', 'CreatorContentManagement', 'Manage your published posts'],
@@ -88,8 +89,8 @@ export default function FeatureHubScreen({ navigation }) {
           {section.items.map(([label, route, detail, params]) => (
             <TouchableOpacity key={`${route}-${label}`} style={styles.item} onPress={() => navigation.navigate(route, params || {})} accessibilityRole="button" accessibilityLabel={`Open ${label}`}>
               <View style={styles.itemCopy}>
-                <Text style={styles.itemTitle}>{label}</Text>
-                <Text style={styles.itemDetail}>{detail}</Text>
+                <Text style={styles.itemTitle}>{label}{deferredFeatures[route] ? ' (unavailable)' : ''}</Text>
+                <Text style={styles.itemDetail}>{deferredFeatures[route] ? 'Not included in this release' : detail}</Text>
               </View>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
