@@ -38,6 +38,16 @@ KONNEKT_ACCEPTANCE_CONFIG=/private/path/konnekt-acceptance.local CHROMIUM_PATH=/
 
 Run from a private workstation/workspace. Local port **5280** must be free. The runner starts Vite in staging mode on that fixed loopback origin so IndexedDB encryption keys remain available across repeated runs. HTTP and WebSocket connections are restricted to that local app and the existing staging project.
 
+If browser egress needs a proxy, the runner accepts `KONNEKT_ACCEPTANCE_PROXY` or the standard HTTPS proxy environment setting. Localhost bypasses it. In proxy mode, HTTP and WebSocket traffic uses verified Node TLS with the environment's existing CA trust; actual staging responses/frames are forwarded unchanged. No shared trust-store changes or certificate-verification bypass is required. Proxy credentials are not logged. The same fixed-origin allowlist and Realtime positive controls still apply.
+
+Read-only connectivity check (no account credentials, browser profiles or database writes):
+
+```sh
+KONNEKT_STAGING_PUBLISHABLE_KEY=STAGING_PUBLISHABLE_KEY CHROMIUM_PATH=/usr/bin/chromium node scripts/acceptance/staging-transport.mjs
+```
+
+`PASS_TRANSPORT_ONLY` requires a real Auth health response and a real Realtime heartbeat reply with TLS verification enabled. It is not encryption, PostgreSQL-change delivery or outsider-isolation acceptance.
+
 The runner preserves three separate Chromium profiles beside the configuration, in `<configuration>.artifacts.local/profiles/`. These profiles contain sessions and private encryption keys: keep the parent directory private and never commit, upload or share it. Each account is checked against the configured username and persisted session before use. If an existing account's original private key is unavailable, the run stops; credentials alone cannot restore its encrypted history. Recover the original key through the app's encrypted-backup flow rather than replacing it. A pass is only meaningful with recoverable test keys.
 
 ## Checks performed by the live runner

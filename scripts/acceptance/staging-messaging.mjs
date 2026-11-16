@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import assert from 'node:assert/strict';
-import { validateConfig, assertIsolation, APP_ORIGIN, STAGING_ORIGIN } from './staging-config.mjs';
+import { validateConfig, assertIsolation, APP_ORIGIN, STAGING_ORIGIN, acceptanceProxy } from './staging-config.mjs';
+import { installStagingNetwork } from './staging-network.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const base = APP_ORIGIN + '/KONNEKT/';
@@ -23,6 +24,7 @@ await mkdir(output, { recursive: true, mode: 0o700 });
 await chmod(output, 0o700);
 const report = { runId: randomUUID(), project: 'konnekt-staging', decision: 'NOT_RUN', checks: [], protectedMessages: [] };
 const contexts = [], pages = [], profiles = [], networkViolations = [];
+const networkCleanups = [];
 let server, phase = 'start-staging-server';
 const pass = check => { report.checks.push({ check, result:'PASS' }); console.log('PASS ' + check); };
 const moduleUrl = '/KONNEKT/src/lib_supabase.js';
@@ -144,18 +146,9 @@ try {
     phase=`account-${'ABC'[i]}-sign-in-and-key-check`;
     const directory=resolve(output,'profiles','account-'+i);
     await mkdir(directory,{recursive:true,mode:0o700});
-    const context=await chromium.launchPersistentContext(directory,{headless:true,serviceWorkers:'block',viewport:{width:390,height:844},executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
+    const context=await chromium.launchPersistentContext(directory,{headless:true,serviceWorkers:'block',viewport:{width:390,height:844},executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox'],proxy:acceptanceProxy(process.env)});
     contexts.push(context);
-    await context.route('**/*',route=>{
-      const url=new URL(route.request().url());
-      if([APP_ORIGIN,STAGING_ORIGIN].includes(url.origin))return route.continue();
-      networkViolations.push('Unexpected HTTP origin');return route.abort();
-    });
-    await context.routeWebSocket(/.*/,socket=>{
-      const url=new URL(socket.url());
-      if(url.origin===STAGING_ORIGIN.replace('https:','wss:')||url.origin===APP_ORIGIN.replace('http:','ws:'))socket.connectToServer();
-      else{networkViolations.push('Unexpected WebSocket origin');socket.close();}
-    });
+    networkCleanups.push(await installStagingNetwork(context,{proxy:acceptanceProxy(process.env),onViolation:message=>networkViolations.push(message)}));
     const page=await context.newPage();pages.push(page);page.setDefaultTimeout(30000);
     await page.goto(base);
     const existing=await page.evaluate(async moduleUrl=>{const {supabase}=await import(moduleUrl);return(await supabase.auth.getSession()).data.session?.user?.email;},moduleUrl);
@@ -217,6 +210,7 @@ try {
   report.decision='FAIL_OR_BLOCKED';report.failedPhase=phase;process.exitCode=1;
   console.error('FAIL_OR_BLOCKED: '+phase+'; no release acceptance granted');
 } finally {
+  for(const cleanup of networkCleanups)cleanup();
   for(const context of contexts)await context.close().catch(()=>{});
   server?.kill();
   await writeFile(resolve(output,'report.json'),JSON.stringify(report,null,2),{mode:0o600});

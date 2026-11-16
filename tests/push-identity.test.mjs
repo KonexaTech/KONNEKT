@@ -39,3 +39,13 @@ test('failed login clears partial native state; later sign-in can recover', asyn
   await change('A');fail=false;await change('B');await change(null);
   assert.deepEqual(events,['logout','A','logout','B','logout']);assert.equal(errors,1);
 });
+
+test('transient permission-request errors can recover on a later sign-in without repeatedly prompting after an ordinary denial',async()=>{
+ let prompts=0,errors=0;
+ const client={login(){},logout(){},Notifications:{requestPermission(){prompts++;if(prompts===1)return Promise.reject(Error('transient native failure'));return Promise.resolve(false);}}};
+ const change=createPushIdentity({enabled:true,loadClient:async()=>client,onError:()=>errors++});
+ await change('A');await new Promise(resolve=>setImmediate(resolve));
+ await change('B');await new Promise(resolve=>setImmediate(resolve));
+ await change(null);await change('C');
+ assert.equal(prompts,2);assert.equal(errors,1);
+});

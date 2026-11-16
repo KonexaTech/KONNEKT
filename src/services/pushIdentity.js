@@ -39,7 +39,10 @@ export function createPushIdentity({ enabled, loadClient, onError = () => {} }) 
       }
       if (!permissionRequested) {
         permissionRequested = true;
-        Promise.resolve().then(() => client.Notifications.requestPermission(false)).catch(onError);
+        Promise.resolve().then(() => client.Notifications.requestPermission(false)).catch(() => {
+          permissionRequested = false;
+          onError();
+        });
       }
     }).catch(async () => {
       // A failed login can have partially changed native state. Clear it before

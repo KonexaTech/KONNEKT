@@ -2,6 +2,17 @@ export const STAGING_REF = 'oiwtfkgrnpzirghbsvim';
 export const STAGING_ORIGIN = `https://${STAGING_REF}.supabase.co`;
 export const APP_ORIGIN = 'http://127.0.0.1:5280';
 
+// Keep the persistent local app origin direct, without logging proxy secrets.
+export function acceptanceProxy(env) {
+  const input=env.KONNEKT_ACCEPTANCE_PROXY||env.HTTPS_PROXY||env.https_proxy;
+  if(!input)return undefined;
+  try{
+    const url=new URL(input);
+    if(!['http:','https:'].includes(url.protocol)||url.pathname!=='/'||url.search||url.hash)throw Error();
+    return {server:url.origin,bypass:'127.0.0.1,localhost',...(url.username?{username:decodeURIComponent(url.username),password:decodeURIComponent(url.password)}:{})};
+  }catch{throw new Error('Invalid acceptance proxy configuration; credentials are not logged.');}
+}
+
 export function validateConfig(config) {
   if (config?.projectUrl !== STAGING_ORIGIN) throw new Error('Acceptance is restricted to the existing konnekt-staging project.');
   if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(config.publishableKey || '')) throw new Error('Use a staging publishable key, never a secret or service-role key.');
