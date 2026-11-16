@@ -1,6 +1,9 @@
 import { Alert } from '../components/Alert';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../AuthContext';
+import { syncPushPreferences } from '../pushNotifications';
+import { notificationPreferenceKey,readPushPreferences } from '../services/pushRegistration';
 import {
   View,
   Text,
@@ -18,14 +21,15 @@ const initialSettings = [
 ];
 
 export default function NotificationSettingsScreen({ navigation }) {
+  const {user}=useAuth();
   const [settings, setSettings] = useState(initialSettings);
-  const [sound, setSound] = useState(true);
-  const [vibration, setVibration] = useState(true);
-  const [preview, setPreview] = useState(true);
+  const [saving,setSaving]=useState(false);
 
   useEffect(() => {
-    try { const saved = globalThis.localStorage?.getItem('konnekt-notification-preferences'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed.settings)) setSettings(parsed.settings); if (typeof parsed.sound === 'boolean') setSound(parsed.sound); if (typeof parsed.vibration === 'boolean') setVibration(parsed.vibration); if (typeof parsed.preview === 'boolean') setPreview(parsed.preview); } } catch { /* Ignore malformed local preferences and use safe defaults. */ }
-  }, []);
+    let flags;
+    try{flags=readPushPreferences(globalThis.localStorage,user?.id);}catch{flags=readPushPreferences(null,user?.id);}
+    setSettings(initialSettings.map(item=>({...item,value:flags[item.id]})));
+  }, [user?.id]);
 
   const updateSetting = (id, value) => {
     setSettings((previous) =>
@@ -50,11 +54,15 @@ export default function NotificationSettingsScreen({ navigation }) {
     );
   };
 
-  const saveSettings = () => {
+  const saveSettings = async () => {
+    if(!user?.id||saving)return;
+    setSaving(true);
     try {
-      if (typeof globalThis.localStorage !== 'undefined') globalThis.localStorage.setItem('konnekt-notification-preferences', JSON.stringify({ settings, sound, vibration, preview }));
-      Alert.alert('Settings saved', 'Your notification preferences have been saved on this device. Actual delivery still depends on device permissions and notification-service configuration.');
-    } catch (error) { Alert.alert('Could not save settings', error.message || 'Please try again.'); }
+      globalThis.localStorage.setItem(notificationPreferenceKey(user.id),JSON.stringify({settings}));
+      await syncPushPreferences(user.id);
+      Alert.alert('Settings saved','Your background notification choices have been saved for this account on this device. Android permission and service availability still control delivery.');
+    } catch {Alert.alert('Settings need syncing','Your choices may be saved on this device, but background delivery has not been updated. Reconnect and save again.');}
+    finally{setSaving(false);}
   };
 
   const renderToggle = (title, description, value, onChange) => (
@@ -67,6 +75,7 @@ export default function NotificationSettingsScreen({ navigation }) {
       </View>
 
       <Switch
+        accessibilityLabel={title}
         value={value}
         onValueChange={onChange}
         trackColor={{ false: '#D0D5DD', true: '#8CCFC0' }}
@@ -96,7 +105,7 @@ export default function NotificationSettingsScreen({ navigation }) {
             Your notifications, your choice
           </Text>
           <Text style={styles.introDescription}>
-            Choose what KONNEKT can notify you about.
+            Choose which background notifications this account can receive on this device.
           </Text>
         </View>
 
@@ -146,30 +155,9 @@ export default function NotificationSettingsScreen({ navigation }) {
         </Text>
 
         <View style={styles.card}>
-          {renderToggle(
-            'Notification sounds',
-            'Play a sound when notifications arrive.',
-            sound,
-            setSound
-          )}
-
-          <View style={styles.divider} />
-
-          {renderToggle(
-            'Vibration',
-            'Vibrate when notifications arrive.',
-            vibration,
-            setVibration
-          )}
-
-          <View style={styles.divider} />
-
-          {renderToggle(
-            'Message previews',
-            'Show message text in notifications.',
-            preview,
-            setPreview
-          )}
+          <Text style={[styles.settingDescription,{paddingVertical:16}]}>
+            Android notification settings control sound and vibration. Push notifications never contain your private message text.
+          </Text>
         </View>
 
         <View style={styles.infoCard}>
@@ -185,14 +173,15 @@ export default function NotificationSettingsScreen({ navigation }) {
         <TouchableOpacity
           style={styles.saveButton}
           onPress={saveSettings}
+          disabled={saving||!user?.id}
         >
           <Text style={styles.saveButtonText}>
-            Save notification settings
+            {saving?'Saving…':'Save notification settings'}
           </Text>
         </TouchableOpacity>
 
         <Text style={styles.demoNote}>
-          These preferences are saved on this device. Background push notifications require notification-service configuration and device permission.
+          Preferences are separate for each account. Background push requires the Android app, notification-service setup and device permission.
         </Text>
       </ScrollView>
     </View>

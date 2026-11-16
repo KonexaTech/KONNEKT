@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createPushIdentity } from '../src/services/pushIdentity.js';
+import { createPushIdentity as createIdentity } from '../src/services/pushIdentity.js';
+const createPushIdentity=options=>createIdentity({resolveIdentity:async id=>id,...options});
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
 
 test('cold-start sign-out clears an identity cached by native code without prompting permission', async () => {
@@ -48,4 +49,20 @@ test('transient permission-request errors can recover on a later sign-in without
  await change('B');await new Promise(resolve=>setImmediate(resolve));
  await change(null);await change('C');
  assert.equal(prompts,2);assert.equal(errors,1);
+});
+
+test('secure resolver is required and a delayed old-account identity never logs in',async()=>{
+ assert.throws(()=>createIdentity({enabled:true,loadClient:async()=>({})}),/secure notification identity resolver/);
+ const pending=deferred(),started=deferred(),events=[];
+ const client={login:id=>events.push(id),logout:()=>events.push('logout'),Notifications:{requestPermission(){}}};
+ const change=createPushIdentity({enabled:true,loadClient:async()=>client,resolveIdentity:async id=>{if(id==='A'){started.resolve();await pending.promise;}return 'private-alias-'+id;}});
+ const a=change('A');await started.promise;const b=change('B');pending.resolve();await Promise.all([a,b]);
+ assert(!events.includes('private-alias-A'));assert(events.includes('private-alias-B'));
+});
+
+test('a renewed sign-in for the same account replaces its old provider alias',async()=>{
+ let alias='old-private-alias';const events=[];
+ const client={login:id=>events.push(id),logout(){},Notifications:{requestPermission(){}}};
+ const change=createPushIdentity({enabled:true,loadClient:async()=>client,resolveIdentity:async()=>alias});
+ await change('A');alias='new-private-alias';await change('A');assert.deepEqual(events,['old-private-alias','new-private-alias']);
 });

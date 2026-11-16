@@ -20,6 +20,14 @@ on:
         description: Optional staging publishable key only; never enter a secret or service-role key
         type: string
         default: ''
+      staging_onesignal_app_id:
+        description: Optional public staging OneSignal App ID only, never an API key
+        type: string
+        default: ''
+      staging_turn_credentials_url:
+        description: Optional authenticated staging turn-credentials function URL, no embedded secrets
+        type: string
+        default: ''
   push:
     branches:
       - main
@@ -90,9 +98,11 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL || inputs.staging_url }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY || inputs.staging_publishable_key }}
-          VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
-          VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
-        run: npm run build:mobile -- --mode staging
+          VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL || inputs.staging_turn_credentials_url }}
+          VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID || inputs.staging_onesignal_app_id }}
+        run: |
+          node scripts/validate-staging-integrations.mjs
+          npm run build:mobile -- --mode staging
 
       - name: Verify staging backend isolation
         if: ${{ inputs.staging }}

@@ -1,9 +1,27 @@
 import { after,before,test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { startServer,setup,ME,OTHER,CHAT } from './helpers.mjs';
+import { startServer,setup,openFeature,ME,OTHER,CHAT } from './helpers.mjs';
 let server;
 before(async()=>{server=await startServer();});after(()=>server?.stop());
+
+test('notification choices are account-scoped, persist after refresh and do not claim message previews',async()=>{
+ const f=await setup(server.base);
+ try{
+  await f.page.evaluate(({me,other})=>{
+   localStorage.setItem('konnekt-notification-preferences',JSON.stringify({settings:[{id:'messages',value:false}]}));
+   localStorage.setItem('konnekt-notification-preferences:'+other,JSON.stringify({settings:[{id:'messages',value:false}]}));
+   localStorage.removeItem('konnekt-notification-preferences:'+me);
+  },{me:ME,other:OTHER});
+  await openFeature(f.page,'Notification settings');
+  const messages=f.page.getByRole('switch',{name:'Messages',exact:true});assert(await messages.isChecked());await messages.uncheck();
+  await f.page.getByText('Save notification settings',{exact:true}).click();await f.page.getByRole('alertdialog',{name:'Settings saved',exact:true}).getByRole('button',{name:'OK',exact:true}).click();
+  const saved=await f.page.evaluate(me=>JSON.parse(localStorage.getItem('konnekt-notification-preferences:'+me)),ME);assert.equal(saved.settings.find(x=>x.id==='messages').value,false);
+  await f.page.reload();await openFeature(f.page,'Notification settings');assert.equal(await f.page.getByRole('switch',{name:'Messages',exact:true}).isChecked(),false);
+  await f.page.getByText(/Push notifications never contain your private message text/).waitFor();assert.equal(await f.page.getByRole('switch',{name:'Message previews',exact:true}).count(),0);
+  assert.deepEqual(f.errors,[]);
+ }finally{await f.close();}
+});
 
 test('sent, delivered and read receipts have distinct accessible states and read ticks are visibly highlighted',async()=>{
  const id='77777777-7777-4777-8777-777777777777';

@@ -1,0 +1,72 @@
+{
+  "observedDateUTC": "2026-11-16",
+  "environment": "konnekt-staging",
+  "releaseDecision": "HOLD",
+  "registrationRunId": "f7caa90b-be0e-4f81-83f6-bff960349977",
+  "registrationDecision": "PASS_SCOPED_PUSH_REGISTRATION_ONLY",
+  "checks": [
+    {
+      "check": "three actual authenticated fixtures receive distinct opaque identities without public-ID login",
+      "result": "PASS"
+    },
+    {
+      "check": "actual outsider cannot register another account, enumerate private identities or call server-only targeting",
+      "result": "PASS"
+    },
+    {
+      "check": "actual TURN session authorization accepts its signed owner and rejects another account",
+      "result": "PASS"
+    },
+    {
+      "check": "actual settings UI stores an account-scoped opt-out and sync preserves its identity",
+      "result": "PASS"
+    },
+    {
+      "check": "real encrypted messages create generic unread notifications for server target probes",
+      "result": "PASS"
+    },
+    {
+      "check": "actual newer account switch rejects the stale JWT registration and a late old-account cleanup cannot remove the new target",
+      "result": "PASS"
+    },
+    {
+      "check": "both isolated fixture sessions are signed out and the genuine old JWT cannot authorize fresh TURN credentials",
+      "result": "PASS"
+    }
+  ],
+  "privateReportSHA256": "a203b9e2fe19e0ce72d0857fc07771e3d7e2693a329cb511ee6e8bab98844615",
+  "redactedOperatorProbe": {
+    "activeTargets": 1,
+    "optedOutTargets": 0,
+    "revokedAuthSessions": 0,
+    "revokedPushSessions": 0,
+    "newPendingQueueRecords": 2
+  },
+  "deployedFunctions": {
+    "dispatch-push": {
+      "version": 2,
+      "unconfiguredHTTP": 503,
+      "providerDelivery": "BLOCKED"
+    },
+    "turn-credentials": {
+      "version": 1,
+      "unconfiguredHTTP": 503,
+      "relayMedia": "BLOCKED"
+    }
+  },
+  "stagingMigrations": [
+    "20261116171920_release_staging_private_push_sessions",
+    "20261116175800_release_staging_push_retry_outbox",
+    "20261116180753_release_staging_turn_session_authorization"
+  ],
+  "schedulerEnabled": false,
+  "providerCredentialsAvailable": false,
+  "physicalDevicesAvailable": false,
+  "localVerification": {
+    "unitDatabaseServiceWorker": 50,
+    "browser": 43,
+    "webBuildSmoke": 3,
+    "mobileBuildSmoke": 3,
+    "productionDependencyVulnerabilities": 0
+  }
+}
