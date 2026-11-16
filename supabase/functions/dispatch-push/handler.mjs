@@ -18,7 +18,7 @@ async function limitedBody(request){
   return JSON.parse(new TextDecoder().decode(all));
 }
 // Real network calls only in the thin runtime adapter; injection permits failure tests.
-export function createPushHandler({projectUrl,appId,apiKey,webhookSecret,resolveDelivery,fetchProvider=fetch}){
+export function createPushHandler({projectUrl,appId,apiKey,webhookSecret,claimNotifications,completeNotification,resolveDelivery,fetchProvider=fetch}){
   const configured=projectUrl===STAGING&&UUID.test(appId||'')&&typeof apiKey==='string'&&apiKey.length>=16&&typeof webhookSecret==='string'&&webhookSecret.length>=32;
   return async request=>{
     if(!configured)return json(503,{status:'not_configured'});
@@ -26,23 +26,34 @@ export function createPushHandler({projectUrl,appId,apiKey,webhookSecret,resolve
     if(!await matchesSecret(request.headers.get('Authorization')?.replace(/^Bearer /,''),webhookSecret))return json(401,{status:'unauthorized'});
     let event;
     try{event=await limitedBody(request);}catch{return json(400,{status:'invalid_event'});}
-    if(event?.type!=='INSERT'||event.schema!=='public'||event.table!=='notifications'||!UUID.test(event.record?.id||''))return json(400,{status:'invalid_event'});
-    let delivery;
-    try{delivery=await resolveDelivery(event.record.id);}catch{return json(503,{status:'lookup_unavailable'});}
-    // Re-read trusted rows; never use webhook-supplied recipients, body or aliases.
-    if(!delivery||!Array.isArray(delivery.aliases))return json(503,{status:'invalid_lookup'});
-    if(!delivery.aliases.length)return json(200,{status:'skipped'});
-    if(!categories.has(delivery.category)||delivery.aliases.length>100||!delivery.aliases.every(alias=>ALIAS.test(alias))||!Number.isInteger(delivery.ttl)||delivery.ttl<1||delivery.ttl>3600)return json(503,{status:'invalid_lookup'});
-    const payload={app_id:appId,include_aliases:{external_id:[...new Set(delivery.aliases)].sort()},target_channel:'push',
-      idempotency_key:event.record.id,headings:{en:'KONNEKT'},contents:{en:delivery.category==='calls'?'Incoming KONNEKT call.':'Open KONNEKT to view new activity.'},
-      data:{screen:'Notifications'},ttl:delivery.ttl};
-    try{
-      const response=await fetchProvider('https://api.onesignal.com/notifications',{method:'POST',headers:{Authorization:'Key '+apiKey,'Content-Type':'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(10000)});
-      if(!response.ok)return json(503,{status:'provider_unavailable'});
-      const body=await response.json();
-      if(!UUID.test(body?.id||''))return json(503,{status:'provider_not_accepted'});
-      // Provider acceptance is not evidence that a physical phone displayed it.
-      return json(200,{status:'accepted'});
-    }catch{return json(503,{status:'provider_unavailable'});}
+    const drain=event?.type==='DRAIN'&&Object.keys(event).length===1;
+    if(!drain&&(event?.type!=='INSERT'||event.schema!=='public'||event.table!=='notifications'||!UUID.test(event.record?.id||'')))return json(400,{status:'invalid_event'});
+    let claimed;
+    try{claimed=await claimNotifications(drain?null:event.record.id,drain?5:1);}catch{return json(503,{status:'queue_unavailable'});}
+    if(!Array.isArray(claimed)||claimed.length>(drain?5:1)||claimed.some(x=>!UUID.test(x?.notification_id||'')||!UUID.test(x?.lease_token||'')||(!drain&&x.notification_id!==event.record.id)))return json(503,{status:'invalid_claim'});
+    if(!claimed.length)return json(200,{status:drain?'drained':'skipped'});
+    async function deliver(entry){
+      const finish=async(result,providerId=null)=>{try{return await completeNotification(entry.notification_id,entry.lease_token,result,providerId)===true;}catch{return false;}};
+      const retry=async()=>{const saved=await finish('retry');return saved?'retry':'state_unavailable';};
+      let delivery;
+      try{delivery=await resolveDelivery(entry.notification_id);}catch{return retry();}
+      // Re-read trusted rows; never use webhook-supplied recipients/body/aliases.
+      if(!delivery||!Array.isArray(delivery.aliases))return retry();
+      if(!delivery.aliases.length)return await finish('skipped')?'skipped':'state_unavailable';
+      if(!categories.has(delivery.category)||delivery.aliases.length>100||!delivery.aliases.every(alias=>ALIAS.test(alias))||!Number.isInteger(delivery.ttl)||delivery.ttl<1||delivery.ttl>3600)return retry();
+      const payload={app_id:appId,include_aliases:{external_id:[...new Set(delivery.aliases)].sort()},target_channel:'push',
+        idempotency_key:entry.notification_id,headings:{en:'KONNEKT'},contents:{en:delivery.category==='calls'?'Incoming KONNEKT call.':'Open KONNEKT to view new activity.'},
+        data:{screen:'Notifications'},ttl:delivery.ttl};
+      try{
+        const response=await fetchProvider('https://api.onesignal.com/notifications',{method:'POST',headers:{Authorization:'Key '+apiKey,'Content-Type':'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(10000)});
+        if(!response.ok)return retry();
+        const body=await response.json();if(!UUID.test(body?.id||''))return retry();
+        // Provider acceptance does not establish physical-phone delivery.
+        return await finish('accepted',body.id)?'accepted':'state_unavailable';
+      }catch{return retry();}
+    }
+    const outcomes=[];for(const entry of claimed)outcomes.push(await deliver(entry));
+    const retry=outcomes.some(x=>x==='retry'||x==='state_unavailable');
+    return json(retry?503:200,drain?{status:'drained',accepted:outcomes.filter(x=>x==='accepted').length,skipped:outcomes.filter(x=>x==='skipped').length,retry:outcomes.filter(x=>x==='retry'||x==='state_unavailable').length}:{status:outcomes[0]});
   };
 }

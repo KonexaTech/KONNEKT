@@ -15,6 +15,8 @@ test('push aliases are owner/session-bound; dispatch excludes revoked, expired, 
   for(const file of(await readdir('supabase/migrations')).sort())await db.exec(await readFile('supabase/migrations/'+file,'utf8'));
   for(const file of ['staging-profile-and-function-grants.sql','staging-opt-in-mfa.sql','staging-account-deletion.sql'])await db.exec(await readFile('docs/release/'+file,'utf8'));
   const sql=await readFile('docs/release/staging-push-delivery.sql','utf8');await db.exec(sql);await db.exec(sql);
+  const turn=await readFile('docs/release/staging-turn-authorization.sql','utf8');await db.exec(turn);await db.exec(turn);
+  await actor(A,SA);assert.equal((await db.query(`select konnekt_authorize_turn('${A}') as ok`)).rows[0].ok,true);assert.equal((await db.query(`select konnekt_authorize_turn('${B}') as ok`)).rows[0].ok,false);
   await actor(A,SA);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${B}')`),/account changed/);
   await actor(A,SB);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${A}')`),/no longer active/);
   const aliases=[];
@@ -41,14 +43,15 @@ test('push aliases are owner/session-bound; dispatch excludes revoked, expired, 
   await db.exec(`reset role;insert into user_blocks(blocker_id,blocked_id) values('${A}','${B}')`);assert.deepEqual((await delivery(A)).aliases,[]);await db.exec('delete from user_blocks');
   await db.exec(`update notifications set read_at=now() where id='${A}'`);assert.deepEqual((await delivery(A)).aliases,[]);await db.exec(`update notifications set read_at=null where id='${A}'`);
   await db.exec(`update auth.sessions set not_after=now()-interval '1 second' where id='${SB}'`);assert.deepEqual((await delivery(A)).aliases,[]);await actor(B,SB);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${B}')`),/no longer active/);await db.exec(`reset role;update auth.sessions set not_after=null where id='${SB}'`);
-  await db.exec(`insert into auth.mfa_factors(user_id,status) values('${B}','verified')`);assert.deepEqual((await delivery(A)).aliases,[]);await actor(B,SB);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${B}')`),/Verify your sign-in/);
+  await db.exec(`insert into auth.mfa_factors(user_id,status) values('${B}','verified')`);assert.deepEqual((await delivery(A)).aliases,[]);await actor(B,SB);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${B}')`),/Verify your sign-in/);assert.equal((await db.query(`select konnekt_authorize_turn('${B}') as ok`)).rows[0].ok,false);
   await db.exec(`reset role;update auth.sessions set aal='aal2' where id='${SB}'`);assert.deepEqual((await delivery(A)).aliases,[aliases[1]]);
   await db.exec(`update auth.users set banned_until=now()+interval '1 day' where id='${B}'`);assert.deepEqual((await delivery(A)).aliases,[]);await db.exec(`update auth.users set banned_until=null where id='${B}'`);
   await db.exec(`insert into account_deletion_requests(user_id,status) values('${B}','processing')`);assert.deepEqual((await delivery(A)).aliases,[]);await db.exec('delete from account_deletion_requests');
   await db.exec(`update notifications set created_at=now()-interval '2 hours' where id='${A}'`);assert.deepEqual((await delivery(A)).aliases,[]);await db.exec(`update notifications set created_at=now() where id='${A}'`);
   await db.exec(`delete from auth.sessions where id='${SB}'`);assert.deepEqual((await delivery(A)).aliases,[]);await actor(B,SB,'aal2');await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${B}')`),/no longer active/);
   await db.exec('reset role');assert.equal((await db.query(`select count(*)::int as n from konnekt_private.push_sessions where session_id='${SB}'`)).rows[0].n,0);
-  await db.exec(`set role anon`);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${A}')`),/permission denied/);
+  await actor(B,SB,'aal2');assert.equal((await db.query(`select konnekt_authorize_turn('${B}') as ok`)).rows[0].ok,false);
+  await db.exec(`reset role;set role anon`);await assert.rejects(db.query(`select konnekt_register_push_session('${KEY}','${A}')`),/permission denied/);
  }finally{await db.close();}
 });
 

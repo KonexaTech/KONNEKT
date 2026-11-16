@@ -1,6 +1,8 @@
 # Staging Android acceptance progress
 
-Public release remains **NO-GO**. This is build evidence, not physical-device acceptance.
+Public release remains **NO-GO**. This document includes historical build evidence; the current scoped live messaging/recovery and push/TURN preparation records are linked below. None substitutes for physical-device acceptance.
+
+Current evidence: [LIVE_ACCEPTANCE_2026-11-16.json](LIVE_ACCEPTANCE_2026-11-16.json), [PUSH_TURN_ACCEPTANCE_2026-11-16.json](PUSH_TURN_ACCEPTANCE_2026-11-16.json), [STAGING_PUSH_DELIVERY.md](STAGING_PUSH_DELIVERY.md) and [STAGING_TURN_CREDENTIALS.md](STAGING_TURN_CREDENTIALS.md). Three fixture accounts are available and live encrypted messaging/Realtime/recovery have passed their recorded scoped cases.
 
 Baseline: `7102642` (merged messaging PR #13). Development branch: `development/staging-android-isolation`.
 
@@ -27,7 +29,7 @@ The workflow uses staging-only public API settings. Optional dispatch inputs avo
 
 ## Still required before acceptance
 
-- Usable credentials/sessions for three dedicated staging test accounts, then real in-app encrypted direct/group exchange and Realtime isolation. Prior API tests are not substituted for this check.
+- Repeat the prepared messaging/recovery cases on actual Android installations; browser and API evidence does not establish native device acceptance.
 - Physical Android devices with Wi-Fi and cellular connectivity; install the staging artifact, verify voice/video media, mute/camera controls, decline, hangup, reconnect, and background/resume.
 - Staging TURN credential endpoint and configured relay provider. Permanent relay secrets must stay on the server.
 - Staging OneSignal application plus Android delivery credentials, then foreground/background/closed-app delivery, permission denial, logout isolation, and token rotation checks.
@@ -35,4 +37,4 @@ The workflow uses staging-only public API settings. Optional dispatch inputs avo
 
 ## Prepared messaging acceptance runner
 
-The three-account browser runner and private setup instructions are in [STAGING_MESSAGING_TESTS.md](STAGING_MESSAGING_TESTS.md). Its configuration/isolation evidence guards have local tests; the runner has not been executed against staging. Account access is intentionally deferred until supplied. Production app/navigation code is unchanged by this preparation.
+The three-account browser runner and private setup instructions are in [STAGING_MESSAGING_TESTS.md](STAGING_MESSAGING_TESTS.md). The runner has passed against staging using the three explicitly approved fixtures. The separate push/TURN runner also passed registration/session guards; provider delivery and two-phone connectivity remain pending. Current navigation is preserved.
