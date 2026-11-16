@@ -696,6 +696,12 @@ export default function ChatConversationScreen({ navigation, route }) {
           <Text style={{ fontSize: 21 }}>📎</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={s.clip} accessibilityRole="button" accessibilityLabel="Record voice note"
+          disabled={sending || busy || !encryptionReady || loadedConversationId !== conversationId}
+          onPress={() => navigation.navigate('VoiceNote', { chatId: conversationId })}>
+          <Text style={{ fontSize: 21 }}>🎙</Text>
+        </TouchableOpacity>
+
         <TextInput
           style={s.input}
           value={message}

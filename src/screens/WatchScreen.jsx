@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
-import { chooseMedia, uploadMedia } from '../services/media';
+import { chooseMedia, uploadMedia, cleanupUnusedPublicMedia } from '../services/media';
 
 const MAX_VIDEO_BYTES = 45 * 1024 * 1024;
 const BUCKET = 'konnekt-public-media';
@@ -17,7 +17,7 @@ function mediaUrl(path) {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data?.publicUrl || '';
 }
 
-export default function WatchScreen({ navigation }) {
+export default function WatchScreen({ navigation, route }) {
   const { user } = useAuth();
   const [reels, setReels] = useState([]);
   const [liked, setLiked] = useState(new Set());
@@ -37,7 +37,18 @@ export default function WatchScreen({ navigation }) {
   const [notice, setNotice] = useState('');
   const [feedHeight, setFeedHeight] = useState(0);
   const requestRef = useRef(0);
+  const feedRef = useRef(null);
+  const publishLock = useRef(false);
+  const selectedReel = route?.params?.reelId;
   const pageHeight = feedHeight || PAGE_HEIGHT;
+  useEffect(() => {
+    if (!selectedReel) return;
+    const index = reels.findIndex(reel => reel.id === selectedReel);
+    if (index < 0) return;
+    setActiveId(selectedReel);
+    const timer = setTimeout(() => feedRef.current?.scrollToOffset({ offset: index * pageHeight, animated: false }), 0);
+    return () => clearTimeout(timer);
+  }, [selectedReel, reels, pageHeight]);
 
   const load = useCallback(async (refresh = false) => {
     if (!user?.id) {
@@ -143,10 +154,14 @@ export default function WatchScreen({ navigation }) {
   }, [load, user?.id]);
 
   const publish = async () => {
-    if (!user?.id || uploading) {
+    if (!user?.id || publishLock.current) {
       if (!user?.id) setNotice('Please sign in before publishing a Reel.');
       return;
     }
+    const submittedCaption = caption.trim();
+    let media = null;
+    publishLock.current = true;
+    setUploading(true);
     try {
       const file = await chooseMedia('video/mp4,video/webm,video/quicktime');
       if (!file) return;
@@ -154,22 +169,29 @@ export default function WatchScreen({ navigation }) {
       if (file.size > MAX_VIDEO_BYTES) throw new Error('Choose a video smaller than 45 MB.');
       setUploading(true);
       setNotice('Uploading your video…');
-      const media = await uploadMedia(file, BUCKET, `reels/${user.id}`);
+      media = await uploadMedia(file, BUCKET, `reels/${user.id}`);
       if (!media?.path) throw new Error('The upload did not return a storage path.');
       const { error } = await supabase.from('reels').insert({
         user_id: user.id,
-        caption: caption.trim(),
+        caption: submittedCaption,
         media_path: media.path,
         visibility: 'public',
         published_at: new Date().toISOString()
       });
       if (error) throw error;
-      setCaption('');
+      media = null;
+      setCaption(current => current.trim() === submittedCaption ? '' : current);
       setNotice('Your Reel has been published.');
       await load(true);
     } catch (error) {
-      setNotice(error?.message || 'Video upload failed. Please try again.');
+      let cleanup = '';
+      if (media) {
+        try { if (!(await cleanupUnusedPublicMedia('reels', user.id, media))) cleanup = ' The post may have completed; refresh before retrying.'; }
+        catch { cleanup = ' Unused media could not be removed.'; }
+      }
+      setNotice((error?.message || 'Video upload failed. Please try again.') + cleanup);
     } finally {
+      publishLock.current = false;
       setUploading(false);
     }
   };
@@ -365,6 +387,7 @@ export default function WatchScreen({ navigation }) {
         {busy
           ? <ActivityIndicator color="#00E6FF" style={{ marginTop: 35 }} />
           : <FlatList
+              ref={feedRef}
               style={{ flex: 1 }}
               data={reels}
               keyExtractor={item => String(item.id)}

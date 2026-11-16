@@ -1,10 +1,11 @@
+import { PUBLIC_PROFILE_FIELDS } from '../services/profileFields';
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib_supabase';
 
 export default function ProfileScreen({ user, navigation }) {
   const [profile,setProfile]=useState(null); const [fullName,setFullName]=useState(''); const [username,setUsername]=useState(''); const [bio,setBio]=useState(''); const [busy,setBusy]=useState(true); const [saving,setSaving]=useState(false); const [notice,setNotice]=useState('');
-  useEffect(()=>{ let active=true; (async()=>{ if(!user){setBusy(false);return;} const {data,error}=await supabase.from('profiles').select('*').eq('id',user.id).maybeSingle(); if(active){const p=data||{};setProfile(p);setFullName(p.full_name||user.user_metadata?.full_name||'');setUsername(p.username||user.user_metadata?.username||'');setBio(p.bio||'');if(error)setNotice(error.message);setBusy(false);} })(); return()=>{active=false;}; },[user?.id]);
+  useEffect(()=>{ let active=true; (async()=>{ if(!user){setBusy(false);return;} const {data,error}=await supabase.from('profiles').select(PUBLIC_PROFILE_FIELDS).eq('id',user.id).maybeSingle(); if(active){const p=data||{};setProfile(p);setFullName(p.full_name||user.user_metadata?.full_name||'');setUsername(p.username||user.user_metadata?.username||'');setBio(p.bio||'');if(error)setNotice(error.message);setBusy(false);} })(); return()=>{active=false;}; },[user?.id]);
   const save=async()=>{setSaving(true);setNotice('');const {error}=await supabase.from('profiles').upsert({id:user.id,full_name:fullName.trim(),username:username.trim().toLowerCase(),bio:bio.trim(),updated_at:new Date().toISOString()});setSaving(false);setNotice(error?error.message:'Profile saved successfully.');};
   const logout=async()=>{const {error}=await supabase.auth.signOut();if(error)setNotice(error.message);};
   if(busy)return <View style={styles.container}><ActivityIndicator color="#6A0DAD"/></View>;

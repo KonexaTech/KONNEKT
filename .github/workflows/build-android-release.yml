@@ -32,6 +32,9 @@ jobs:
         run: npx cap add android
       - name: Install KONNEKT Android icon and splash assets
         run: node scripts/android-assets.mjs
+
+      - name: Configure optional call device permissions
+        run: node scripts/android-permissions.mjs
       - name: Sync Capacitor
         run: npx cap sync android
       - name: Configure release signing key

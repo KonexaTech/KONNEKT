@@ -6,6 +6,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the website only after public-release acceptance is approved
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -44,6 +49,9 @@ jobs:
           path: ./dist
 
   deploy:
+    # Main may contain acceptance fixes while public release remains on HOLD.
+    # A push still validates/builds, but publishing needs a separate owner action.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == true }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

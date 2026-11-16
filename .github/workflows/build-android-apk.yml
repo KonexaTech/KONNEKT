@@ -8,6 +8,14 @@ on:
         description: Build an isolated staging APK
         type: boolean
         default: false
+      staging_url:
+        description: Optional staging Supabase URL (used when repository variable is absent)
+        type: string
+        default: ''
+      staging_publishable_key:
+        description: Optional staging publishable key only; never enter a secret or service-role key
+        type: string
+        default: ''
   push:
     branches:
       - main
@@ -34,6 +42,8 @@ permissions:
 jobs:
   android-apk:
     runs-on: ubuntu-latest
+    env:
+      KONNEKT_BUILD_TARGET: ${{ inputs.staging && 'staging' || 'production' }}
 
     steps:
       - name: Download repository
@@ -60,11 +70,17 @@ jobs:
       - name: Build staging mobile website
         if: ${{ inputs.staging }}
         env:
-          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL || inputs.staging_url }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY || inputs.staging_publishable_key }}
           VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
           VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
         run: npm run build:mobile -- --mode staging
+
+      - name: Verify staging backend isolation
+        if: ${{ inputs.staging }}
+        env:
+          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL || inputs.staging_url }}
+        run: node scripts/verify-staging-bundle.mjs
 
       - name: Verify website assets
         run: |
@@ -77,6 +93,9 @@ jobs:
 
       - name: Install existing KONNEKT brand assets
         run: node scripts/android-assets.mjs
+
+      - name: Configure optional call device permissions
+        run: node scripts/android-permissions.mjs
 
       - name: Synchronise Capacitor
         run: npx cap sync android

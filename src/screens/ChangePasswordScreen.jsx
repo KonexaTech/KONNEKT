@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
+import { verifyCurrentPassword } from '../services/verifyCurrentPassword';
 import { supabase } from '../lib_supabase';
 import { useAuth } from '../AuthContext';
 
@@ -62,7 +63,7 @@ export default function ChangePasswordScreen({ navigation }) {
     setBusy(true);
     try {
       if (!user?.email) throw new Error('Sign in again before changing your password.');
-      const { error: authError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+      const { error: authError } = await verifyCurrentPassword({ email: user.email, password: currentPassword });
       if (authError) throw authError;
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;

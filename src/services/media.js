@@ -34,3 +34,17 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   // Do not mint a long-lived bearer URL at upload time.
   return { path, type };
 }
+
+// Only remove an upload after a successful lookup proves no owned row uses it.
+// Ambiguous network failures retain media instead of breaking a committed post.
+export async function cleanupUnusedPublicMedia(table, userId, media) {
+  const column = table === 'reels' ? 'media_path' : table === 'statuses' ? 'media_url' : null;
+  if (!column || !media?.path || !userId) throw new Error('Cannot verify unused media.');
+  const { data, error } = await supabase.from(table).select('id')
+    .eq('user_id', userId).eq(column, table === 'reels' ? media.path : media.url).limit(1);
+  if (error) throw error;
+  if (data?.length) return false;
+  const result = await supabase.storage.from('konnekt-public-media').remove([media.path]);
+  if (result.error) throw result.error;
+  return true;
+}

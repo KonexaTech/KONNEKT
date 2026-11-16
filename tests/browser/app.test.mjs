@@ -285,3 +285,95 @@ test('voice-note failures clean unused uploads and invalid conversation IDs make
   assert.equal(removals[0].body.prefixes[0], uploads[0].path.split('/konnekt-chat-media/')[1]);
   assert.equal(db.messages.length, 0);
 }));
+
+
+test('profile loads and saves when wildcard profile reads are denied', async () => run({}, async ({ page, context, db, requests }) => {
+  await context.route('**/rest/v1/profiles?**', route => {
+    if(route.request().method()==='GET' && new URL(route.request().url()).searchParams.get('select')==='*') return route.fulfill({status:403,json:{message:'permission denied for table profiles'}});
+    return route.fallback();
+  });
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByPlaceholder('Your name',{exact:true}).waitFor();
+  assert.equal(await page.getByPlaceholder('Your name',{exact:true}).inputValue(),'Fixture Member');
+  await page.getByPlaceholder('Your name',{exact:true}).fill('Fixture Updated');
+  await page.getByText('SAVE PROFILE',{exact:true}).click();
+  await page.getByText('Profile saved successfully.',{exact:true}).waitFor();
+  assert.equal(db.profiles.find(row=>row.id===ME).full_name,'Fixture Updated');
+  await page.reload();
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByPlaceholder('Your name',{exact:true}).waitFor();
+  assert.equal(await page.getByPlaceholder('Your name',{exact:true}).inputValue(),'Fixture Updated');
+  const read=requests.filter(r=>r.path.endsWith('/profiles')&&r.method==='GET').at(-1);
+  assert(!new URLSearchParams(read.search).get('select').split(',').includes('phone'));
+}));
+
+
+test('voice notes are reachable from chat, encrypt sends and release recording tracks', async () => run({}, async ({ page, db, requests }) => {
+  db.profiles[1].encryption_public_key=await page.evaluate(async()=>{
+    const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));
+  });
+  await page.evaluate(()=>{
+    navigator.mediaDevices.getUserMedia=async()=>{
+      const context=new AudioContext();const oscillator=context.createOscillator();const destination=context.createMediaStreamDestination();oscillator.connect(destination);oscillator.start();window.__voiceStream=destination.stream;return destination.stream;
+    };
+  });
+  await page.getByRole('tab',{name:'Chats',exact:true}).click();await page.getByText('Other Member',{exact:true}).click();
+  await page.getByRole('button',{name:'Record voice note',exact:true}).click();
+  await page.getByText('Start recording',{exact:true}).click();await page.getByText('Stop recording',{exact:true}).waitFor();
+  await page.waitForTimeout(500);await page.getByText('Stop recording',{exact:true}).click();await page.getByText('Send voice note',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.__voiceStream.getTracks().every(track=>track.readyState==='ended')),true);
+  await page.getByText('Send voice note',{exact:true}).click();await page.getByRole('alertdialog').waitFor();
+  const writes=requests.filter(r=>r.method==='POST'&&r.path.endsWith('/messages'));assert.equal(writes.length,1);assert.equal(writes[0].body.is_encrypted,true);assert.equal(writes[0].body.media_encrypted,true);assert.notEqual(writes[0].body.body,'Voice note');
+}));
+
+
+test('leaving voice recording while permission is pending stops any late-granted stream',async()=>run({},async({page,db})=>{
+  db.profiles[1].encryption_public_key=await page.evaluate(async()=>{const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));});
+  await page.evaluate(()=>{navigator.mediaDevices.getUserMedia=()=>new Promise(resolve=>{window.__grantVoice=()=>{const context=new AudioContext();const oscillator=context.createOscillator();const destination=context.createMediaStreamDestination();oscillator.connect(destination);oscillator.start();window.__lateVoice=destination.stream;resolve(destination.stream);};});});
+  await page.getByRole('tab',{name:'Chats',exact:true}).click();await page.getByText('Other Member',{exact:true}).click();await page.getByRole('button',{name:'Record voice note',exact:true}).click();
+  await page.getByText('Start recording',{exact:true}).click();await page.waitForFunction(()=>typeof window.__grantVoice==='function');
+  await page.getByText('‹ Back',{exact:true}).click();await page.getByPlaceholder('Message securely…').waitFor();
+  await page.evaluate(()=>window.__grantVoice());await page.waitForFunction(()=>window.__lateVoice.getTracks().every(track=>track.readyState==='ended'));
+}));
+
+
+test('unenforced privacy controls cannot promise restrictions and blocked count comes from data',async()=>run({db:{user_blocks:[]}},async({page,requests})=>{
+  await openFeature(page,'Account settings');
+  await page.getByRole('switch').first().waitFor();
+  assert.equal(await page.getByRole('switch').count(),3);
+  for(const control of await page.getByRole('switch').all())assert.equal(await control.isDisabled(),true);
+  await page.getByText(/^‹(?: Back.*)?$/).first().click();
+  const countResponse=page.waitForResponse(response=>response.request().method()==='HEAD'&&response.url().includes('/rest/v1/user_blocks'));
+  await page.getByRole('button',{name:'Open Privacy settings',exact:true}).click();
+  await countResponse;
+  await page.getByText(/Audience restrictions and receipt controls are unavailable/).waitFor();
+  assert.equal(await page.getByLabel('Read receipts (unavailable)',{exact:true}).isDisabled(),true);
+  assert.equal(await page.getByText('3',{exact:true}).count(),0);
+  assert(requests.some(r=>r.method==='HEAD'&&r.path.endsWith('/user_blocks')));
+}));
+
+
+test('live setup does not offer unenforced private or follower audiences',async()=>run({},async({page})=>{
+  await openFeature(page,'Live rooms');
+  assert.equal(await page.getByRole('button',{name:'Private rooms unavailable',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'Followers rooms unavailable',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'Public room audience',exact:true}).isDisabled(),false);
+}));
+
+
+test('route chunks load on demand and a failed screen download offers reload without replacing keys',async()=>{
+ const f=await setup(server.base);try{
+  const {page,context,db}=f;await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  const initialKey=db.profiles.find(row=>row.id===ME).encryption_public_key;
+  assert(initialKey,'registered key required before testing reload preservation');
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(item=>item.name));
+  assert(!loaded.some(url=>url.includes('/screens/DiscoverScreen.jsx')),'Discover should not load in initial route');
+  const outage=route=>route.abort();await context.route('**/src/screens/DiscoverScreen.jsx',outage);
+  await page.getByRole('tab',{name:'Discover',exact:true}).click();await page.getByText('KONNEKT could not open this screen',{exact:true}).waitFor();
+  await context.unroute('**/src/screens/DiscoverScreen.jsx',outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  assert.equal(db.profiles.find(row=>row.id===ME).encryption_public_key,initialKey);
+  for(const error of f.errors)assert.match(error,/DiscoverScreen|dynamically imported/);
+ }finally{await f.close();}
+});
