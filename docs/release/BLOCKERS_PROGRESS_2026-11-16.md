@@ -1,6 +1,6 @@
 # Release blocker repair progress — 16 November 2026
 
-Public release remains **HOLD**. This milestone extends the initial core-release PR; it does not merge, publish the website, change production data or enable paid infrastructure.
+Public release remains **HOLD**. The owner approved merging the verified repairs: PR #17 was merged as `728cb90`. The remaining messaging PR is being reconciled with that mainline. Website publication, production data changes and paid infrastructure remain excluded.
 
 ## Completed repairs
 
@@ -73,3 +73,11 @@ An additional cleanup defect was found: chat/voice upload cleanup assumed an INS
 ### Final verification of this repair
 
 Clean `npm ci`, lint, **34 unit/database/service-worker tests**, website and mobile production builds, **three compiled-build smoke checks per build**, and both production/full dependency audits passed (zero vulnerabilities). The focused voice-note lost-response and verification-failure regression passed. The first concurrent browser run timed out on a public-form case under resource contention and stalled in its worker; the affected test passed separately, and the complete browser suite was restarted after the heavy checks. That run passed 39 of 40 cases; the remaining Status-expiry test used an ambiguous creator-name selector during a navigation transition. Selecting the specific Status caption fixes the harness. All four affected social regression cases then passed, covering all 40 browser cases across the suite and targeted reruns. Exact final-commit CI and APK results are tracked in draft PR #17. Neither a compiled APK nor synthetic media proves physical-device acceptance.
+
+## Reconciliation of the older messaging PR
+
+PR #4 contained invalid conflict-branch text and an older copy of chat code. Its head was merged with the verified mainline, resolving the affected files to current main before applying the missing messaging behavior. This preserves all previously accepted cleanup, receipts, inline-video, security and navigation work. No database change is part of this reconciliation.
+
+Attachments now refresh the recipient key before upload and encrypt both the file and caption with the same captured key. Group sends/attachments can retry available key setup inside the open conversation. The existing group-envelope conflict protection is retained: a duplicate is acceptable only when this member can decrypt a saved envelope. Added tests cover malformed direct/group IDs, delayed group-key setup and both duplicate outcomes, plus actual attachment/caption decryption using the refreshed key.
+
+The reconciled chat code passed a fresh actual three-account staging run: direct/group text and PNGs both ways, ciphertext and recipient-byte checks, real member Realtime with outsider positive controls/exclusion, outsider download/signed-link denial, sent-to-read receipts and both-browser refresh decryption. The sanitized messaging evidence/hash was updated, with earlier private reports retained separately. Lint, three targeted messaging cases (plus the group duplicate-denial extension), website/mobile production builds and all six compiled smoke cases passed. Final branch CI/APK evidence is attached to PR #4 before merge.

@@ -41,6 +41,7 @@ export async function setup(base, options = {}) {
   };
   const requests = [];
   const failures = new Map();
+  const rpcResults = new Map();
   const single = req => (req.headers()['accept'] || '').includes('vnd.pgrst.object');
   function filterRows(rows, search) {
     return rows.filter(row => [...search].every(([key, value]) => {
@@ -69,7 +70,7 @@ export async function setup(base, options = {}) {
       if (table === 'signup') return respond({ user, session: null });
       return respond({});
     }
-    if (url.pathname.includes('/rpc/')) return respond(CHAT);
+    if (url.pathname.includes('/rpc/')) return respond(rpcResults.has(table) ? rpcResults.get(table) : CHAT);
     if (url.pathname.includes('/storage/v1/object/sign/')) return respond({ signedURL: '/object/sign/fixture' });
     if (url.pathname.includes('/storage/')) return respond({ Key: 'fixture-upload' });
     let rows = db[table] || [];
@@ -107,7 +108,7 @@ export async function setup(base, options = {}) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base);
-  return { browser, context, page, db, requests, failures, errors, close: () => browser.close() };
+  return { browser, context, page, db, requests, failures, rpcResults, errors, close: () => browser.close() };
 }
 
 export async function hub(page) {

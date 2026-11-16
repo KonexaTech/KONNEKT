@@ -335,6 +335,7 @@ export default function ChatConversationScreen({ navigation, route }) {
           if (receiptWriteError) throw receiptWriteError;
         }
       }
+      return activeGroupKey;
     } catch (e) {
       setNotice(e?.message || 'Could not load this conversation.');
     } finally {
@@ -382,7 +383,7 @@ export default function ChatConversationScreen({ navigation, route }) {
   // SEND MESSAGE
   // =======================================================
 
-  const send = async (extra = {}, lockHeld = false) => {
+  const send = async (extra = {}, lockHeld = false, attachmentKey = null) => {
     const body = message.trim();
 
     if ((!body && !extra.media_path) || !user?.id ||
@@ -396,8 +397,8 @@ export default function ChatConversationScreen({ navigation, route }) {
     try {
       let recipient = otherMember;
 
-      // Refresh the recipient's encryption key before sending.
-      if (!isGroup) {
+      // Text sends refresh now; attachments already captured a key before upload.
+      if (!isGroup && !attachmentKey) {
         const { data: freshProfile, error: profileError } =
           await supabase.from('profiles')
             .select('id,username,encryption_public_key')
@@ -426,11 +427,14 @@ export default function ChatConversationScreen({ navigation, route }) {
         ...extra
       };
 
-      if (isGroup) {
-        const groupKey = await getGroupKonnektCryptoKey(
+      if (attachmentKey) {
+        payload = { ...payload, ...(await encryptWithKonnektCryptoKey(attachmentKey, contentToEncrypt)) };
+      } else if (isGroup) {
+        let groupKey = await getGroupKonnektCryptoKey(
           conversationId,
           user.id
         );
+        if (!groupKey) groupKey = await load();
 
         if (!groupKey) {
           throw new Error(
@@ -493,18 +497,18 @@ export default function ChatConversationScreen({ navigation, route }) {
       const file = await chooseMedia('image/*,video/*,audio/*');
       if (!file) return;
 
-      if (!encryptionReady) {
-        throw new Error(
-          'Secure encryption is not ready. Open KONNEKT on both accounts first.'
-        );
+      let cryptoKey;
+      if (isGroup) {
+        cryptoKey = await getGroupKonnektCryptoKey(conversationId, user.id);
+        if (!cryptoKey) cryptoKey = await load();
+      } else {
+        const { data: recipient, error } = await supabase.from('profiles')
+          .select('id,username,encryption_public_key').eq('id', otherMember?.id).maybeSingle();
+        if (error) throw error;
+        if (!recipient?.encryption_public_key) throw new Error('Ask the other member to open KONNEKT before sending secure attachments.');
+        setOtherMember(recipient);
+        cryptoKey = await getKonnektConversationCryptoKey(user.id, recipient.encryption_public_key);
       }
-
-      const cryptoKey = isGroup
-        ? await getGroupKonnektCryptoKey(conversationId, user.id)
-        : await getKonnektConversationCryptoKey(
-            user.id,
-            otherMember?.encryption_public_key
-          );
 
       if (!cryptoKey) {
         throw new Error('Could not load the conversation encryption key.');
@@ -533,7 +537,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         media_encrypted: true,
         media_encryption_iv: encryptedFile.iv,
         media_mime_type: file.type
-      }, true);
+      }, true, cryptoKey);
 
       if (!sent) {
         try {
