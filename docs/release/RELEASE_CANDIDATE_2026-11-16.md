@@ -2,6 +2,8 @@
 
 **Decision: HOLD. Mandatory live/device/operational gates remain blocked. This is not release authorization.**
 
+Merging the repair does not authorize publication. The Pages workflow continues to validate/build main pushes, but its deploy job requires a manual dispatch with `publish=true` (default false). Keep that action on hold until release acceptance and owner go/no-go approval.
+
 Started from the latest observed `origin/main`, `7102642`, on `repair/release-gates-20261115`. Carried forward the tested staging work from PR #14 without merging it to main. Production database/data and hosted frontend were not changed. No paid service, new hosted project or infrastructure upgrade was introduced.
 
 ## Verified repairs
