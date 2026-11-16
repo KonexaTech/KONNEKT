@@ -8,11 +8,12 @@ import {pathToFileURL} from 'node:url';
 export function apkEvidence({badging,signature,apk,commit,expectedPackage,expectedCertificate,previous}) {
  const packageLine=badging.match(/^package: name='([^']+)' versionCode='(\d+)' versionName='([^']*)'/m);
  const sdk=badging.match(/^sdkVersion:'(\d+)'/m);
- const certificates=[...signature.matchAll(/^Signer #\d+ certificate SHA-256 digest: ([a-f0-9]{64})\s*$/gmi)];
+ const signers=[...signature.matchAll(/^(?:Signer #(\d+)|V[1-4] Signer:) certificate SHA-256 digest: ([a-f0-9]{64})\s*$/gmi)];
+ const certificates=[...new Set(signers.map(s=>s[2].toLowerCase()))];
  if(!packageLine||packageLine[1]!==expectedPackage)throw Error('APK package does not match the intended installation.');
  if(!sdk||Number(sdk[1])!==26)throw Error('APK must declare Android 8.0 / API 26 as its minimum.');
- if(certificates.length!==1)throw Error('Expected exactly one verified APK signing certificate.');
- const certificate=certificates[0][1].toLowerCase();
+ if(!/^Number of signers: 1\s*$/m.test(signature)||signers.some(s=>s[1]&&s[1]!=='1')||certificates.length!==1)throw Error('Expected exactly one verified APK signing certificate.');
+ const certificate=certificates[0];
  if(expectedCertificate&&certificate!==expectedCertificate.toLowerCase())throw Error('APK signing certificate does not match the configured key.');
  if(!/^[a-f0-9]{40}$/.test(commit||''))throw Error('An exact source commit is required.');
  if(previous&&(previous.package!==packageLine[1]||previous.certificateSha256!==certificate||Number(previous.versionCode)>Number(packageLine[2])))throw Error('APK cannot establish update continuity with the supplied previous evidence.');

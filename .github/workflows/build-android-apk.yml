@@ -176,8 +176,6 @@ jobs:
         run: ./gradlew --no-daemon clean assembleDebug
 
       - name: Verify APK file and signature
-        env:
-          EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
 
@@ -195,11 +193,6 @@ jobs:
 
           "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/konnekt-apk-signature.txt"
           cat "$RUNNER_TEMP/konnekt-apk-signature.txt"
-          if [ -n "$EXPECTED_STAGING_CERTIFICATE" ]; then
-            ACTUAL_CERTIFICATE="$(awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}' "$RUNNER_TEMP/konnekt-apk-signature.txt")"
-            test "$ACTUAL_CERTIFICATE" = "$EXPECTED_STAGING_CERTIFICATE"
-          fi
-
           echo "APK signature verification passed."
 
       - name: Record staging APK installation evidence
