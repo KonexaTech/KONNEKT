@@ -2,6 +2,8 @@
 
 Public release remains **NO-GO**. This document includes historical build evidence; the current scoped live messaging/recovery and push/TURN preparation records are linked below. None substitutes for physical-device acceptance.
 
+The prioritized physical installation/update, notification and network matrix is [ANDROID_DEVICE_ACCEPTANCE.md](ANDROID_DEVICE_ACCEPTANCE.md). PR #18 is merged as `781515e`; its verified [APK run](https://github.com/siboniisozulu-alt/KONNEKT/actions/runs/43928799890) produced a **Fresh-Install-Only** artifact. It does not satisfy stable signing or device acceptance. Future staging artifacts include a byte checksum, source commit, actual package/minimum SDK and certificate evidence alongside the APK.
+
 Current evidence: [LIVE_ACCEPTANCE_2026-11-16.json](LIVE_ACCEPTANCE_2026-11-16.json), [PUSH_TURN_ACCEPTANCE_2026-11-16.json](PUSH_TURN_ACCEPTANCE_2026-11-16.json), [STAGING_PUSH_DELIVERY.md](STAGING_PUSH_DELIVERY.md) and [STAGING_TURN_CREDENTIALS.md](STAGING_TURN_CREDENTIALS.md). Three fixture accounts are available and live encrypted messaging/Realtime/recovery have passed their recorded scoped cases.
 
 Baseline: `7102642` (merged messaging PR #13). Development branch: `development/staging-android-isolation`.

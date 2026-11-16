@@ -38,7 +38,7 @@ export function createPushHandler({projectUrl,appId,apiKey,webhookSecret,claimNo
       let delivery;
       try{delivery=await resolveDelivery(entry.notification_id);}catch{return retry();}
       // Re-read trusted rows; never use webhook-supplied recipients/body/aliases.
-      if(!delivery||!Array.isArray(delivery.aliases))return retry();
+      if(!delivery||delivery.app_id!==appId||!Array.isArray(delivery.aliases))return retry();
       if(!delivery.aliases.length)return await finish('skipped')?'skipped':'state_unavailable';
       if(!categories.has(delivery.category)||delivery.aliases.length>100||!delivery.aliases.every(alias=>ALIAS.test(alias))||!Number.isInteger(delivery.ttl)||delivery.ttl<1||delivery.ttl>3600)return retry();
       const payload={app_id:appId,include_aliases:{external_id:[...new Set(delivery.aliases)].sort()},target_channel:'push',

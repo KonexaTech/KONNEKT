@@ -12,6 +12,8 @@ Read-only production catalog inspection on 16 November 2026 found:
 
 No production rows, values or secrets were read by this inspection; no production schema/data changed.
 
+Read-only recheck at 20:31 UTC on 16 November confirmed the same 30 RLS-enabled public tables, zero public tables without RLS, broad anonymous/authenticated phone-column SELECT grants and no `konnekt_private` schema. Advisors still report two anonymously executable definer helpers, eight authenticated definer entry points and disabled leaked-password protection. This is a **BLOCKED** production acceptance result, not evidence that the staged repairs have been promoted. [Anonymous definer guidance](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable).
+
 ## Prerequisites and order
 
 1. Complete three-account staging encryption/Realtime/file tests, enrolled MFA/recovery, deletion of a disposable account and the owner-agreed full backup/restore drill. Install stable signing and complete physical call/push/installation acceptance.
@@ -28,3 +30,5 @@ Remaining security advisories need documented review: authenticated definer help
 ## Additional push/TURN prerequisites
 
 The later staging-only files `staging-push-delivery.sql`, `staging-push-outbox.sql` and `staging-turn-authorization.sql` are review sources, not automatic production migrations. Native push uses new own-session registration RPCs; leave production integration flags disabled until compatible client/backend/provider configuration is verified. The deployed Edge handlers deliberately refuse production URLs. Adapt and separately approve their project/origin guards only after staging delivery, stable signing/device tests and provider-enabled deletion/backup acceptance. Never promote staging aliases, device capabilities, provider keys or webhook/Vault tokens. The retry schedule is an opt-in infrastructure operation requiring quota and queued-header access review.
+
+The subsequent `staging-provider-erasure.sql` also needs separate production review, including historical provider inventory, private alias retention, session revocation, deletion tombstones and restore reconciliation. Applying staging definitions does not prove actual provider erasure. The physical installation/push matrix is [ANDROID_DEVICE_ACCEPTANCE.md](ANDROID_DEVICE_ACCEPTANCE.md).

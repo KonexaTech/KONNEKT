@@ -9,7 +9,7 @@ function setup(extra={}){
  const handler=createPushHandler({projectUrl:'https://oiwtfkgrnpzirghbsvim.supabase.co',appId:APP,apiKey:APIKEY,webhookSecret:SECRET,
   claimNotifications:async id=>completed?[]:[{notification_id:id||ID,lease_token:ID}],
   completeNotification:async(id,lease,result)=>{if(result==='accepted'||result==='skipped')completed=true;return true;},
-  resolveDelivery:async id=>{lookups.push(id);return{aliases:[ALIAS],category:'messages',ttl:3600};},
+  resolveDelivery:async id=>{lookups.push(id);return{app_id:APP,aliases:[ALIAS],category:'messages',ttl:3600};},
   fetchProvider:async(url,options)=>{calls.push({url,...options,body:JSON.parse(options.body)});return Response.json({id:ID});},...extra});
  return{handler,calls,lookups};
 }
@@ -25,9 +25,14 @@ test('trusted targets only; no plaintext, actor/recipient IDs or reference leak,
  for(const call of f.calls){assert.equal(call.url,'https://api.onesignal.com/notifications');assert.equal(call.redirect,'error');assert.equal(call.headers.Authorization,'Key '+APIKEY);assert.equal(call.body.idempotency_key,ID);assert.deepEqual(call.body.include_aliases,{external_id:[ALIAS]});assert.equal(call.body.target_channel,'push');assert.equal(call.body.ttl,3600);assert.deepEqual(call.body.data,{screen:'Notifications'});assert(!JSON.stringify(call.body).includes('PRIVATE MESSAGE'));assert(!JSON.stringify(call.body).includes('ATTACKER_TARGET'));assert(!JSON.stringify(call.body).includes('FORGED_ALIAS'));}
 });
 test('no active targets skips provider, invalid targets fail closed, provider outages and no-recipient responses never report acceptance',async()=>{
- let f=setup({resolveDelivery:async()=>({aliases:[],category:null,ttl:3600})});assert.deepEqual(await(await f.handler(request())).json(),{status:'skipped'});assert.equal(f.calls.length,0);
+ let f=setup({resolveDelivery:async()=>({app_id:APP,aliases:[],category:null,ttl:3600})});assert.deepEqual(await(await f.handler(request())).json(),{status:'skipped'});assert.equal(f.calls.length,0);
  for(const delivery of [{aliases:[ID],category:'messages',ttl:1},{aliases:[ALIAS],category:'forged',ttl:1},{aliases:[ALIAS],category:'messages',ttl:9000},{aliases:Array(101).fill(ALIAS),category:'messages',ttl:1}]){f=setup({resolveDelivery:async()=>delivery});assert.equal((await f.handler(request())).status,503);assert.equal(f.calls.length,0);}
  for(const fetchProvider of [async()=>{throw Error('PRIVATE_PROVIDER_ERROR');},async()=>Response.json({error:'PRIVATE_PROVIDER_ERROR'},{status:429}),async()=>Response.json({id:'',errors:['PRIVATE_PROVIDER_ERROR']})]){f=setup({fetchProvider});const response=await f.handler(request());assert.equal(response.status,503);assert(!(await response.text()).includes('PRIVATE_PROVIDER_ERROR'));}
+});
+
+test('provider App ID must match server-owned targets before any provider send',async()=>{
+ const f=setup({resolveDelivery:async()=>({app_id:ID,aliases:[ALIAS],category:'messages',ttl:3600})});
+ assert.equal((await f.handler(request())).status,503);assert.equal(f.calls.length,0);
 });
 
 test('lost completion after provider acceptance retries with the same provider idempotency key',async()=>{

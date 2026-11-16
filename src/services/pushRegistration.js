@@ -16,10 +16,10 @@ export function installationKey(storage,cryptoImpl=globalThis.crypto){
   }
   return key;
 }
-export async function resolvePushIdentity({client,userId,storage=globalThis.localStorage}){
+export async function resolvePushIdentity({client,userId,appId,storage=globalThis.localStorage}){
   const prefs=readPushPreferences(storage,userId),key=installationKey(storage);
   const result=await client.rpc('konnekt_register_push_session',{p_device_key:key,p_user_id:userId,
     p_messages:prefs.messages,p_calls:prefs.calls,p_social:prefs.social,p_security:prefs.security});
-  if(result.error||result.data?.user_id!==userId||!/^ks_[a-f0-9]{64}$/.test(result.data?.external_id||''))throw Error('Secure notification registration is unavailable.');
+  if(result.error||result.data?.user_id!==userId||(appId&&result.data?.app_id!==appId)||!/^ks_[a-f0-9]{64}$/.test(result.data?.external_id||''))throw Error('Secure notification registration is unavailable.');
   return result.data.external_id;
 }

@@ -43,14 +43,14 @@ test('deletion locks old JWTs, removes authored content and preserves other part
 
 function fakeClient({failRemoval=false}={}){
  const calls=[];let files=[{bucket_id:'private',name:'owned.enc'}];
- const client={calls,from:()=>({select:()=>({eq:async()=>({data:[{status:'requested'}]})})}),rpc:async(name)=>{calls.push(name);return {data:name.endsWith('_plan')?{account_exists:true,owned_files:files.length}:name.endsWith('_files')?[...files]:null};},storage:{from:()=>({remove:async paths=>{calls.push(['remove',paths]);if(failRemoval)return{error:{message:'private provider details'}};files=[];return{data:[]};}})},auth:{admin:{deleteUser:async()=>{calls.push('deleteAuth');return{data:{}};}}}};
+ const client={calls,from:()=>({select:()=>({eq:async()=>({data:[{status:'requested'}]})})}),rpc:async(name)=>{calls.push(name);return {data:name==='konnekt_deletion_push_plan'?{app_ids:[],pending_targets:0,targets:[]}:name.endsWith('_plan')?{account_exists:true,owned_files:files.length}:name.endsWith('_files')?[...files]:null};},storage:{from:()=>({remove:async paths=>{calls.push(['remove',paths]);if(failRemoval)return{error:{message:'private provider details'}};files=[];return{data:[]};}})},auth:{admin:{deleteUser:async()=>{calls.push('deleteAuth');return{data:{}};}}}};
  return client;
 }
 const config={projectUrl:'https://oiwtfkgrnpzirghbsvim.supabase.co',deletionUserId:A,allowStagingDeletion:true,disposableStagingAccount:true,backupVerified:true,pushProvider:'none'};
 test('operator deletion defaults to plan-only; execution removes storage through API before Auth and completion',async()=>{
- const client=fakeClient();assert.equal((await deleteStagingAccount({client,config})).status,'PLAN_ONLY');assert.deepEqual(client.calls,['konnekt_deletion_plan']);
+ const client=fakeClient();assert.equal((await deleteStagingAccount({client,config})).status,'PLAN_ONLY');assert.deepEqual(client.calls,['konnekt_deletion_plan','konnekt_deletion_push_plan']);
  await assert.rejects(deleteStagingAccount({client,config,execute:true,confirmUserId:B}),/matching/);
-  await assert.rejects(deleteStagingAccount({client,config:{...config,pushProvider:'onesignal'},execute:true,confirmUserId:A}),/External push/);
+  await assert.rejects(deleteStagingAccount({client,config:{...config,pushProvider:'onesignal'},execute:true,confirmUserId:A}),/provider/);
  client.calls.length=0;
  assert.equal((await deleteStagingAccount({client,config,execute:true,confirmUserId:A})).status,'COMPLETED');
  assert(client.calls.findIndex(c=>Array.isArray(c))<client.calls.indexOf('deleteAuth'));assert(client.calls.indexOf('deleteAuth')<client.calls.indexOf('konnekt_deletion_complete'));

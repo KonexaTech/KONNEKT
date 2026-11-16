@@ -12,6 +12,7 @@ test('native login uses only the current authenticated account opaque alias, nev
  const store=storage(),alias='ks_'+'b'.repeat(64),calls=[];
  let data={user_id:'A',external_id:alias};const client={rpc:async(name,args)=>{calls.push({name,args});return{data};}};
  assert.equal(await resolvePushIdentity({client,userId:'A',storage:store}),alias);assert.equal(calls[0].name,'konnekt_register_push_session');assert.match(calls[0].args.p_device_key,/^[a-f0-9]{64}$/);assert.equal(calls[0].args.p_messages,true);
+ await assert.rejects(resolvePushIdentity({client,userId:'A',appId:'wrong-app',storage:store}),/unavailable/);
  data={user_id:'B',external_id:alias};await assert.rejects(resolvePushIdentity({client,userId:'A',storage:store}),/unavailable/);
  data={user_id:'A',external_id:'A'};await assert.rejects(resolvePushIdentity({client,userId:'A',storage:store}),/unavailable/);
 });
