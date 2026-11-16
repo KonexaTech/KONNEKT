@@ -19,7 +19,11 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm test
-      - run: npm run build
-      - run: npm run build:mobile
       - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Smoke-test the production website build
+        run: KONNEKT_TEST_PREVIEW=1 node --test tests/browser/release-build.test.mjs
+      - run: npm run build:mobile
+      - name: Smoke-test the production mobile web bundle
+        run: KONNEKT_TEST_PREVIEW=1 node --test tests/browser/release-build.test.mjs
       - run: npm run test:browser

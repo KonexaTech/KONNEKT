@@ -353,12 +353,34 @@ test('unenforced privacy controls cannot promise restrictions and blocked count 
 }));
 
 
-test('live setup does not offer unenforced private or follower audiences',async()=>run({},async({page})=>{
-  await openFeature(page,'Live rooms');
-  assert.equal(await page.getByRole('button',{name:'Private rooms unavailable',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'Followers rooms unavailable',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'Public room audience',exact:true}).isDisabled(),false);
-}));
+for (const width of [390, 1280]) {
+ test(`deferred live and payment routes remain inert and return to core features at width ${width}`,async()=>run({width},async({page,requests})=>{
+  await page.evaluate(()=>{
+    window.testMediaRequests=0;
+    navigator.mediaDevices.getUserMedia=async()=>{window.testMediaRequests++;throw new Error('Deferred route requested media');};
+  });
+  await page.getByRole('tab',{name:'Profile',exact:true}).click();
+  await page.getByText('☰  ALL FEATURES',{exact:true}).click();
+  for (const label of ['Live rooms','Creator earnings','Creator monetisation','Creator subscriptions','Brand partnerships']) {
+    await page.getByRole('button',{name:`Open ${label}`,exact:true}).click();
+    await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+    assert.equal(await page.getByPlaceholder(/bank|card|live title/i).count(),0);
+    await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+    await page.getByText('All features',{exact:true}).waitFor();
+  }
+  await page.getByRole('button',{name:'Open Creator studio',exact:true}).click();
+  await page.getByText('Go live (unavailable)',{exact:true}).click();
+  await page.getByText('Unavailable in this release',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.testMediaRequests),0);
+  assert.equal(requests.filter(r=>/live_stream|payment|payout|subscription|gift/.test(r.path)).length,0);
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
+  assert(!loaded.some(url=>/\/screens\/(LiveStream|CreatorEarnings|CreatorPayout|CreatorMonetization|CreatorSubscriptions|CreatorBrandPartnerships)/.test(url)),'deferred implementations must not mount or load');
+  await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+  await page.getByText('‹ Back',{exact:true}).click();
+  await page.getByRole('button',{name:'Open Discover people',exact:true}).click();
+  await page.getByLabel('Search Discover').waitFor();
+ }));
+}
 
 
 test('route chunks load on demand and a failed screen download offers reload without replacing keys',async()=>{
@@ -369,9 +391,13 @@ test('route chunks load on demand and a failed screen download offers reload wit
   assert(initialKey,'registered key required before testing reload preservation');
   const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(item=>item.name));
   assert(!loaded.some(url=>url.includes('/screens/DiscoverScreen.jsx')),'Discover should not load in initial route');
-  const outage=route=>route.abort();await context.route('**/src/screens/DiscoverScreen.jsx',outage);
+  // Vite may append an HMR timestamp; the simulated outage must catch that URL too.
+  const chunk=/\/src\/screens\/DiscoverScreen\.jsx(?:\?.*)?$/;
+  let blocked=0;
+  const outage=route=>{blocked++;return route.abort();};await context.route(chunk,outage);
   await page.getByRole('tab',{name:'Discover',exact:true}).click();await page.getByText('KONNEKT could not open this screen',{exact:true}).waitFor();
-  await context.unroute('**/src/screens/DiscoverScreen.jsx',outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  assert(blocked>0,'a real screen request must be blocked');
+  await context.unroute(chunk,outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
   await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
   assert.equal(db.profiles.find(row=>row.id===ME).encryption_public_key,initialKey);
   for(const error of f.errors)assert.match(error,/DiscoverScreen|dynamically imported/);

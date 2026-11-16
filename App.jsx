@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { supabase } from './src/lib_supabase';
+import { deferredFeatures } from './src/services/releaseScope';
 import './src/konnekt-theme.css';
 
 const discoveredScreens = import.meta.glob('./src/screens/*.jsx', {
@@ -282,7 +283,8 @@ function AppShell() {
   }, []);
 
   const screenKey = routeAliases[currentRoute.name] || currentRoute.name;
-  const ActiveScreen = screenRegistry[screenKey];
+  const deferredFeature = deferredFeatures[screenKey];
+  const ActiveScreen = screenRegistry[deferredFeature ? 'DeferredFeature' : screenKey];
   const isMainTab = tabs.some(tab => tab.name === currentRoute.name);
 
   if (loading || (securityChecking && authorizedUser.current !== user?.id)) {
@@ -384,7 +386,7 @@ function AppShell() {
             navigation={navigation}
             route={{
               name: currentRoute.name,
-              params: currentRoute.params || {}
+              params: { ...currentRoute.params, deferredFeature }
             }}
             user={user}
             session={session}

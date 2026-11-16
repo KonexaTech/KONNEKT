@@ -4,7 +4,14 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { validateConfig, assertIsolation, STAGING_ORIGIN } from '../scripts/acceptance/staging-config.mjs';
+import { validateConfig, assertIsolation, STAGING_ORIGIN, acceptanceProxy } from '../scripts/acceptance/staging-config.mjs';
+test('staging browser proxy preserves direct local access and never logs proxy credentials',()=>{
+  assert.equal(acceptanceProxy({}),undefined);
+  const proxy=acceptanceProxy({HTTPS_PROXY:'http://fixture:private%20fixture@proxy.invalid:8080'});
+  assert.deepEqual(proxy,{server:'http://proxy.invalid:8080',bypass:'127.0.0.1,localhost',username:'fixture',password:'private fixture'});
+  assert.throws(()=>acceptanceProxy({KONNEKT_ACCEPTANCE_PROXY:'invalid PRIVATE_FIXTURE_VALUE'}),e=>!e.message.includes('PRIVATE_FIXTURE_VALUE')&&e.message.includes('not logged'));
+  assert.throws(()=>acceptanceProxy({HTTPS_PROXY:'file:///private/path'}),/Invalid acceptance/);
+});
 const fixture = () => ({ projectUrl: STAGING_ORIGIN, publishableKey: 'sb_publishable_fixture', confirmStagingWrites: true, accounts: ['a','b','c'].map(x => ({ email: `${x}@example.invalid`, password: 'fixture-only', username: `fixture_${x}` })) });
 test('live acceptance rejects production, unknown projects, privileged keys and unapproved writes', () => {
   assert.equal(validateConfig(fixture()).accounts.length, 3);

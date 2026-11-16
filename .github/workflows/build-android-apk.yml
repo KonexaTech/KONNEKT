@@ -8,6 +8,10 @@ on:
         description: Build an isolated staging APK
         type: boolean
         default: false
+      ephemeral_staging_signing:
+        description: Explicit fresh-install-only test build without stable signing; cannot guarantee updates
+        type: boolean
+        default: false
       staging_url:
         description: Optional staging Supabase URL (used when repository variable is absent)
         type: string
@@ -46,6 +50,20 @@ jobs:
       KONNEKT_BUILD_TARGET: ${{ inputs.staging && 'staging' || 'production' }}
 
     steps:
+      - name: Check stable staging signing configuration
+        if: ${{ inputs.staging && !inputs.ephemeral_staging_signing }}
+        env:
+          KONNEKT_STAGING_KEYSTORE_BASE64: ${{ secrets.KONNEKT_STAGING_KEYSTORE_BASE64 }}
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+        run: |
+          for NAME in KONNEKT_STAGING_KEYSTORE_BASE64 KONNEKT_STAGING_KEYSTORE_PASSWORD KONNEKT_STAGING_KEY_ALIAS KONNEKT_STAGING_KEY_PASSWORD; do
+            if [ -z "${!NAME}" ]; then
+              echo "Missing Actions secret: $NAME. An owner must configure stable signing."
+              exit 1
+            fi
+          done
       - name: Download repository
         uses: actions/checkout@v4
 
@@ -129,11 +147,27 @@ jobs:
 
           grep -n "minSdkVersion" android/variables.gradle
 
+      - name: Configure stable staging signing
+        id: staging_signing
+        if: ${{ inputs.staging && !inputs.ephemeral_staging_signing }}
+        env:
+          KONNEKT_STAGING_KEYSTORE_BASE64: ${{ secrets.KONNEKT_STAGING_KEYSTORE_BASE64 }}
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+        run: node scripts/android-staging-signing.mjs
+
       - name: Build Android APK
         working-directory: android
+        env:
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
         run: ./gradlew --no-daemon clean assembleDebug
 
       - name: Verify APK file and signature
+        env:
+          EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
 
@@ -149,15 +183,26 @@ jobs:
             exit 1
           fi
 
-          "$APKSIGNER" verify --verbose "$APK"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/konnekt-apk-signature.txt"
+          cat "$RUNNER_TEMP/konnekt-apk-signature.txt"
+          if [ -n "$EXPECTED_STAGING_CERTIFICATE" ]; then
+            ACTUAL_CERTIFICATE="$(awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}' "$RUNNER_TEMP/konnekt-apk-signature.txt")"
+            test "$ACTUAL_CERTIFICATE" = "$EXPECTED_STAGING_CERTIFICATE"
+          fi
 
           echo "APK signature verification passed."
 
       - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.staging && 'KONNEKT-Android-API26-Staging' || 'KONNEKT-Android-API26-Test' }}
+          name: ${{ inputs.staging && (inputs.ephemeral_staging_signing && 'KONNEKT-Android-API26-Staging-Fresh-Install-Only' || 'KONNEKT-Android-API26-Staging-Stable') || 'KONNEKT-Android-API26-Test' }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Remove staging keystore
+        if: ${{ always() && inputs.staging && !inputs.ephemeral_staging_signing }}
+        run: |
+          if [ -n "$KONNEKT_SIGNING_KEYSTORE_PATH" ]; then
+            rm -f -- "$KONNEKT_SIGNING_KEYSTORE_PATH"
+          fi
           

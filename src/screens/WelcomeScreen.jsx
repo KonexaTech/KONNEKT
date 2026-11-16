@@ -35,7 +35,7 @@ export default function WelcomeScreen({ navigation }) {
 
         <Text style={styles.description}>
           Chat with friends, share your moments, watch amazing
-          videos and go live. Everything you love about social
+          videos and discover people. Everything you love about social
           media in one place.
         </Text>
       </View>
@@ -46,7 +46,7 @@ export default function WelcomeScreen({ navigation }) {
           ['💬', 'Private messaging'],
           ['📸', '24-hour statuses'],
           ['🎬', 'Short videos'],
-          ['🔴', 'Live streaming'],
+          ['◎', 'Discover people'],
         ].map(([icon, label]) => (
           <View style={styles.feature} key={label}>
             <Text style={styles.featureIcon}>{icon}</Text>
