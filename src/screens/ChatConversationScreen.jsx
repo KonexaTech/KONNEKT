@@ -8,7 +8,7 @@ import {
 
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
-import { chooseMedia, uploadMedia } from '../services/media';
+import { chooseMedia, uploadMedia, cleanupUnusedChatMedia } from '../services/media';
 import { isConversationId } from '../services/conversationId';
 import {
   ensureKonnektIdentity,
@@ -536,11 +536,11 @@ export default function ChatConversationScreen({ navigation, route }) {
       }, true);
 
       if (!sent) {
-        // The upload succeeded but no message references it. Best-effort cleanup.
-        const { error: cleanupError } = await supabase.storage
-          .from('konnekt-chat-media').remove([uploaded.path]);
-        if (cleanupError) {
-          setNotice('Message failed and its unused attachment could not be removed.');
+        try {
+          const removed = await cleanupUnusedChatMedia(user.id, conversationId, uploaded.path);
+          if (!removed) setNotice('Your attachment was saved. Refresh the chat before retrying.');
+        } catch {
+          setNotice('Message status could not be confirmed. Its attachment was retained. Refresh the chat before retrying.');
         }
       }
     } catch (e) {
@@ -615,7 +615,7 @@ export default function ChatConversationScreen({ navigation, route }) {
     const mine = item.sender_id === user?.id;
 
     return (
-      <View style={[s.row, mine ? s.mine : s.theirs]}>
+      <View testID={`message-${item.id}`} style={[s.row, mine ? s.mine : s.theirs]}>
         <View style={[s.bubble, mine ? s.myBubble : s.otherBubble]}>
           {item.media_path ? (
             <ChatAttachment
@@ -640,13 +640,10 @@ export default function ChatConversationScreen({ navigation, route }) {
               hour: '2-digit',
               minute: '2-digit'
             })}
-            {mine
-              ? receiptMap[item.id]?.read_at
-                ? '  ✓✓'
-                : receiptMap[item.id]?.delivered_at
-                  ? '  ✓✓'
-                  : '  ✓'
-              : ''}
+            {mine && <Text
+              accessibilityLabel={receiptMap[item.id]?.read_at ? 'Message read' : receiptMap[item.id]?.delivered_at ? 'Message delivered' : 'Message sent'}
+              style={receiptMap[item.id]?.read_at ? {color:'#72BEFF'} : undefined}
+            >{receiptMap[item.id]?.read_at || receiptMap[item.id]?.delivered_at ? '  ✓✓' : '  ✓'}</Text>}
           </Text>
         </View>
       </View>
@@ -834,6 +831,19 @@ function ChatAttachment({
         src={url}
         controls
         style={{ width: '220px', marginBottom: 8 }}
+      />
+    );
+  }
+
+  if (type === 'video') {
+    return (
+      <video
+        src={url}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label="Video attachment"
+        style={{ width: '220px', maxWidth: '100%', marginBottom: 8, borderRadius: 10 }}
       />
     );
   }

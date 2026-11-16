@@ -33,8 +33,13 @@ const imageHash = createHash('sha256').update(image).digest('hex');
 
 async function tab(page, name) {
   const target = page.getByRole('tab', { name, exact:true });
-  for(let n=0;n<5 && !(await target.count());n++) await page.getByText(/^‹(?: Back.*)?$/).first().click();
-  await target.click();
+  const back = page.getByText(/^‹(?: Back.*)?$/).first();
+  for(let n=0;n<6;n++){
+    await target.or(back).first().waitFor({state:'visible'});
+    if(await target.isVisible()){await target.click();return;}
+    await back.click();
+  }
+  throw new Error('Could not return to a main tab.');
 }
 async function hub(page) { await tab(page,'Profile'); await page.getByText('☰  ALL FEATURES', { exact:true }).click(); }
 async function openDirect(page, username) {
@@ -101,7 +106,25 @@ async function send(page,conversationId,label,attachment=false) {
   assert.equal(rows.length,1,'message duplicated or absent');
   await page.getByText(text,{exact:true}).waitFor();
   report.protectedMessages.push({id:rows[0].id,conversationId,label});
-  return {id:rows[0].id,text};
+  return {id:rows[0].id,text,mediaPath:attachment?payload.media_path:null};
+}
+async function denyFiles(paths){
+  const result=await pages[2].evaluate(async({moduleUrl,paths})=>{
+    const {supabase}=await import(moduleUrl);
+    const before=await supabase.auth.getUser();
+    if(before.error||!before.data.user)throw Error('Outsider session is not authenticated');
+    const probes=[];
+    for(const path of paths){
+      const download=await supabase.storage.from('konnekt-chat-media').download(path);
+      const signed=await supabase.storage.from('konnekt-chat-media').createSignedUrl(path,60);
+      probes.push({readable:!!download.data,signed:!!signed.data?.signedUrl,downloadStatus:Number(download.error?.status||download.error?.statusCode),signedStatus:Number(signed.error?.status||signed.error?.statusCode)});
+    }
+    const after=await supabase.auth.getUser();
+    if(after.error||after.data.user?.id!==before.data.user.id)throw Error('Outsider session changed');
+    return probes;
+  },{moduleUrl,paths});
+  assert.equal(result.length,paths.length);
+  for(const probe of result){assert.equal(probe.readable,false);assert.equal(probe.signed,false);assert([400,403,404].includes(probe.downloadStatus));assert([400,403,404].includes(probe.signedStatus));}
 }
 async function receive(page,text,attachment=false) {
   await page.getByText(text,{exact:true}).waitFor(); // No reload/polling of message data.
@@ -176,12 +199,19 @@ try {
   assert.equal(await openDirect(pages[1],profiles[0].username),directId);
   await Promise.all([observe(pages[1]),observe(pages[2])]);
   const before=await send(pages[2],controlId,'outsider control before direct');await waitEvent(pages[2],before.id);
-  const directMessages=[];
+  const directMessages=[],directFiles=[];
   for(const [sender,recipient,label,attachment] of [[0,1,'direct A to B',false],[1,0,'direct B to A',false],[0,1,'direct image A to B',true],[1,0,'direct image B to A',true]]){
-    phase=label;const sent=await send(pages[sender],directId,label,attachment);await receive(pages[recipient],sent.text,attachment);directMessages.push(sent.id);
+    phase=label;const sent=await send(pages[sender],directId,label,attachment);await receive(pages[recipient],sent.text,attachment);directMessages.push(sent.id);if(sent.mediaPath)directFiles.push(sent.mediaPath);
   }
+  phase='direct-read-receipt';await tab(pages[1],'Profile');
+  const receiptProbe=await send(pages[0],directId,'read receipt waits for recipient');directMessages.push(receiptProbe.id);
+  const receiptBubble=pages[0].getByText(receiptProbe.text,{exact:true}).locator('..');
+  await receiptBubble.getByLabel('Message sent',{exact:true}).waitFor();
+  assert.equal(await openDirect(pages[1],profiles[0].username),directId);await receive(pages[1],receiptProbe.text);
+  await receiptBubble.getByLabel('Message read',{exact:true}).waitFor();pass('read receipt changes from sent to read when the recipient opens the conversation');
   const after=await send(pages[2],controlId,'outsider control after direct');
   phase='direct-realtime-isolation';await checkIsolation(directId,directMessages,before.id,after.id);pass('direct encrypted text/images in both directions; member Realtime delivery and outsider exclusion with positive controls');
+  phase='direct-file-isolation';await denyFiles(directFiles);pass('authenticated outsider cannot download direct attachments or obtain signed links');
   phase='group-create-ui';await hub(pages[0]);await pages[0].getByRole('button',{name:'Open Create a group',exact:true}).click();
   const groupName=`TEST ACCEPTANCE ${report.runId.slice(0,8)}`;
   await pages[0].getByPlaceholder('Enter group name').fill(groupName);
@@ -194,12 +224,13 @@ try {
   const membership=await pages[0].evaluate(async ({moduleUrl,groupId})=>{const {supabase}=await import(moduleUrl);const {data,error}=await supabase.from('conversation_members').select('user_id').eq('conversation_id',groupId);if(error)throw error;return data.map(r=>r.user_id);},{moduleUrl,groupId});
   assert.deepEqual(membership.sort(),[profiles[0].id,profiles[1].id].sort());
   const groupBefore=await send(pages[2],controlId,'outsider control before group');await waitEvent(pages[2],groupBefore.id);
-  const groupMessages=[];
+  const groupMessages=[],groupFiles=[];
   for(const [sender,recipient,label,attachment] of [[0,1,'group A to B',false],[1,0,'group B to A',false],[0,1,'group image A to B',true],[1,0,'group image B to A',true]]){
-    phase=label;const sent=await send(pages[sender],groupId,label,attachment);await receive(pages[recipient],sent.text,attachment);groupMessages.push(sent.id);
+    phase=label;const sent=await send(pages[sender],groupId,label,attachment);await receive(pages[recipient],sent.text,attachment);groupMessages.push(sent.id);if(sent.mediaPath)groupFiles.push(sent.mediaPath);
   }
   const groupAfter=await send(pages[2],controlId,'outsider control after group');
   phase='group-realtime-isolation';await checkIsolation(groupId,groupMessages,groupBefore.id,groupAfter.id);pass('group encrypted text/images in both directions; actual membership and outsider Realtime exclusion');
+  phase='group-file-isolation';await denyFiles(groupFiles);pass('authenticated outsider cannot download group attachments or obtain signed links');
   phase='refresh-persistence';await Promise.all(pages.slice(0,2).map(p=>p.reload()));
   for(const page of pages.slice(0,2)){await tab(page,'Chats');await page.getByText(groupName,{exact:true}).click();await receive(page,`TEST ACCEPTANCE ${report.runId} group A to B`);await receive(page,`TEST ACCEPTANCE ${report.runId} group B to A`);}
   pass('both independent browser refreshes retain keys and decrypt group history');

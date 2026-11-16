@@ -1,8 +1,57 @@
 import { after,before,test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { startServer,setup,ME,OTHER,CHAT } from './helpers.mjs';
 let server;
 before(async()=>{server=await startServer();});after(()=>server?.stop());
+
+test('sent, delivered and read receipts have distinct accessible states and read ticks are visibly highlighted',async()=>{
+ const id='77777777-7777-4777-8777-777777777777';
+ for(const [label,delivered_at,read_at] of [['Message sent',null,null],['Message delivered','2026-11-16T00:00:00Z',null],['Message read','2026-11-16T00:00:00Z','2026-11-16T00:00:01Z']]){
+  const f=await setup(server.base,{db:{messages:[{id,conversation_id:CHAT,sender_id:ME,body:'Receipt state fixture',is_encrypted:false,created_at:'2026-11-16T00:00:00Z'}],message_receipts:delivered_at?[{message_id:id,user_id:OTHER,delivered_at,read_at}]:[]}});
+  try{
+   await f.page.getByRole('tab',{name:'Chats',exact:true}).click();await f.page.getByText('Other Member',{exact:true}).click();
+   const state=f.page.getByLabel(label,{exact:true});await state.waitFor();
+   if(read_at)assert.equal(await state.evaluate(node=>getComputedStyle(node).color),'rgb(114, 190, 255)');
+   assert.deepEqual(f.errors,[]);
+  }finally{await f.close();}
+ }
+});
+
+test('chat video attachments play inline with controls instead of requiring a new window',async()=>{
+ const id='88888888-8888-4888-8888-888888888888';
+ const f=await setup(server.base,{db:{messages:[{id,conversation_id:CHAT,sender_id:OTHER,body:'Video fixture',is_encrypted:false,media_path:'fixture/video.webm',media_type:'video',created_at:'2026-11-16T00:00:00Z'}]}});
+ try{
+  const video=await readFile(new URL('../fixtures/social-video.webm',import.meta.url));
+  await f.context.route('**/storage/v1/object/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
+  await f.page.getByRole('tab',{name:'Chats',exact:true}).click();await f.page.getByText('Other Member',{exact:true}).click();
+  const player=f.page.getByLabel('Video attachment',{exact:true});await player.waitFor();
+  assert(await player.evaluate(el=>el.controls&&el.playsInline&&el.src.startsWith('blob:')));
+  await player.evaluate(async el=>{el.muted=true;await el.play();});
+  await f.page.waitForFunction(()=>document.querySelector('video')?.currentTime>0.1);
+  assert.deepEqual(f.errors,[]);
+ }finally{await f.close();}
+});
+
+test('voice-note cleanup preserves a server-committed message after a lost INSERT response and retains media if verification fails',async()=>{
+ const f=await setup(server.base);
+ try{
+  await f.page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  f.db.profiles[1].encryption_public_key=await f.page.evaluate(async()=>{const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);return JSON.stringify(await crypto.subtle.exportKey('jwk',pair.publicKey));});
+  await f.context.route('**/rest/v1/messages',async route=>{
+   if(route.request().method()!=='POST')return route.fallback();
+   f.db.messages.push({id:'99999999-9999-4999-8999-999999999999',...route.request().postDataJSON()});
+   await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Lost fixture response'})});
+  });
+  await f.page.evaluate(async({me,chat})=>{await(await import('/KONNEKT/src/services/voiceMessages.js')).sendEncryptedVoiceMessage(new File(['voice bytes'],'fixture.webm',{type:'audio/webm'}),chat,me);},{me:ME,chat:CHAT});
+  assert.equal(f.db.messages.length,1);
+  assert.equal(f.requests.filter(r=>r.method==='DELETE'&&r.path.includes('/storage/')).length,0);
+  f.failures.set('GET:messages',{message:'Cannot confirm fixture status'});
+  const error=await f.page.evaluate(async({me,chat})=>{try{await(await import('/KONNEKT/src/services/voiceMessages.js')).sendEncryptedVoiceMessage(new File(['more voice bytes'],'fixture.webm',{type:'audio/webm'}),chat,me);}catch(error){return error.message;}},{me:ME,chat:CHAT});
+  assert.match(error,/status could not be confirmed.*retained/);
+  assert.equal(f.requests.filter(r=>r.method==='DELETE'&&r.path.includes('/storage/')).length,0);
+ }finally{await f.close();}
+});
 
 test('encrypted key backup recovers in a genuinely isolated browser and decrypts original ciphertext',async()=>{
  const source=await setup(server.base);let restored;

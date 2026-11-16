@@ -1,5 +1,5 @@
 import { supabase } from '../lib_supabase';
-import { uploadMedia } from './media';
+import { uploadMedia, cleanupUnusedChatMedia } from './media';
 import { isConversationId } from './conversationId';
 import {
   getGroupKonnektCryptoKey, getKonnektConversationCryptoKey,
@@ -39,13 +39,12 @@ export async function sendEncryptedVoiceMessage(file, conversationId, userId) {
   });
   if (sendError) throw sendError;
   } catch (error) {
-    // A failed message must not leave an unreferenced encrypted upload behind.
+    // Preserve a committed message's file if only its response was lost.
     try {
-      const { error: cleanupError } = await supabase.storage
-        .from('konnekt-chat-media').remove([uploaded.path]);
-      if (cleanupError) throw cleanupError;
+      const removed = await cleanupUnusedChatMedia(userId, conversationId, uploaded.path);
+      if (!removed) return; // The owned message was saved successfully.
     } catch {
-      throw new Error('Voice note failed and its unused attachment could not be removed. Please try again later.');
+      throw new Error('Voice note status could not be confirmed. Its attachment was retained. Refresh the chat before retrying.');
     }
     throw error;
   }

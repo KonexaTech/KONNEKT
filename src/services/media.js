@@ -35,6 +35,19 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   return { path, type };
 }
 
+// A lost INSERT response does not prove that the message failed. Confirm the
+// upload is unreferenced before deleting it; retain it if this lookup fails.
+export async function cleanupUnusedChatMedia(userId, conversationId, path) {
+  if (!userId || !conversationId || !path) throw new Error('Cannot verify unused attachment.');
+  const { data, error } = await supabase.from('messages').select('id')
+    .eq('sender_id', userId).eq('conversation_id', conversationId).eq('media_path', path).limit(1);
+  if (error) throw error;
+  if (data?.length) return false;
+  const removed = await supabase.storage.from('konnekt-chat-media').remove([path]);
+  if (removed.error) throw removed.error;
+  return true;
+}
+
 // Only remove an upload after a successful lookup proves no owned row uses it.
 // Ambiguous network failures retain media instead of breaking a committed post.
 export async function cleanupUnusedPublicMedia(table, userId, media) {

@@ -37,5 +37,12 @@ test('staging grant repairs protect phones and anonymous RPCs while preserving a
       const {rows:[row]}=await db.query(`select has_function_privilege('anon','public.${signature}','EXECUTE') as anon,has_function_privilege('authenticated','public.${signature}','EXECUTE') as member`);
       assert.equal(row.anon,false);assert.equal(row.member,true);
     }
+    await db.exec(await readFile('docs/release/staging-unused-direct-rpc.sql','utf8'));
+    await db.exec(await readFile('docs/release/staging-unused-direct-rpc.sql','utf8'));
+    await actor(B);
+    await assert.rejects(db.query(`select create_direct_conversation('${A}')`),/permission denied/);
+    assert.equal((await db.query("select konnekt_start_direct_conversation('fixture_a') as id")).rows[0].id,direct);
+    const newGroup=await db.query(`select konnekt_create_group_conversation('After revoke','',array['${A}'::uuid]) as id`);
+    assert(newGroup.rows[0].id);
   } finally {await db.close();}
 });
