@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 export default function StatusPrivacyScreen({ navigation, route }) {
-  const [privacy, setPrivacy] = useState('contacts');
+  const [privacy, setPrivacy] = useState('everyone');
 
   const [excludedContacts, setExcludedContacts] = useState([]);
 
@@ -42,23 +42,7 @@ export default function StatusPrivacyScreen({ navigation, route }) {
     );
   };
 
-  const savePrivacy = () => {
-    const settings = {
-      privacy,
-      selectedContacts: excludedContacts,
-    };
-
-    if (route?.params?.onSave) {
-      route.params.onSave(settings);
-    }
-
-    Alert.alert(
-      'KONNEKT',
-      'Your status privacy preference has been selected. It will be saved to your account when backend integration is added.'
-    );
-
-    navigation.goBack();
-  };
+  const savePrivacy = () => Alert.alert('Audience restrictions unavailable', 'Active statuses are visible to signed-in members. Contact-only audiences are not enforced yet.');
 
   return (
     <ScrollView style={styles.container}>
@@ -73,14 +57,15 @@ export default function StatusPrivacyScreen({ navigation, route }) {
       <Text style={styles.heading}>Who can see my status?</Text>
 
       <Text style={styles.description}>
-        Choose who can view the photos, videos and updates
-        you share on KONNEKT.
+        Active statuses are visible to signed-in members. Restricted audiences are
+        unavailable. Uploaded media uses public links; list expiry does not revoke them.
       </Text>
 
       {options.map((option) => (
         <TouchableOpacity
           key={option.id}
           style={styles.option}
+          disabled
           onPress={() => setPrivacy(option.id)}
         >
           <View style={styles.optionText}>
@@ -98,7 +83,7 @@ export default function StatusPrivacyScreen({ navigation, route }) {
         </TouchableOpacity>
       ))}
 
-      {privacy !== 'contacts' && (
+      {['except', 'only'].includes(privacy) && (
         <View style={styles.contactsSection}>
           <Text style={styles.contactsHeading}>
             {privacy === 'except'
@@ -140,7 +125,7 @@ export default function StatusPrivacyScreen({ navigation, route }) {
         onPress={savePrivacy}
       >
         <Text style={styles.saveButtonText}>
-          Save Privacy Settings
+          Audience restrictions unavailable
         </Text>
       </TouchableOpacity>
 

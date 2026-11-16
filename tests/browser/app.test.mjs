@@ -335,3 +335,45 @@ test('leaving voice recording while permission is pending stops any late-granted
   await page.getByText('‹ Back',{exact:true}).click();await page.getByPlaceholder('Message securely…').waitFor();
   await page.evaluate(()=>window.__grantVoice());await page.waitForFunction(()=>window.__lateVoice.getTracks().every(track=>track.readyState==='ended'));
 }));
+
+
+test('unenforced privacy controls cannot promise restrictions and blocked count comes from data',async()=>run({db:{user_blocks:[]}},async({page,requests})=>{
+  await openFeature(page,'Account settings');
+  await page.getByRole('switch').first().waitFor();
+  assert.equal(await page.getByRole('switch').count(),3);
+  for(const control of await page.getByRole('switch').all())assert.equal(await control.isDisabled(),true);
+  await page.getByText(/^‹(?: Back.*)?$/).first().click();
+  const countResponse=page.waitForResponse(response=>response.request().method()==='HEAD'&&response.url().includes('/rest/v1/user_blocks'));
+  await page.getByRole('button',{name:'Open Privacy settings',exact:true}).click();
+  await countResponse;
+  await page.getByText(/Audience restrictions and receipt controls are unavailable/).waitFor();
+  assert.equal(await page.getByLabel('Read receipts (unavailable)',{exact:true}).isDisabled(),true);
+  assert.equal(await page.getByText('3',{exact:true}).count(),0);
+  assert(requests.some(r=>r.method==='HEAD'&&r.path.endsWith('/user_blocks')));
+}));
+
+
+test('live setup does not offer unenforced private or follower audiences',async()=>run({},async({page})=>{
+  await openFeature(page,'Live rooms');
+  assert.equal(await page.getByRole('button',{name:'Private rooms unavailable',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'Followers rooms unavailable',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'Public room audience',exact:true}).isDisabled(),false);
+}));
+
+
+test('route chunks load on demand and a failed screen download offers reload without replacing keys',async()=>{
+ const f=await setup(server.base);try{
+  const {page,context,db}=f;await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  const initialKey=db.profiles.find(row=>row.id===ME).encryption_public_key;
+  assert(initialKey,'registered key required before testing reload preservation');
+  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(item=>item.name));
+  assert(!loaded.some(url=>url.includes('/screens/DiscoverScreen.jsx')),'Discover should not load in initial route');
+  const outage=route=>route.abort();await context.route('**/src/screens/DiscoverScreen.jsx',outage);
+  await page.getByRole('tab',{name:'Discover',exact:true}).click();await page.getByText('KONNEKT could not open this screen',{exact:true}).waitFor();
+  await context.unroute('**/src/screens/DiscoverScreen.jsx',outage);await page.getByRole('button',{name:'Reload KONNEKT',exact:true}).click();await page.getByRole('tab',{name:'Profile',exact:true}).waitFor();
+  await page.evaluate(async me=>{const {ensureKonnektIdentity}=await import('/KONNEKT/src/services/konnektEncryption.js');await ensureKonnektIdentity(me);},ME);
+  assert.equal(db.profiles.find(row=>row.id===ME).encryption_public_key,initialKey);
+  for(const error of f.errors)assert.match(error,/DiscoverScreen|dynamically imported/);
+ }finally{await f.close();}
+});

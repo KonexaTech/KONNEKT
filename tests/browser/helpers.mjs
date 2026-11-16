@@ -8,7 +8,7 @@ export const OTHER = '22222222-2222-4222-8222-222222222222';
 export const CHAT = '33333333-3333-4333-8333-333333333333';
 export const user = { id: ME, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: { provider: 'email' }, user_metadata: { full_name: 'Fixture Member' }, created_at: '2026-01-01T00:00:00Z' };
 const segment = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-export const session = { access_token: `${segment({ alg: 'HS256', typ: 'JWT' })}.${segment({ sub: ME, exp: 4102444800, role: 'authenticated', aal: 'aal1' })}.fixture-signature`, refresh_token: 'fixture-refresh-token', expires_in: 3600, expires_at: 4102444800, token_type: 'bearer', user };
+export const session = { access_token: `${segment({ alg: 'HS256', typ: 'JWT' })}.${segment({ sub: ME, exp: 4102444800, role: 'authenticated', aal: 'aal1' })}.${segment('fixture-signature')}`, refresh_token: 'fixture-refresh-token', expires_in: 3600, expires_at: 4102444800, token_type: 'bearer', user };
 
 export async function startServer() {
   const probe = createServer();

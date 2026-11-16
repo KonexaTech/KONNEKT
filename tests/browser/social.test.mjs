@@ -4,12 +4,12 @@ import { readFile } from 'node:fs/promises';
 import { startServer, setup, ME, OTHER } from './helpers.mjs';
 let server;
 before(async()=>{server=await startServer();});after(()=>server?.stop());
-const reel=(id,caption,published_at)=>({id,user_id:OTHER,caption,media_path:`reels/${OTHER}/${id}.mp4`,visibility:'public',published_at,created_at:published_at,deleted_at:null});
+const reel=(id,caption,published_at)=>({id,user_id:OTHER,caption,media_path:`reels/${OTHER}/${id}.webm`,visibility:'public',published_at,created_at:published_at,deleted_at:null});
 const reels=[reel('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Newest fixture Reel #new','2026-11-15T00:00:00Z'),reel('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Selected fixture Reel #selected','2026-11-14T00:00:00Z')];
 async function app(options={}){
   const fixture=await setup(server.base,{db:{reels,reel_likes:[],reel_comments:[],...options.db}});
-  const video=await readFile(new URL('../fixtures/social-video.mp4',import.meta.url));
-  await fixture.context.route('**/storage/v1/object/public/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/mp4',body:video}));
+  const video=await readFile(new URL('../fixtures/social-video.webm',import.meta.url));
+  await fixture.context.route('**/storage/v1/object/public/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
   await fixture.page.reload();fixture.page.setDefaultTimeout(12000);return fixture;
 }
 test('multi-Reel feed stays within the viewport and a Discover selection opens that Reel',async()=>{
@@ -48,7 +48,7 @@ test('Reel playback, like rollback/persistence and comment retries use actual UI
 });
 test('an open status removes its content and stops video at expiry',{timeout:25000},async()=>{
   const now=Date.now();
-  const f=await app({db:{statuses:[{id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',user_id:OTHER,text_content:'Expiring fixture status',media_url:`https://itkoagpigiifodfhoujt.supabase.co/storage/v1/object/public/konnekt-public-media/status.mp4`,media_type:'video',created_at:new Date(now).toISOString(),expires_at:new Date(now+60000).toISOString()}]}});
+  const f=await app({db:{statuses:[{id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',user_id:OTHER,text_content:'Expiring fixture status',media_url:`https://itkoagpigiifodfhoujt.supabase.co/storage/v1/object/public/konnekt-public-media/status.webm`,media_type:'video',created_at:new Date(now).toISOString(),expires_at:new Date(now+60000).toISOString()}]}});
   try{
     const {page}=f;await page.clock.install({time:now});await page.getByRole('tab',{name:'Status',exact:true}).click();
     await page.getByText('Other Member',{exact:true}).click();await page.getByText('Expiring fixture status',{exact:true}).waitFor();
@@ -68,7 +68,7 @@ test('failed Reel and Status inserts remove unused uploads; Status retry publish
     await page.getByPlaceholder('Add a caption before uploading (optional)').fill('Failed fixture Reel');
     failures.set('POST:reels',{message:'Fixture publication failure'});
     let chooser=page.waitForEvent('filechooser');await page.getByText('＋ Create Reel',{exact:true}).click();
-    await (await chooser).setFiles({name:'fixture.mp4',mimeType:'video/mp4',buffer:await readFile(new URL('../fixtures/social-video.mp4',import.meta.url))});
+    await (await chooser).setFiles({name:'fixture.webm',mimeType:'video/webm',buffer:await readFile(new URL('../fixtures/social-video.webm',import.meta.url))});
     await page.getByText('Fixture publication failure',{exact:true}).waitFor();
     assert.equal(requests.filter(r=>r.method==='DELETE'&&r.path.includes('/storage/')).length,1);
     assert.equal(db.reels.length,2);

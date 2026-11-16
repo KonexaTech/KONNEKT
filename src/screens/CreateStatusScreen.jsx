@@ -44,7 +44,7 @@ export default function CreateStatusScreen({ navigation }) {
   return <View style={s.container}>
     <TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back to Status</Text></TouchableOpacity>
     <Text style={s.title}>Create a status</Text>
-    <Text style={s.hint}>Share a thought, photo or short video. Your status expires after 24 hours.</Text>
+    <Text style={s.hint}>Share a thought, photo or short video. Your status leaves the list after 24 hours. Uploaded media uses public links that may remain accessible afterward.</Text>
     <TextInput style={s.input} value={text} onChangeText={setText} multiline maxLength={700} placeholder="What's happening?" placeholderTextColor="#BBA9CC"/>
     <TouchableOpacity style={s.secondary} onPress={pick}><Text style={s.secondaryText}>＋ Add photo or video</Text></TouchableOpacity>
     {!!file && <View style={s.fileRow}><Text style={s.file} numberOfLines={1}>{file.name}</Text><TouchableOpacity onPress={() => setFile(null)}><Text style={s.remove}>Remove</Text></TouchableOpacity></View>}

@@ -14,7 +14,6 @@ import { supabase } from './src/lib_supabase';
 import './src/konnekt-theme.css';
 
 const discoveredScreens = import.meta.glob('./src/screens/*.jsx', {
-  eager: true,
   import: 'default'
 });
 
@@ -22,7 +21,7 @@ const screenRegistry = Object.fromEntries(
   Object.entries(discoveredScreens).map(([filePath, component]) => {
     const fileName = filePath.split('/').pop().replace(/\.(jsx|js)$/, '');
     const routeName = fileName.replace(/Screen$/, '');
-    return [routeName, component];
+    return [routeName, React.lazy(() => component().then(screen => ({ default: screen })))];
   })
 );
 
@@ -56,7 +55,7 @@ const tabIcons = {
 };
 
 function AppShell() {
-  const { session, user, loading, recovery } = useAuth();
+  const { session, user, loading, recovery, securityChecking, mfaRequired, mfaError, accessReady } = useAuth();
   const [stack, setStack] = useState([{ name: 'Welcome', params: {} }]);
   const [lightMode, setLightMode] = useState(false);
   const seenIncomingCalls = React.useRef(new Set());
@@ -66,17 +65,22 @@ function AppShell() {
     seenIncomingCalls.current.clear();
   }, [user?.id]);
 
+  const boundary = React.useRef(null);
+  const authorizedUser = React.useRef(null);
+  if (!user || authorizedUser.current !== user.id) authorizedUser.current = null;
+  if (accessReady) authorizedUser.current = user.id;
+  const securityBlocked = mfaRequired || !!mfaError;
+  useEffect(() => { if (securityChecking || securityBlocked) Alert.dismissAll(); }, [securityChecking, securityBlocked]);
   useEffect(() => {
-    if (!loading) {
-      setStack([{
-        name: recovery ? 'PasswordReset' : user?.id ? 'Reels' : 'Welcome',
-        params: {}
-      }]);
-    }
-  }, [loading, recovery, user?.id]);
+    if (loading || securityChecking) return;
+    const next = JSON.stringify([user?.id, recovery, securityBlocked]);
+    if (boundary.current === next) return;
+    boundary.current = next;
+    setStack([{ name: securityBlocked ? 'VerifyAuthenticator' : recovery ? 'PasswordReset' : user?.id ? 'Reels' : 'Welcome', params: {} }]);
+  }, [loading, securityChecking, recovery, user?.id, securityBlocked]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !accessReady) return;
 
     let active = true;
 
@@ -238,12 +242,16 @@ function AppShell() {
       active = false;
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, accessReady]);
 
-  const currentRoute = stack[stack.length - 1] || {
+  const stackedRoute = stack[stack.length - 1] || {
     name: 'Welcome',
     params: {}
   };
+  const publicRoutes = ['Welcome', 'Login', 'SignUp'];
+  const currentRoute = securityBlocked ? { name: 'VerifyAuthenticator', params: {} }
+    : recovery ? { name: 'PasswordReset', params: {} }
+      : !user && !publicRoutes.includes(stackedRoute.name) ? { name: 'Welcome', params: {} } : stackedRoute;
 
   const navigate = useCallback((name, params = {}) => {
     setStack(previous => [...previous, { name, params }]);
@@ -277,7 +285,7 @@ function AppShell() {
   const ActiveScreen = screenRegistry[screenKey];
   const isMainTab = tabs.some(tab => tab.name === currentRoute.name);
 
-  if (loading) {
+  if (loading || (securityChecking && authorizedUser.current !== user?.id)) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.missingScreen}>
@@ -299,6 +307,7 @@ function AppShell() {
         barStyle={lightMode ? 'dark-content' : 'light-content'}
       />
 
+      <div inert={securityChecking ? '' : undefined} aria-hidden={securityChecking || undefined} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {isMainTab && session && (
         <>
           {/* KONNEKT BRAND HEADER */}
@@ -370,6 +379,7 @@ function AppShell() {
       {/* MAIN SCREEN CONTENT */}
       <View style={styles.screen}>
         {ActiveScreen ? (
+          <React.Suspense fallback={<View style={styles.missingScreen}><Text style={styles.missingText}>Opening screen…</Text></View>}>
           <ActiveScreen
             navigation={navigation}
             route={{
@@ -379,6 +389,7 @@ function AppShell() {
             user={user}
             session={session}
           />
+          </React.Suspense>
         ) : (
           <View style={styles.missingScreen}>
             <Text style={styles.missingTitle}>
@@ -399,6 +410,8 @@ function AppShell() {
           </View>
         )}
       </View>
+      </div>
+      {securityChecking && <View style={[StyleSheet.absoluteFillObject, styles.missingScreen]} accessibilityRole="status"><Text style={styles.missingText}>Connecting securely…</Text></View>}
     </SafeAreaView>
   );
 }
