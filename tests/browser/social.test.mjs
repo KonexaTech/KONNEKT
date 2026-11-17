@@ -18,7 +18,7 @@ test('multi-Reel feed stays within the viewport and a Discover selection opens t
     await page.getByText('Newest fixture Reel #new',{exact:true}).waitFor();
     await page.waitForTimeout(500);
     assert(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),'Reels caused the page to grow past the viewport');
-    assert.deepEqual(await page.getByRole('tab').allTextContents(),['▶Reels','✉Chats','◉Status','◎Discover','☎Calls','◌Profile'],'main navigation unchanged');
+    assert.deepEqual(await page.getByRole('tab').allTextContents(),['✉Chats','▶Reels','◉Status','◎Discover','◌Profile'],'main navigation unchanged');
     await page.getByRole('tab',{name:'Discover',exact:true}).click();
     await page.getByLabel('Search Discover').fill('Selected fixture Reel');
     await page.getByRole('tab',{name:'Videos',exact:true}).click();

@@ -10,6 +10,7 @@ const sections = [
       ['New message', 'NewChat', 'Start a private conversation'],
       ['Contacts', 'Contacts', 'Find KONNEKT members'],
       ['Create a group', 'CreateGroup', 'Set up a group conversation'],
+      ['Calls', 'Calls', 'View call history and start a voice or video call'],
       ['Group calling', 'Chats', 'Open a group conversation to start a voice or video call'],
     ],
   },

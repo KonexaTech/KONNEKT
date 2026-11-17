@@ -109,6 +109,7 @@ export default function CallsScreen({ navigation }) {
 
   return (
     <View style={s.page}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back from Calls" onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back</Text></TouchableOpacity>
       <View style={s.header}>
         <View><Text style={s.title}>Calls</Text><Text style={s.subtitle}>Voice and video conversations</Text></View>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh calls" style={s.refresh} onPress={load}>
@@ -145,6 +146,7 @@ export default function CallsScreen({ navigation }) {
 
 const s = StyleSheet.create({
   page: { flex: 1, minHeight: 0, backgroundColor: '#10091B', paddingHorizontal: 18, paddingTop: 10 },
+  back: { color: '#D8B8F5', fontSize: 16, marginTop: 12 },
   header: { marginTop: 12, marginBottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { color: '#FFF', fontSize: 28, fontWeight: '800' },
   subtitle: { color: '#C4B4D0', marginTop: 4, fontSize: 12 },

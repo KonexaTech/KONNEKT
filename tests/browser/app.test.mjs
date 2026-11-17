@@ -46,8 +46,8 @@ test('signup validates passwords and recovery request targets this Pages base', 
   assert.ok(requests.find(r => r.path.endsWith('/recover')).search.includes('redirect_to='));
 }));
 
-for (const width of [320, 390, 1280]) test(`six tabs and retained session work at ${width}px`, async () => run({ width }, async ({ page }) => {
-  for (const tab of ['Reels', 'Chats', 'Status', 'Discover', 'Calls', 'Profile']) {
+for (const width of [320, 390, 1280]) test(`five tabs and retained session work at ${width}px`, async () => run({ width }, async ({ page }) => {
+  for (const tab of ['Chats', 'Reels', 'Status', 'Discover', 'Profile']) {
     await page.getByRole('tab', { name: tab, exact: true }).click();
     assert.equal(await page.getByRole('tab', { name: tab, exact: true }).getAttribute('aria-selected'), 'true');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${tab} does not overflow`);
