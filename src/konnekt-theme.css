@@ -7,12 +7,12 @@
   --konnekt-indigo: #3A0CA3;
   --konnekt-cyan: #00E6FF;
   --konnekt-green: #35D94A;
-  --konnekt-bg: #10091B;
-  --konnekt-surface: #170D26;
-  --konnekt-surface-raised: #241630;
+  --konnekt-bg: #05030A;
+  --konnekt-surface: #0C0714;
+  --konnekt-surface-raised: #181025;
   --konnekt-border: rgba(196, 169, 220, .22);
   --konnekt-text: #FAF8FF;
-  --konnekt-muted: #C4B4D0;
+  --konnekt-muted: #CBBBD9;
   --konnekt-gradient: linear-gradient(115deg, var(--konnekt-purple), var(--konnekt-indigo) 70%, var(--konnekt-cyan));
   --konnekt-action-gradient: linear-gradient(110deg, var(--konnekt-orange), #FF8A00);
 }
@@ -53,6 +53,40 @@ video { max-width: 100%; }
     radial-gradient(ellipse at 0% 0%, rgba(106, 13, 173, .20), transparent 28rem),
     radial-gradient(ellipse at 100% 25%, rgba(58, 12, 163, .14), transparent 30rem) !important;
 }
+
+/* Reference-photo palette: near-black canvas, purple/indigo light and gold
+   accents. Decorative treatment only; keep the existing five-tab geometry. */
+.konnekt-dark [data-testid="konnekt-brand-header"] {
+  background: linear-gradient(110deg, #0C0714, #160925 65%, #0C0714);
+  border-bottom-color: rgba(255, 193, 7, .24);
+}
+[data-testid="konnekt-brand-mark"] {
+  position: relative;
+  overflow: visible;
+  background-image: linear-gradient(140deg, #B900ED, #6A0DAD 48%, #3A0CA3);
+  box-shadow: 0 0 14px rgba(106, 13, 173, .30);
+}
+[data-testid="konnekt-brand-mark"]::after {
+  content: "";
+  position: absolute;
+  width: 40px;
+  height: 13px;
+  left: -4px;
+  top: 19px;
+  border-left: 2px solid var(--konnekt-gold);
+  border-bottom: 2px solid var(--konnekt-gold);
+  border-radius: 50%;
+  transform: rotate(-26deg);
+  pointer-events: none;
+}
+.konnekt-dark [data-testid="konnekt-main-tabs"] {
+  background: #09060F;
+}
+.konnekt-dark [data-testid="konnekt-main-tabs"] [role="tab"][aria-selected="true"] {
+  background: linear-gradient(145deg, #6A0DAD, #3A0CA3);
+  border-radius: 14px 14px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
+}
 .konnekt-light {
   color-scheme: light;
   background: #F7F3FC !important;
@@ -69,6 +103,13 @@ video { max-width: 100%; }
 .konnekt-light [class*="css-scrollview"] { background-color: #F7F3FC !important; }
 .konnekt-light [class*="css-touchable"] { border-color: #E5D9EF !important; }
 .konnekt-light [class*="css-image"] { background-color: transparent !important; }
+.konnekt-light [data-testid="konnekt-main-tabs"] [role="tab"][aria-selected="true"] {
+  background-color: #EADCF6 !important;
+  border-bottom-color: var(--konnekt-purple) !important;
+}
+.konnekt-light [data-testid="konnekt-brand-mark"] [class*="css-text"] {
+  color: #FFFFFF !important;
+}
 
 @media (min-width: 900px) {
   #root { max-width: 1180px; margin: 0 auto; min-height: 100vh; box-shadow: 0 0 90px rgba(106, 13, 173, .16); }

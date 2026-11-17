@@ -107,7 +107,7 @@ export default function FeatureHubScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#10091B' },
+  page: { flex: 1, backgroundColor: '#05030A' },
   content: { padding: 18, paddingBottom: 42 },
   back: { alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 4 },
   backText: { color: '#D8B8F5', fontSize: 16, fontWeight: '700' },

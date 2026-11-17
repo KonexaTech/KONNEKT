@@ -883,37 +883,37 @@ function ChatAttachment({
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#07111F' },
+  container: { flex: 1, backgroundColor: '#05030A' },
   header: {
-    backgroundColor: '#14243A',
+    backgroundColor: '#0C0714',
     padding: 14,
     paddingTop: 25,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10
   },
-  back: { color: '#168BFF', fontSize: 32 },
+  back: { color: '#00E6FF', fontSize: 32 },
   name: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   sub: { color: '#91A4BA', fontSize: 10, marginTop: 3 },
   call: {
-    backgroundColor: '#203753',
+    backgroundColor: '#352047',
     borderRadius: 20,
     width: 36,
     height: 36,
     alignItems: 'center',
     justifyContent: 'center'
   },
-  callText: { color: '#8CCBFF', fontSize: 18 },
+  callText: { color: '#00E6FF', fontSize: 18 },
   row: { flexDirection: 'row', marginBottom: 10 },
   mine: { justifyContent: 'flex-end' },
   theirs: { justifyContent: 'flex-start' },
   bubble: { maxWidth: '84%', padding: 11, borderRadius: 14 },
   myBubble: {
-    backgroundColor: '#124D79',
+    backgroundColor: '#6A0DAD',
     borderBottomRightRadius: 3
   },
   otherBubble: {
-    backgroundColor: '#182D46',
+    backgroundColor: '#181025',
     borderBottomLeftRadius: 3
   },
   message: { color: '#FFF', fontSize: 14, lineHeight: 20 },
@@ -927,13 +927,13 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#14243A',
+    backgroundColor: '#0C0714',
     gap: 8
   },
   clip: { padding: 6 },
   input: {
     flex: 1,
-    backgroundColor: '#203753',
+    backgroundColor: '#352047',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -944,7 +944,7 @@ const s = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#168BFF',
+    backgroundColor: '#6A0DAD',
     alignItems: 'center',
     justifyContent: 'center'
   },
