@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
+import { browserAlertFor } from '../services/browserAlerts';
 
 function iconFor(type) {
   if (type === 'message') return '💬';
@@ -14,7 +15,7 @@ function iconFor(type) {
   return '🔔';
 }
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen({navigation}) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(true);
@@ -48,6 +49,7 @@ export default function NotificationsScreen() {
   }, [user?.id]);
 
   useEffect(() => {
+    let active=true;
     load();
     if (!user?.id) return undefined;
     const channel = supabase.channel(`notifications-${user.id}`)
@@ -58,7 +60,7 @@ export default function NotificationsScreen() {
         filter: `recipient_id=eq.${user.id}`
       }, payload => {
         const incoming = payload.new;
-        if (!incoming?.id) return;
+        if (!active || !incoming?.id || incoming.recipient_id !== user.id) return;
         setItems(previous => previous.some(item => item.id === incoming.id)
           ? previous
           : [incoming, ...previous].slice(0, 100));
@@ -69,14 +71,15 @@ export default function NotificationsScreen() {
           document.visibilityState === 'visible'
         ) {
           try {
-            new window.Notification('KONNEKT', { body: incoming.body || 'You have a new notification.' });
+            const alert=browserAlertFor(incoming,{userId:user.id,storage:window.localStorage});
+            if(alert)new window.Notification(alert.title,alert.options);
           } catch (_) {
             // Browser notification support varies; in-app notification remains available.
           }
         }
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { active=false; supabase.removeChannel(channel); };
   }, [load, user?.id]);
 
   const enableBrowserAlerts = async () => {
@@ -87,7 +90,7 @@ export default function NotificationsScreen() {
     try {
       const permission = await window.Notification.requestPermission();
       setPushState(permission === 'granted'
-        ? 'Browser alerts are enabled while KONNEKT is open.'
+        ? 'Browser alerts are enabled while this screen is open.'
         : `Browser notification permission: ${permission}.`);
     } catch (error) {
       setPushState(error?.message || 'Could not request browser notification permission.');
@@ -141,6 +144,9 @@ export default function NotificationsScreen() {
 
   return (
     <View style={s.container}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back" style={s.back} onPress={()=>navigation.goBack()}>
+        <Text style={s.backText}>‹ Back</Text>
+      </TouchableOpacity>
       <View style={s.head}>
         <View style={{ flex: 1 }}>
           <Text style={s.title}>Notifications</Text>
@@ -189,7 +195,9 @@ export default function NotificationsScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, minHeight: 0, backgroundColor: '#10091B', padding: 18 },
-  head: { marginTop: 24, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  back: { minHeight:44, alignSelf:'flex-start', justifyContent:'center', paddingRight:18 },
+  backText: { color:'#C9B5E2', fontSize:16 },
+  head: { marginTop: 4, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
   title: { color: '#FFF', fontSize: 27, fontWeight: 'bold' },
   count: { color: '#8EA3BB', fontSize: 11, marginTop: 4 },
   enable: { backgroundColor: '#173A5B', padding: 9, borderRadius: 9 },

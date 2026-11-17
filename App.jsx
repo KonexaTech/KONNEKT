@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { supabase } from './src/lib_supabase';
 import { deferredFeatures } from './src/services/releaseScope';
+import { notificationOpener } from './src/services/pushOpen';
 import './src/konnekt-theme.css';
 
 const discoveredScreens = import.meta.glob('./src/screens/*.jsx', {
@@ -257,6 +258,14 @@ function AppShell() {
   const navigate = useCallback((name, params = {}) => {
     setStack(previous => [...previous, { name, params }]);
   }, []);
+
+  // Establish this mount's account/security state before replaying a buffered tap.
+  useEffect(()=>{
+    notificationOpener.setSession({userId:user?.id||null,ready:accessReady&&!recovery,loading:loading||securityChecking});
+  },[user?.id,accessReady,recovery,loading,securityChecking]);
+  useEffect(()=>notificationOpener.subscribe(()=>{
+    setStack(previous=>previous[previous.length-1]?.name==='Notifications'?previous:[...previous,{name:'Notifications',params:{}}]);
+  }),[]);
 
   const goBack = useCallback(() => {
     setStack(previous =>
