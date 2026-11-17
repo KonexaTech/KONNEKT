@@ -213,8 +213,8 @@ export default function WatchScreen({ navigation, route }) {
         : await supabase.from('reel_likes').insert({ reel_id: reel.id, user_id: user.id });
       if (result.error) throw result.error;
     } catch (error) {
-      setNotice(`Like could not be saved: ${error?.message || 'Please try again.'}`);
       await load();
+      setNotice(`Like could not be saved: ${error?.message || 'Please try again.'}`);
     } finally {
       setLikeBusy('');
     }
