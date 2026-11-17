@@ -1,5 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../AuthContext';
+import { supabase } from '../lib_supabase';
+import { getCreatorAnalytics } from '../services/creatorAnalytics';
 import {
   View,
   Text,
@@ -10,39 +13,29 @@ import {
 
 const periods = ['7 days', '30 days', '90 days'];
 
-const analyticsData = {
-  '7 days': {
-    views: '—',
-    likes: '—',
-    comments: '—',
-    shares: '—',
-    followers: '—',
-    engagement: '—',
-  },
-  '30 days': {
-    views: '—',
-    likes: '—',
-    comments: '—',
-    shares: '—',
-    followers: '—',
-    engagement: '—',
-  },
-  '90 days': {
-    views: '—',
-    likes: '—',
-    comments: '—',
-    shares: '—',
-    followers: '—',
-    engagement: '—',
-  },
-};
+const emptyMetrics = { views: null, likes: null, comments: null, shares: null, followers: null, engagement: null };
 
 const topVideos = [];
 
 export default function CreatorAnalyticsScreen({ navigation }) {
+  const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('7 days');
-
-  const data = analyticsData[selectedPeriod];
+  const [snapshot, setSnapshot] = useState(null);
+  const [notice, setNotice] = useState('');
+  // Never render another account/period's stale totals while a request settles.
+  const current = snapshot?.userId === user?.id && snapshot?.period === selectedPeriod;
+  const data = current ? snapshot.data : emptyMetrics;
+  useEffect(() => {
+    let active = true;
+    setNotice('Loading recorded analytics…');
+    if (!user?.id) return () => { active = false; };
+    getCreatorAnalytics(supabase, user.id, Number.parseInt(selectedPeriod, 10)).then(result => {
+      if (!active) return;
+      setSnapshot({ userId: user.id, period: selectedPeriod, data: result.data });
+      setNotice(result.unavailable.length ? `Some recorded counts are unavailable: ${result.unavailable.join(', ')}.` : 'Counts reflect current recorded likes, comments and follows created during this period. Removed activity is excluded.');
+    }).catch(() => { if (active) { setSnapshot(null); setNotice('Analytics could not load. Choose a period to retry.'); } });
+    return () => { active = false; };
+  }, [user?.id, selectedPeriod]);
 
   const metricCards = [
     { title: 'Video views', value: data.views, icon: '👁' },
@@ -104,7 +97,7 @@ export default function CreatorAnalyticsScreen({ navigation }) {
         {metricCards.map(metric => (
           <View key={metric.title} style={styles.metricCard}>
             <Text style={styles.metricIcon}>{metric.icon}</Text>
-            <Text style={styles.metricValue}>{metric.value}</Text>
+            <Text accessibilityLabel={`${metric.title}: ${metric.value ?? 'unavailable'}`} style={styles.metricValue}>{metric.value ?? '—'}</Text>
             <Text style={styles.metricTitle}>{metric.title}</Text>
           </View>
         ))}
@@ -115,7 +108,7 @@ export default function CreatorAnalyticsScreen({ navigation }) {
       <View style={styles.growthCard}>
         <View>
           <Text style={styles.growthLabel}>New followers</Text>
-          <Text style={styles.growthValue}>{data.followers}</Text>
+          <Text style={styles.growthValue}>{data.followers ?? '—'}</Text>
           <Text style={styles.growthCaption}>
             During the selected period
           </Text>
@@ -125,6 +118,7 @@ export default function CreatorAnalyticsScreen({ navigation }) {
       </View>
 
       <Text style={styles.sectionTitle}>Top-performing videos</Text>
+      <Text style={styles.footer}>Top-video ranking is not connected yet.</Text>
 
       {topVideos.map(video => (
         <View key={video.id} style={styles.videoCard}>
@@ -168,7 +162,7 @@ export default function CreatorAnalyticsScreen({ navigation }) {
       </View>
 
       <Text style={styles.footer}>
-        Analytics will appear here as your account receives real activity.
+        {notice} Views, shares and view-based engagement are unavailable until verified measurement is connected.
       </Text>
     </ScrollView>
   );
