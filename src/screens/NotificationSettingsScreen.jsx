@@ -20,15 +20,19 @@ const initialSettings = [
   { id: 'security', title: 'Security alerts', description: 'Important account and sign-in alerts.', value: true },
 ];
 
+function settingsFor(userId) {
+  let flags;
+  try{flags=readPushPreferences(globalThis.localStorage,userId);}catch{flags=readPushPreferences(null,userId);}
+  return initialSettings.map(item=>({...item,value:flags[item.id]}));
+}
+
 export default function NotificationSettingsScreen({ navigation }) {
   const {user}=useAuth();
-  const [settings, setSettings] = useState(initialSettings);
+  const [settings, setSettings] = useState(()=>settingsFor(user?.id));
   const [saving,setSaving]=useState(false);
 
   useEffect(() => {
-    let flags;
-    try{flags=readPushPreferences(globalThis.localStorage,user?.id);}catch{flags=readPushPreferences(null,user?.id);}
-    setSettings(initialSettings.map(item=>({...item,value:flags[item.id]})));
+    setSettings(settingsFor(user?.id));
   }, [user?.id]);
 
   const updateSetting = (id, value) => {

@@ -1,0 +1,77 @@
+{
+  "runId": "6a7254d4-310b-4c8d-98a0-c3025ed1e2f7",
+  "project": "konnekt-staging",
+  "decision": "PASS_SCOPED_LIVE_CALL_INVITATIONS_ONLY",
+  "checks": [
+    {
+      "check": "actual recipient C receives and dismisses its own call through Realtime as a positive control",
+      "result": "PASS"
+    },
+    {
+      "check": "actual B decline is stored while C cannot read the A/B call",
+      "result": "PASS"
+    },
+    {
+      "check": "actual caller hang-up update dismisses the recipient ringing dialog without interaction",
+      "result": "PASS"
+    },
+    {
+      "check": "actual recipient invitation expires when the caller sends no further update",
+      "result": "PASS"
+    },
+    {
+      "check": "actual group host can leave before joining, ends the session and dismisses B invitation; C cannot read the group call",
+      "result": "PASS"
+    },
+    {
+      "check": "actual non-host B cannot end the shared group session while member reads remain allowed",
+      "result": "PASS"
+    },
+    {
+      "check": "actual group invitation decline is persisted for the invited recipient",
+      "result": "PASS"
+    },
+    {
+      "check": "no camera/microphone request or unexpected origin was used by the live invitation tests",
+      "result": "PASS"
+    }
+  ],
+  "cleanupComplete": true,
+  "observedDate": "2026-11-17",
+  "publicRelease": "HOLD",
+  "privateReportSHA256": "e5ae899eca8e5ac0778c96f84235dbcd4efd6d592fcf2b8ea93e3ad59e85657b",
+  "createdTestCalls": {
+    "direct": 4,
+    "group": 2
+  },
+  "stagingReadback": {
+    "authUsers": 7,
+    "messages": 58,
+    "storageObjects": 30,
+    "directCalls": {
+      "ended": 10,
+      "rejected": 2
+    },
+    "groupCalls": {
+      "ended": 2
+    },
+    "activeCalls": 0,
+    "restrictiveGroupOwnerUpdate": true
+  },
+  "stagingMigration": "20261117054101_release_staging_group_call_owner_update",
+  "verification": {
+    "cleanInstall": "PASS",
+    "lint": "PASS",
+    "unitDatabaseTests": 63,
+    "browserTests": 58,
+    "webBuild": "PASS",
+    "mobileBuild": "PASS",
+    "compiledSmokeTests": 6,
+    "productionDependencyVulnerabilities": 0
+  },
+  "limits": [
+    "No microphone or camera requested; these results do not prove physical two-way media or native push.",
+    "Stable signing, physical Android installation/update/calls/push, provider erasure, full-service restore, email recovery and production security acceptance remain BLOCKED.",
+    "Production data and configuration unchanged."
+  ]
+}

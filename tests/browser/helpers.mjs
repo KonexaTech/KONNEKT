@@ -62,6 +62,9 @@ export async function setup(base, options = {}) {
     const headers = { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-range': '0-0/0' };
     const respond = (data, status = 200) => route.fulfill({ status, headers, body: JSON.stringify(data) });
     if (failures.has(`${method}:${table}`)) return respond(failures.get(`${method}:${table}`), 400);
+    // Match the inspected staging direct-call CHECK, rather than accepting
+    // unsupported status values that real PostgREST will reject.
+    if(table==='call_sessions'&&['POST','PATCH'].includes(method)&&body?.status&&!['ringing','accepted','rejected','missed','ended','failed'].includes(body.status))return respond({code:'23514',message:'Unsupported direct-call status'},400);
     if (url.pathname.includes('/auth/v1/')) {
       if (table === 'token') return respond(session);
       if (table === 'user') return respond(user);
@@ -77,7 +80,7 @@ export async function setup(base, options = {}) {
     let matches = filterRows(rows, url.searchParams);
     if (method === 'HEAD') return route.fulfill({ status: 200, headers: { ...headers, 'content-range': `0-0/${matches.length}` } });
     if (method === 'POST') {
-      const values = (Array.isArray(body) ? body : [body]).map((row, i) => ({ id: row.id || `44444444-4444-4444-8444-${String(rows.length + i).padStart(12, '0')}`, created_at: '2026-11-15T00:00:00Z', ...row }));
+      const values = (Array.isArray(body) ? body : [body]).map((row, i) => ({ id: row.id || `44444444-4444-4444-8444-${String(rows.length + i).padStart(12, '0')}`, created_at: table==='call_sessions'?new Date().toISOString():'2026-11-15T00:00:00Z', ...row }));
       if (table === 'profiles' && (req.headers().prefer || '').includes('resolution=merge-duplicates')) {
         for (const value of values) {
           const existing = rows.find(row => row.id === value.id);

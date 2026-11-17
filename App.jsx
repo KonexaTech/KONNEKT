@@ -13,6 +13,7 @@ import {
 import { supabase } from './src/lib_supabase';
 import { deferredFeatures } from './src/services/releaseScope';
 import { notificationOpener } from './src/services/pushOpen';
+import { ringingTimeLeft } from './src/services/callInvitations';
 import './src/konnekt-theme.css';
 
 const discoveredScreens = import.meta.glob('./src/screens/*.jsx', {
@@ -85,11 +86,15 @@ function AppShell() {
     if (!user?.id || !accessReady) return;
 
     let active = true;
+    const ringTimers=new Set();
+    const expireAlert=(key,time)=>{const timer=setTimeout(()=>{ringTimers.delete(timer);Alert.dismiss(key);},time);ringTimers.add(timer);};
 
     const showIncoming = call => {
       if (
         !active ||
         !call?.id ||
+        call.callee_id !== user.id ||
+        !ringingTimeLeft(call) ||
         seenIncomingCalls.current.has(call.id)
       ) return;
 
@@ -105,7 +110,7 @@ function AppShell() {
             onPress: async () => {
               const { error } = await supabase
                 .from('call_sessions')
-                .update({ status: 'declined' })
+                .update({ status: 'rejected' })
                 .eq('id', call.id);
               if (error) throw error;
             }
@@ -126,8 +131,10 @@ function AppShell() {
               ]);
             }
           }
-        ]
+        ],
+        {key:`call-${call.id}`}
       );
+      expireAlert(`call-${call.id}`,ringingTimeLeft(call));
     };
 
     supabase
@@ -160,13 +167,15 @@ function AppShell() {
         .eq('id', invite.call_id)
         .maybeSingle();
 
-      if (!active || !call || call.status === 'ended') return;
+      if (!active || !call || call.status === 'ended' || call.created_by === user.id) return;
 
       const { data: conversation } = await supabase
         .from('conversations')
         .select('title')
         .eq('id', call.conversation_id)
         .maybeSingle();
+
+      if(!active)return;
 
       Alert.alert(
         'Group call invitation',
@@ -201,7 +210,8 @@ function AppShell() {
               ]);
             }
           }
-        ]
+        ],
+        {key:`group-${call.id}`}
       );
     };
 
@@ -217,6 +227,9 @@ function AppShell() {
         },
         payload => showIncoming(payload.new)
       )
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'call_sessions',filter:`callee_id=eq.${user.id}`},payload=>{
+        if(active&&payload.new?.id&&payload.new.status!=='ringing')Alert.dismiss(`call-${payload.new.id}`);
+      })
       .on(
         'postgres_changes',
         {
@@ -227,6 +240,12 @@ function AppShell() {
         },
         payload => showGroupInvite(payload.new)
       )
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'group_call_sessions'},payload=>{
+        if(active&&payload.new?.status==='ended')Alert.dismiss(`group-${payload.new.id}`);
+      })
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'group_call_participants',filter:`user_id=eq.${user.id}`},payload=>{
+        if(active&&payload.new?.call_id&&payload.new.status!=='invited')Alert.dismiss(`group-${payload.new.call_id}`);
+      })
       .subscribe();
 
     supabase
@@ -242,6 +261,7 @@ function AppShell() {
 
     return () => {
       active = false;
+      for(const timer of ringTimers)clearTimeout(timer);
       supabase.removeChannel(channel);
     };
   }, [user?.id, accessReady]);
@@ -264,7 +284,7 @@ function AppShell() {
     notificationOpener.setSession({userId:user?.id||null,ready:accessReady&&!recovery,loading:loading||securityChecking});
   },[user?.id,accessReady,recovery,loading,securityChecking]);
   useEffect(()=>notificationOpener.subscribe(()=>{
-    setStack(previous=>previous[previous.length-1]?.name==='Notifications'?previous:[...previous,{name:'Notifications',params:{}}]);
+    setStack(previous=>['Notifications','Call','GroupCall'].includes(previous[previous.length-1]?.name)?previous:[...previous,{name:'Notifications',params:{}}]);
   }),[]);
 
   const goBack = useCallback(() => {
@@ -392,6 +412,7 @@ function AppShell() {
         {ActiveScreen ? (
           <React.Suspense fallback={<View style={styles.missingScreen}><Text style={styles.missingText}>Opening screen…</Text></View>}>
           <ActiveScreen
+            key={['Call','GroupCall'].includes(screenKey)?`${user?.id}:${currentRoute.params?.callId||'missing'}`:screenKey}
             navigation={navigation}
             route={{
               name: currentRoute.name,

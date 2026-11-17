@@ -39,6 +39,8 @@ export default function GroupCallScreen({ navigation, route }) {
   const remoteStreams = useRef(new Map());
   const videoRefs = useRef(new Map());
   const activeRef = useRef(true);
+  const leavingRef = useRef(false);
+  const localVideoRef = useRef(null);
 
   const cleanup = useCallback(() => {
     peers.current.forEach(pc => {
@@ -50,7 +52,10 @@ export default function GroupCallScreen({ navigation, route }) {
     peers.current.clear();
     pendingPeers.current.clear();
     queuedIce.current.clear();
+    remoteStreams.current.forEach(stream=>stream.getTracks().forEach(track=>track.stop()));
     remoteStreams.current.clear();
+    videoRefs.current.forEach(video=>{video.srcObject=null;});
+    if(localVideoRef.current)localVideoRef.current.srcObject=null;
 
     localStream.current?.getTracks?.().forEach(track => track.stop());
     localStream.current = null;
@@ -102,23 +107,25 @@ export default function GroupCallScreen({ navigation, route }) {
       return pendingPeers.current.get(peerId);
     }
 
-    if (!localStream.current) {
+    if (!activeRef.current || !localStream.current) {
       throw new Error('Join the group call before connecting to participants.');
     }
 
+    const streamAtStart=localStream.current;
     const creation = (async () => {
       const iceServers = await getKonnektIceServers();
+      if(!activeRef.current||localStream.current!==streamAtStart)throw new Error('This group call is no longer active.');
 
       const pc = new RTCPeerConnection({ iceServers });
 
       peers.current.set(peerId, pc);
 
-      localStream.current.getTracks().forEach(track => {
-        pc.addTrack(track, localStream.current);
+      streamAtStart.getTracks().forEach(track => {
+        pc.addTrack(track, streamAtStart);
       });
 
       pc.onicecandidate = event => {
-        if (event.candidate) {
+        if (activeRef.current && peers.current.get(peerId)===pc && event.candidate) {
           sendSignal(
             peerId,
             'ice-candidate',
@@ -132,6 +139,7 @@ export default function GroupCallScreen({ navigation, route }) {
       };
 
       pc.ontrack = event => {
+        if(!activeRef.current||peers.current.get(peerId)!==pc)return;
         const stream = event.streams?.[0];
 
         if (!stream) return;
@@ -152,7 +160,7 @@ export default function GroupCallScreen({ navigation, route }) {
       };
 
       pc.onconnectionstatechange = () => {
-        if (!activeRef.current) return;
+        if (!activeRef.current || peers.current.get(peerId)!==pc) return;
 
         if (pc.connectionState === 'connected') {
           setNotice('Group call connected.');
@@ -173,13 +181,14 @@ export default function GroupCallScreen({ navigation, route }) {
     try {
       return await creation;
     } finally {
-      pendingPeers.current.delete(peerId);
+      if(pendingPeers.current.get(peerId)===creation)pendingPeers.current.delete(peerId);
     }
   }, [sendSignal]);
 
   const processSignal = useCallback(async signal => {
     if (
       !signal ||
+      !activeRef.current ||
       signal.call_id !== callId ||
       signal.sender_id === user?.id ||
       signal.recipient_id !== user?.id ||
@@ -194,6 +203,7 @@ export default function GroupCallScreen({ navigation, route }) {
     try {
       if (signal.signal_type === 'ice-candidate') {
         const pc = await makePeer(signal.sender_id);
+        if(!activeRef.current||peers.current.get(signal.sender_id)!==pc)return;
 
         if (pc.remoteDescription) {
           await pc.addIceCandidate(
@@ -209,6 +219,7 @@ export default function GroupCallScreen({ navigation, route }) {
       }
 
       const pc = await makePeer(signal.sender_id);
+      if(!activeRef.current||peers.current.get(signal.sender_id)!==pc)return;
 
       if (signal.signal_type === 'offer') {
         await pc.setRemoteDescription(
@@ -220,6 +231,7 @@ export default function GroupCallScreen({ navigation, route }) {
         const answer = await pc.createAnswer();
 
         await pc.setLocalDescription(answer);
+        if(!activeRef.current||peers.current.get(signal.sender_id)!==pc)return;
 
         await sendSignal(
           signal.sender_id,
@@ -296,11 +308,12 @@ export default function GroupCallScreen({ navigation, route }) {
   }, [callId]);
 
   const join = async () => {
-    if (joinedRef.current || busy) return;
+    if (!activeRef.current || joinedRef.current || busy) return;
 
     setBusy(true);
     setNotice('Checking group call and requesting media access…');
 
+    let joinAttempted=false;
     try {
       if (!callId || !user?.id) {
         throw new Error('Group-call details are missing.');
@@ -322,6 +335,7 @@ export default function GroupCallScreen({ navigation, route }) {
         .single();
 
       if (callError) throw callError;
+      if(!activeRef.current)return;
 
       if (call.status === 'ended') {
         throw new Error('This group call has already ended.');
@@ -336,6 +350,7 @@ export default function GroupCallScreen({ navigation, route }) {
           .maybeSingle();
 
       if (membershipError) throw membershipError;
+      if(!activeRef.current)return;
 
       if (!membership) {
         throw new Error('You are not invited to this group call.');
@@ -347,8 +362,11 @@ export default function GroupCallScreen({ navigation, route }) {
           video: callType === 'video'
         });
 
+      if(!activeRef.current){stream.getTracks().forEach(track=>track.stop());return;}
+
       localStream.current = stream;
 
+      joinAttempted=true;
       const { error: joinError } = await supabase
         .from('group_call_participants')
         .update({
@@ -359,11 +377,13 @@ export default function GroupCallScreen({ navigation, route }) {
         .eq('user_id', user.id);
 
       if (joinError) throw joinError;
+      if(!activeRef.current){await markLeft();return;}
 
       joinedRef.current = true;
       setJoined(true);
 
       const rows = await loadParticipants();
+      if(!activeRef.current)return;
 
       // The lower user ID creates the offer to avoid duplicate offers.
       for (const row of rows) {
@@ -376,6 +396,7 @@ export default function GroupCallScreen({ navigation, route }) {
           const offer = await pc.createOffer();
 
           await pc.setLocalDescription(offer);
+          if(!activeRef.current||peers.current.get(row.user_id)!==pc)return;
 
           await sendSignal(
             row.user_id,
@@ -394,6 +415,7 @@ export default function GroupCallScreen({ navigation, route }) {
         .order('created_at', { ascending: true });
 
       if (queuedError) throw queuedError;
+      if(!activeRef.current)return;
 
       for (const signal of queued || []) {
         await processSignal(signal);
@@ -403,33 +425,35 @@ export default function GroupCallScreen({ navigation, route }) {
         'You joined the group call. Waiting for participants to connect.'
       );
     } catch (error) {
-      cleanup();
-      joinedRef.current = false;
-      setJoined(false);
-
-      setNotice(error.message || 'Could not join the group call.');
+      if(activeRef.current){
+        cleanup();joinedRef.current=false;setJoined(false);
+        setNotice(error.message || 'Could not join the group call.');
+      }
+      if(joinAttempted)await markLeft();
     } finally {
-      setBusy(false);
+      if(activeRef.current)setBusy(false);
     }
   };
 
-  const leave = async () => {
-    if (busy) return;
+  const markLeft=async()=>{
+    const {error}=await supabase.from('group_call_participants').update({status:'left'}).eq('call_id',callId).eq('user_id',user.id);
+    if(error)console.warn('Group call ended locally; participant update could not be confirmed.');
+    return !error;
+  };
 
-    setBusy(true);
+  const leave = async () => {
+    if(leavingRef.current)return;leavingRef.current=true;
+    const peerIds=[...peers.current.keys()];
+    activeRef.current=false;
     joinedRef.current = false;
-    setJoined(false);
+    cleanup();navigation.goBack();
+    if(!callId||!user?.id)return;
 
     try {
-      await supabase
-        .from('group_call_participants')
-        .update({ status: 'left' })
-        .eq('call_id', callId)
-        .eq('user_id', user.id);
-
-      for (const peerId of peers.current.keys()) {
-        await sendSignal(peerId, 'hangup', {});
+      for (const peerId of peerIds) {
+        try{await sendSignal(peerId, 'hangup', {});}catch{console.warn('Group peer disconnect could not be confirmed.');}
       }
+      await markLeft();
 
       const { data: call, error } = await supabase
         .from('group_call_sessions')
@@ -440,25 +464,21 @@ export default function GroupCallScreen({ navigation, route }) {
       if (error) throw error;
 
       if (call?.created_by === user.id) {
-        await supabase
+        const {error:endError}=await supabase
           .from('group_call_sessions')
           .update({
             status: 'ended',
             ended_at: new Date().toISOString()
           })
           .eq('id', callId);
+        if(endError)throw endError;
       }
-    } catch (error) {
-      setNotice(error.message || 'Could not leave cleanly.');
-    } finally {
-      cleanup();
-      setBusy(false);
-      navigation.goBack();
-    }
+    } catch {console.warn('Group call ended locally; server update could not be confirmed.');}
   };
 
   useEffect(() => {
     activeRef.current = true;
+    leavingRef.current = false;
 
     if (!callId || !user?.id) {
       setNotice('Group-call details are missing.');
@@ -484,7 +504,15 @@ export default function GroupCallScreen({ navigation, route }) {
 
           const rows = await loadParticipants().catch(() => []);
 
-          if (!joinedRef.current) return;
+          if (!activeRef.current || !joinedRef.current) return;
+
+          const present=new Map(rows.map(row=>[row.user_id,row.status]));
+          for(const [peerId,pc] of peers.current){if(present.get(peerId)!=='joined'){
+            pc.close();peers.current.delete(peerId);queuedIce.current.delete(peerId);
+            remoteStreams.current.get(peerId)?.getTracks().forEach(track=>track.stop());remoteStreams.current.delete(peerId);
+            const video=videoRefs.current.get(peerId);if(video)video.srcObject=null;
+            setParticipants(previous=>previous.map(person=>person.id===peerId?{...person,stream:null}:person));
+          }}
 
           for (const row of rows) {
             if (
@@ -498,6 +526,7 @@ export default function GroupCallScreen({ navigation, route }) {
                 const offer = await pc.createOffer();
 
                 await pc.setLocalDescription(offer);
+                if(!activeRef.current||peers.current.get(row.user_id)!==pc)return;
 
                 await sendSignal(
                   row.user_id,
@@ -505,7 +534,7 @@ export default function GroupCallScreen({ navigation, route }) {
                   pc.localDescription.toJSON()
                 );
               } catch (error) {
-                setNotice(error.message || 'Could not connect a participant.');
+                if(activeRef.current)setNotice(error.message || 'Could not connect a participant.');
               }
             }
           }
@@ -520,7 +549,7 @@ export default function GroupCallScreen({ navigation, route }) {
           filter: `call_id=eq.${callId}`
         },
         payload => {
-          if (payload.new?.recipient_id === user.id) {
+          if (activeRef.current && payload.new?.recipient_id === user.id) {
             processSignal(payload.new);
           }
         }
@@ -534,7 +563,8 @@ export default function GroupCallScreen({ navigation, route }) {
           filter: `id=eq.${callId}`
         },
         payload => {
-          if (payload.new.status === 'ended') {
+          if (activeRef.current && payload.new.status === 'ended') {
+            activeRef.current=false;
             setNotice('The group call has ended.');
             cleanup();
             navigation.goBack();
@@ -594,9 +624,8 @@ export default function GroupCallScreen({ navigation, route }) {
             muted
             playsInline
             ref={node => {
-              if (node && localStream.current) {
-                node.srcObject = localStream.current;
-              }
+              localVideoRef.current=node;
+              if(node)node.srcObject=localStream.current;
             }}
             style={{
               width: '100%',
@@ -689,15 +718,11 @@ export default function GroupCallScreen({ navigation, route }) {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={styles.leave}
-              onPress={leave}
-              disabled={busy}
-            >
-              <Text style={styles.buttonText}>Leave call</Text>
-            </TouchableOpacity>
           </>
         )}
+        <TouchableOpacity accessibilityRole="button" style={styles.leave} onPress={leave}>
+          <Text style={styles.buttonText}>Leave call</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.foot}>

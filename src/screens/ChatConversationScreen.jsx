@@ -676,7 +676,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Start voice call"
-          disabled={!!otherMember?.retired}
+          disabled={busy || loadedConversationId !== conversationId || !!otherMember?.retired}
           onPress={() => startCall('voice')}
           style={s.call}
         >
@@ -686,7 +686,7 @@ export default function ChatConversationScreen({ navigation, route }) {
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Start video call"
-          disabled={!!otherMember?.retired}
+          disabled={busy || loadedConversationId !== conversationId || !!otherMember?.retired}
           onPress={() => startCall('video')}
           style={s.call}
         >

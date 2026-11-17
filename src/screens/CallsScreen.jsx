@@ -74,7 +74,7 @@ export default function CallsScreen({ navigation }) {
   }, [people, query]);
 
   const personName = person => person.full_name || (person.username ? `@${person.username}` : 'KONNEKT member');
-  const statusLabel = status => ({ accepted: 'Connected', ringing: 'Calling', missed: 'Missed', declined: 'Declined', ended: 'Ended' }[status] || 'Call');
+  const statusLabel = status => ({ accepted: 'Connected', ringing: 'Calling', missed: 'Missed', declined: 'Declined', rejected: 'Declined', failed: 'Failed', ended: 'Ended' }[status] || 'Call');
   const callAgain = row => start(row.contact, row.call_type === 'video' ? 'video' : 'voice');
 
   const renderHistory = ({ item }) => {
