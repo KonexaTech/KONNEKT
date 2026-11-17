@@ -20,6 +20,12 @@ export function configureStagingSigning({ projectRoot, tempRoot, env }) {
     certificate = execFileSync('keytool', ['-exportcert', '-keystore', keystore, '-storepass:env', 'KONNEKT_STAGING_KEYSTORE_PASSWORD', '-alias', env.KONNEKT_STAGING_KEY_ALIAS], { env: { ...process.env, ...env }, stdio: ['ignore','pipe','pipe'] });
   } catch { throw new Error('Cannot open the staging signing certificate; check the keystore, password and alias.'); }
   const sha256 = createHash('sha256').update(certificate).digest('hex');
+  // A pinned fingerprint protects existing testers from an accidental signing-key
+  // rotation that would make subsequent APK updates uninstallable.
+  const pinned = (env.KONNEKT_STAGING_CERT_SHA256 || '').replace(/[^a-fA-F0-9]/g, '').toLowerCase();
+  if (env.KONNEKT_STAGING_CERT_SHA256 && (pinned.length !== 64 || pinned !== sha256)) {
+    throw new Error('Staging signing certificate differs from the pinned fingerprint; stop before distributing an incompatible update.');
+  }
   const file = join(projectRoot, 'android/app/build.gradle');
   const start = '// BEGIN KONNEKT STAGING SIGNING', end = '// END KONNEKT STAGING SIGNING';
   const original = readFileSync(file, 'utf8');
