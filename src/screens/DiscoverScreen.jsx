@@ -167,7 +167,7 @@ export default function DiscoverScreen({ navigation }) {
         </TouchableOpacity>
         <View style={s.actions}>
           <TouchableOpacity style={[s.follow, isFollowing && s.following]} disabled={!!actionId} onPress={() => toggleFollow(item)}>
-            <Text style={s.followText}>{actionId === item.id ? '…' : isFollowing ? 'Following' : 'Follow'}</Text>
+            <Text style={[s.followText, isFollowing && s.followingText]}>{actionId === item.id ? '…' : isFollowing ? 'Following' : 'Follow'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.message} disabled={!!actionId} onPress={() => message(item)}>
             <Text style={s.messageText}>{actionId === item.id ? '…' : 'Message'}</Text>
@@ -220,7 +220,7 @@ export default function DiscoverScreen({ navigation }) {
         value={query}
         onChangeText={setQuery}
         placeholder="Search names, creators, Reels or #hashtags"
-        placeholderTextColor="#C4B4D0"
+        placeholderTextColor="#CBBBD9"
         autoCapitalize="none"
         returnKeyType="search"
         accessibilityLabel="Search Discover"
@@ -250,45 +250,46 @@ export default function DiscoverScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, minHeight: 0, backgroundColor: '#10091B', padding: 18 },
+  container: { flex: 1, minHeight: 0, backgroundColor: '#05030A', padding: 18 },
   header: { marginTop: 14, marginBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { color: '#FAF8FF', fontSize: 27, fontWeight: '800' },
-  subtitle: { color: '#C4B4D0', marginTop: 4, fontSize: 11 },
-  refresh: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#241630', alignItems: 'center', justifyContent: 'center' },
+  subtitle: { color: '#CBBBD9', marginTop: 4, fontSize: 11 },
+  refresh: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#181025', alignItems: 'center', justifyContent: 'center' },
   refreshText: { color: '#00E6FF', fontSize: 23 },
-  search: { backgroundColor: '#241630', borderWidth: 1, borderColor: '#39244B', color: '#FAF8FF', padding: 13, borderRadius: 12, marginBottom: 12 },
-  filters: { flexDirection: 'row', backgroundColor: '#170D26', borderRadius: 12, padding: 4, gap: 4 },
+  search: { backgroundColor: '#181025', borderWidth: 1, borderColor: '#352047', color: '#FAF8FF', padding: 13, borderRadius: 12, marginBottom: 12 },
+  filters: { flexDirection: 'row', backgroundColor: '#0C0714', borderRadius: 12, padding: 4, gap: 4 },
   filter: { flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: 'center' },
   filterActive: { backgroundColor: '#6A0DAD' },
-  filterText: { color: '#C4B4D0', fontWeight: '700', fontSize: 12 },
+  filterText: { color: '#CBBBD9', fontWeight: '700', fontSize: 12 },
   filterTextActive: { color: '#FFF' },
   section: { color: '#FFC107', fontWeight: '800', fontSize: 12, letterSpacing: 1, marginTop: 17, marginBottom: 5, textTransform: 'uppercase' },
-  person: { paddingVertical: 12, borderBottomWidth: 1, borderColor: '#39244B', gap: 9 },
+  person: { paddingVertical: 12, borderBottomWidth: 1, borderColor: '#352047', gap: 9 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
-  avatarImage: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#241630' },
+  avatarImage: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#181025' },
   avatarText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   personCopy: { flex: 1, minWidth: 0 },
   name: { color: '#FAF8FF', fontSize: 14, fontWeight: '800' },
-  username: { color: '#C4B4D0', fontSize: 11, marginTop: 3 },
+  username: { color: '#CBBBD9', fontSize: 11, marginTop: 3 },
   bio: { color: '#A998B8', fontSize: 10, marginTop: 4 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
-  follow: { backgroundColor: '#FF6B00', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, minWidth: 76, alignItems: 'center' },
-  following: { backgroundColor: '#241630', borderWidth: 1, borderColor: '#FFC107' },
-  followText: { color: '#FFF', fontWeight: '800', fontSize: 11 },
+  follow: { backgroundColor: '#FFC107', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, minWidth: 76, alignItems: 'center' },
+  following: { backgroundColor: '#181025', borderWidth: 1, borderColor: '#FFC107' },
+  followText: { color: '#05030A', fontWeight: '800', fontSize: 11 },
+  followingText: { color: '#FAF8FF' },
   message: { backgroundColor: '#3A0CA3', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18 },
   messageText: { color: '#FFF', fontWeight: '800', fontSize: 11 },
-  videoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, marginVertical: 5, backgroundColor: '#170D26', borderWidth: 1, borderColor: '#39244B', borderRadius: 13 },
+  videoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, marginVertical: 5, backgroundColor: '#0C0714', borderWidth: 1, borderColor: '#352047', borderRadius: 13 },
   videoThumb: { width: 58, height: 70, borderRadius: 9, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
   play: { color: '#FFC107', fontSize: 20 },
   videoTag: { color: '#FFF', fontSize: 8, fontWeight: '900', marginTop: 5 },
   videoCopy: { flex: 1, minWidth: 0 },
   videoCaption: { color: '#FAF8FF', fontSize: 13, fontWeight: '700' },
   arrow: { color: '#00E6FF', fontSize: 25 },
-  hashtagRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderBottomWidth: 1, borderColor: '#39244B' },
+  hashtagRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderBottomWidth: 1, borderColor: '#352047' },
   hashIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
   hashGlyph: { color: '#00E6FF', fontSize: 21, fontWeight: '900' },
   hashName: { color: '#FAF8FF', fontSize: 14, fontWeight: '800' },
-  empty: { color: '#C4B4D0', textAlign: 'center', padding: 22, lineHeight: 20, fontSize: 12 },
+  empty: { color: '#CBBBD9', textAlign: 'center', padding: 22, lineHeight: 20, fontSize: 12 },
   notice: { color: '#FFD0B5', padding: 10, backgroundColor: 'rgba(255,107,0,.12)', borderRadius: 9, marginTop: 8, fontSize: 12 }
 });

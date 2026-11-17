@@ -301,7 +301,7 @@ export default function WatchScreen({ navigation, route }) {
           {own
             ? <View style={s.ownBadge}><Text style={s.ownBadgeText}>Your Reel</Text></View>
             : <TouchableOpacity style={[s.followButton, following.has(item.user_id) && s.followingButton]} onPress={() => toggleFollow(item.user_id)} disabled={!!followBusy}>
-                <Text style={s.followText}>{followBusy === item.user_id ? 'Saving…' : following.has(item.user_id) ? '✓ Following' : '+ Follow'}</Text>
+                <Text style={[s.followText, following.has(item.user_id) && s.followingText]}>{followBusy === item.user_id ? 'Saving…' : following.has(item.user_id) ? '✓ Following' : '+ Follow'}</Text>
               </TouchableOpacity>}
         </View>
         <View style={s.mediaFrame}>
@@ -343,7 +343,7 @@ export default function WatchScreen({ navigation, route }) {
             value={drafts[item.id] || ''}
             onChangeText={value => setDrafts(prev => ({ ...prev, [item.id]: value }))}
             placeholder="Add a comment…"
-            placeholderTextColor="#BBA9CC"
+            placeholderTextColor="#CBBBD9"
             style={s.commentInput}
             maxLength={2000}
           />
@@ -377,7 +377,7 @@ export default function WatchScreen({ navigation, route }) {
         value={caption}
         onChangeText={setCaption}
         placeholder="Add a caption before uploading (optional)"
-        placeholderTextColor="#BBA9CC"
+        placeholderTextColor="#CBBBD9"
         maxLength={500}
       />
       {!!notice && <Text accessibilityRole="alert" style={s.notice}>{notice}</Text>}
@@ -414,14 +414,14 @@ export default function WatchScreen({ navigation, route }) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, minHeight: 0, backgroundColor: '#10091B', paddingHorizontal: 14, paddingTop: 8 },
+  container: { flex: 1, minHeight: 0, backgroundColor: '#05030A', paddingHorizontal: 14, paddingTop: 8 },
   header: { marginTop: 12, marginBottom: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { color: '#FFF', fontSize: 27, fontWeight: 'bold' },
-  sub: { color: '#BBA9CC', marginTop: 3, fontSize: 11 },
+  sub: { color: '#CBBBD9', marginTop: 3, fontSize: 11 },
   upload: { backgroundColor: '#6A0DAD', paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11 },
   uploadDisabled: { opacity: 0.65 },
   uploadText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
-  input: { backgroundColor: '#241630', borderWidth: 1, borderColor: '#39244B', borderRadius: 11, padding: 12, color: '#FFF', marginBottom: 9 },
+  input: { backgroundColor: '#181025', borderWidth: 1, borderColor: '#352047', borderRadius: 11, padding: 12, color: '#FFF', marginBottom: 9 },
   notice: { color: '#9FD3FF', marginBottom: 8, fontSize: 12, lineHeight: 18 },
   feedViewport: { flex: 1, minHeight: 180 },
   feedContent: { paddingBottom: 0 },
@@ -429,30 +429,31 @@ const s = StyleSheet.create({
   emptyWrap: { alignItems: 'center', padding: 28 },
   emptyIcon: { fontSize: 44, marginBottom: 12 },
   emptyTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 18, marginBottom: 8 },
-  empty: { color: '#C4B4D0', textAlign: 'center', lineHeight: 22, maxWidth: 340 },
+  empty: { color: '#CBBBD9', textAlign: 'center', lineHeight: 22, maxWidth: 340 },
   emptyRefresh: { marginTop: 18, backgroundColor: '#3A0CA3', borderRadius: 10, paddingHorizontal: 18, paddingVertical: 11 },
   emptyRefreshText: { color: '#FFF', fontWeight: 'bold' },
-  reelCard: { backgroundColor: '#10091B', padding: 12, borderBottomWidth: 1, borderBottomColor: '#39244B', justifyContent: 'flex-start' },
+  reelCard: { backgroundColor: '#05030A', padding: 12, borderBottomWidth: 1, borderBottomColor: '#352047', justifyContent: 'flex-start' },
   creatorRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12, minHeight: 54, width: '100%' },
   creatorIdentity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 0 },
-  followButton: { backgroundColor: '#6A0DAD', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, minWidth: 88, alignItems: 'center', justifyContent: 'center', flexShrink: 0, elevation: 3 },
-  followingButton: { backgroundColor: '#39244B', borderWidth: 1, borderColor: '#4B6683' },
-  followText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
-  ownBadge: { backgroundColor: '#39244B', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 18 },
+  followButton: { backgroundColor: '#FFC107', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, minWidth: 88, alignItems: 'center', justifyContent: 'center', flexShrink: 0, elevation: 3 },
+  followingButton: { backgroundColor: '#181025', borderWidth: 1, borderColor: '#6A0DAD' },
+  followText: { color: '#05030A', fontWeight: 'bold', fontSize: 12 },
+  ownBadge: { backgroundColor: '#352047', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 18 },
   ownBadgeText: { color: '#B9C9DB', fontSize: 11, fontWeight: 'bold' },
   creatorAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
   creatorAvatarText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   creator: { color: '#D8B8F5', fontWeight: 'bold', fontSize: 13 },
-  creatorName: { color: '#BBA9CC', fontSize: 10, marginTop: 2 },
+  creatorName: { color: '#CBBBD9', fontSize: 10, marginTop: 2 },
   mediaFrame: { width: '100%', flex: 1, minHeight: 180, backgroundColor: '#000', borderRadius: 14, overflow: 'hidden' },
-  mediaError: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 22, backgroundColor: '#170D26' },
+  mediaError: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 22, backgroundColor: '#0C0714' },
   mediaErrorIcon: { color: '#FFC107', fontSize: 34, marginBottom: 10 },
   mediaErrorTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 15, textAlign: 'center' },
-  mediaErrorText: { color: '#BBA9CC', fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 19 },
+  mediaErrorText: { color: '#CBBBD9', fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 19 },
   retryButton: { backgroundColor: '#6A0DAD', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 9, marginTop: 15 },
   retryText: { color: '#FFF', fontWeight: 'bold' },
+  followingText: { color: '#FAF8FF' },
   caption: { color: '#FFF', marginTop: 10, lineHeight: 19, fontSize: 13 },
-  reportReel: { alignSelf: 'flex-end', paddingVertical: 7, paddingHorizontal: 10, marginTop: 5, marginBottom: 5, borderRadius: 8, backgroundColor: '#30203F' },
+  reportReel: { alignSelf: 'flex-end', paddingVertical: 7, paddingHorizontal: 10, marginTop: 5, marginBottom: 5, borderRadius: 8, backgroundColor: '#21132F' },
   reportReelText: { color: '#FFB6C0', fontSize: 11, fontWeight: '700' },
   actions: { flexDirection: 'row', gap: 18, alignItems: 'center', paddingVertical: 11 },
   actionButton: { paddingVertical: 2 },

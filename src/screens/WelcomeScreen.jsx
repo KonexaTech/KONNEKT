@@ -84,7 +84,7 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
   },
 
   content: {
@@ -159,10 +159,10 @@ const styles = StyleSheet.create({
 
   feature: {
     width: '48%',
-    backgroundColor: '#170D26',
+    backgroundColor: '#0C0714',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#39244B',
+    borderColor: '#352047',
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
 
   signupText: {
-    color: '#FFFFFF',
+    color: '#05030A',
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
 
   footer: {
-    color: '#BBA9CC',
+    color: '#CBBBD9',
     textAlign: 'center',
     marginTop: 20,
     fontSize: 12,

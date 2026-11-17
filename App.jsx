@@ -333,21 +333,21 @@ function AppShell() {
       testID="konnekt-app-shell"
     >
       <StatusBar
-        backgroundColor={lightMode ? '#F7F3FC' : '#10091B'}
+        backgroundColor={lightMode ? '#F7F3FC' : '#05030A'}
         barStyle={lightMode ? 'dark-content' : 'light-content'}
       />
 
-      <div inert={securityChecking ? '' : undefined} aria-hidden={securityChecking || undefined} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div className={lightMode ? 'konnekt-light' : 'konnekt-dark'} inert={securityChecking ? '' : undefined} aria-hidden={securityChecking || undefined} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {isMainTab && session && (
         <>
           {/* KONNEKT BRAND HEADER */}
-          <View style={styles.brandBar}>
-            <View style={styles.brandMark}>
+          <View style={styles.brandBar} testID="konnekt-brand-header">
+            <View style={styles.brandMark} testID="konnekt-brand-mark">
               <Text style={styles.brandMarkText}>K</Text>
             </View>
 
             <View style={styles.brandCopy}>
-              <Text style={styles.brandName}>KONNEKT</Text>
+              <Text style={styles.brandName} accessibilityLabel="KONNEKT">KONNE<Text style={styles.brandAccent}>KT</Text></Text>
               <Text style={styles.brandTagline}>
                 Connecting people everywhere.
               </Text>
@@ -368,7 +368,7 @@ function AppShell() {
           </View>
 
           {/* TOP NAVIGATION BAR */}
-          <View style={styles.tabBar} accessibilityRole="tablist">
+          <View style={styles.tabBar} accessibilityRole="tablist" testID="konnekt-main-tabs">
             {tabs.map(tab => {
               const active = currentRoute.name === tab.name;
 
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     minHeight: 0,
-    backgroundColor: '#10091B'
+    backgroundColor: '#05030A'
   },
 
   lightContainer: {
@@ -463,9 +463,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#170D26',
+    backgroundColor: '#0C0714',
     borderBottomWidth: 1,
-    borderBottomColor: '#39244B'
+    borderBottomColor: '#352047'
   },
 
   brandMark: {
@@ -498,16 +498,20 @@ const styles = StyleSheet.create({
   },
 
   brandTagline: {
-    color: '#BBA9CC',
+    color: '#CBBBD9',
     fontSize: 9,
     marginTop: 2
+  },
+
+  brandAccent: {
+    color: '#FFC107'
   },
 
   themeToggle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#30203F',
+    backgroundColor: '#21132F',
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -521,9 +525,9 @@ const styles = StyleSheet.create({
   tabBar: {
     minHeight: 62,
     flexDirection: 'row',
-    backgroundColor: '#170D26',
+    backgroundColor: '#0C0714',
     borderBottomWidth: 1,
-    borderBottomColor: '#39244B',
+    borderBottomColor: '#352047',
     justifyContent: 'space-around',
     alignItems: 'stretch',
     paddingHorizontal: 2
@@ -540,7 +544,7 @@ const styles = StyleSheet.create({
   },
 
   activeTab: {
-    borderBottomColor: '#FF6B00'
+    borderBottomColor: '#FFC107'
   },
 
   tabIcon: {
@@ -570,7 +574,7 @@ const styles = StyleSheet.create({
 
   missingScreen: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 25

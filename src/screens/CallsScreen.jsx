@@ -130,7 +130,7 @@ export default function CallsScreen({ navigation }) {
         />
       )}
       <Text style={s.section}>Start a call</Text>
-      <TextInput value={query} onChangeText={setQuery} style={s.search} placeholder="Search people by name or username" placeholderTextColor="#C4B4D0" accessibilityLabel="Search people to call" autoCapitalize="none" returnKeyType="search" />
+      <TextInput value={query} onChangeText={setQuery} style={s.search} placeholder="Search people by name or username" placeholderTextColor="#CBBBD9" accessibilityLabel="Search people to call" autoCapitalize="none" returnKeyType="search" />
       <FlatList
         data={filteredPeople}
         keyExtractor={item => item.id}
@@ -145,36 +145,36 @@ export default function CallsScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  page: { flex: 1, minHeight: 0, backgroundColor: '#10091B', paddingHorizontal: 18, paddingTop: 10 },
+  page: { flex: 1, minHeight: 0, backgroundColor: '#05030A', paddingHorizontal: 18, paddingTop: 10 },
   back: { color: '#D8B8F5', fontSize: 16, marginTop: 12 },
   header: { marginTop: 12, marginBottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { color: '#FFF', fontSize: 28, fontWeight: '800' },
-  subtitle: { color: '#C4B4D0', marginTop: 4, fontSize: 12 },
-  refresh: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#241630', borderWidth: 1, borderColor: '#39244B' },
+  subtitle: { color: '#CBBBD9', marginTop: 4, fontSize: 12 },
+  refresh: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#181025', borderWidth: 1, borderColor: '#352047' },
   refreshText: { color: '#00E6FF', fontSize: 24 },
   section: { color: '#FFC107', fontWeight: '800', fontSize: 13, letterSpacing: 1, marginTop: 8, marginBottom: 7, textTransform: 'uppercase' },
   historyList: { maxHeight: 245, flexGrow: 0 },
   peopleList: { flex: 1, minHeight: 80 },
   loading: { marginVertical: 22 },
-  historyRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#39244B', gap: 10 },
-  callIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#241630', alignItems: 'center', justifyContent: 'center' },
+  historyRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#352047', gap: 10 },
+  callIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#181025', alignItems: 'center', justifyContent: 'center' },
   missedIcon: { backgroundColor: 'rgba(255,107,0,.18)' },
   callGlyph: { color: '#00E6FF', fontSize: 17 },
   historyCopy: { flex: 1, minWidth: 0 },
   personName: { color: '#FAF8FF', fontSize: 14, fontWeight: '700' },
-  meta: { color: '#C4B4D0', fontSize: 10, marginTop: 4 },
+  meta: { color: '#CBBBD9', fontSize: 10, marginTop: 4 },
   redial: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#3A0CA3' },
   redialText: { color: '#FFF', fontSize: 20 },
-  search: { backgroundColor: '#241630', color: '#FAF8FF', borderColor: '#39244B', borderWidth: 1, borderRadius: 12, padding: 13, marginBottom: 7 },
-  personRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#39244B', gap: 9 },
+  search: { backgroundColor: '#181025', color: '#FAF8FF', borderColor: '#352047', borderWidth: 1, borderRadius: 12, padding: 13, marginBottom: 7 },
+  personRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#352047', gap: 9 },
   avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#3A0CA3', alignItems: 'center', justifyContent: 'center' },
-  avatarImage: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#241630' },
+  avatarImage: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#181025' },
   avatarText: { color: '#FFF', fontWeight: '800' },
   personCopy: { flex: 1, minWidth: 0 },
   voiceButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center' },
   videoButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
   actionText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-  empty: { color: '#C4B4D0', textAlign: 'center', padding: 16, fontSize: 12, lineHeight: 18 },
+  empty: { color: '#CBBBD9', textAlign: 'center', padding: 16, fontSize: 12, lineHeight: 18 },
   notice: { color: '#FFD0B5', backgroundColor: 'rgba(255,107,0,.12)', padding: 10, borderRadius: 9, marginBottom: 8 },
   footnote: { color: '#A998B8', fontSize: 10, lineHeight: 15, textAlign: 'center', paddingVertical: 7 }
 });
