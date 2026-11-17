@@ -165,6 +165,7 @@ jobs:
           KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
           KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
           KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+          KONNEKT_STAGING_CERT_SHA256: ${{ vars.KONNEKT_STAGING_CERT_SHA256 }}
         run: node scripts/android-staging-signing.mjs
 
       - name: Build Android APK
