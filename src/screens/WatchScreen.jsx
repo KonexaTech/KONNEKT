@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { chooseMedia, uploadMedia, cleanupUnusedPublicMedia } from '../services/media';
+import ReelPlayer from '../components/ReelPlayer';
 
 const MAX_VIDEO_BYTES = 45 * 1024 * 1024;
 const BUCKET = 'konnekt-public-media';
@@ -311,14 +312,14 @@ export default function WatchScreen({ navigation, route }) {
                 <Text style={s.mediaErrorText}>The file may be unavailable or in an unsupported format.</Text>
                 <TouchableOpacity style={s.retryButton} onPress={() => setFailedMedia(prev => ({ ...prev, [item.id]: false }))}><Text style={s.retryText}>Try again</Text></TouchableOpacity>
               </View>
-            : <video
+            : <ReelPlayer
                 key={`${item.id}-${url}`}
                 src={url}
                 controls
                 playsInline
                 loop
                 muted
-                autoPlay={active}
+                active={active}
                 preload={active ? 'auto' : 'metadata'}
                 onError={() => setFailedMedia(prev => ({ ...prev, [item.id]: true }))}
                 style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', borderRadius: 14 }}
