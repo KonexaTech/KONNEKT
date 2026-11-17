@@ -13,6 +13,7 @@ export default function AdminModerationScreen({ navigation }) {
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
   const [reports, setReports] = useState([]);
+  const [reportFilter, setReportFilter] = useState('all');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -172,11 +173,21 @@ export default function AdminModerationScreen({ navigation }) {
         or remove content.
       </Text>
 
+      <View style={s.actions}>
+        {['all', 'bugs', 'safety'].map(filter => (
+          <TouchableOpacity key={filter} accessibilityRole="button"
+            accessibilityState={{ selected: reportFilter === filter }}
+            onPress={() => setReportFilter(filter)}
+            style={[s.filterButton, reportFilter === filter && s.filterActive]}>
+            <Text style={s.buttonText}>{filter === 'all' ? 'All' : filter === 'bugs' ? 'App bugs' : 'Safety'}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       {busy ? (
         <ActivityIndicator color="#167BFF" />
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-          {reports.map(report => (
+          {reports.filter(report => reportFilter === 'all' || (report.reason?.startsWith('App bug:') === (reportFilter === 'bugs'))).map(report => ( 
             <View key={report.id} style={s.card}>
               <Text style={s.reportTitle}>
                 {report.reason} · {report.status}
@@ -223,7 +234,7 @@ export default function AdminModerationScreen({ navigation }) {
             </View>
           ))}
 
-          {!reports.length && (
+          {!reports.some(report => reportFilter === 'all' || (report.reason?.startsWith('App bug:') === (reportFilter === 'bugs'))) && (
             <Text style={s.info}>No reports in the queue.</Text>
           )}
         </ScrollView>
@@ -294,6 +305,8 @@ const s = StyleSheet.create({
     lineHeight: 19,
     marginTop: 10
   },
+  filterButton: { backgroundColor: '#31506D', padding: 10, borderRadius: 8, marginBottom: 10 },
+  filterActive: { backgroundColor: '#6A0DAD' },
   actions: {
     flexDirection: 'row',
     gap: 7,
