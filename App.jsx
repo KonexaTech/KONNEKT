@@ -40,11 +40,10 @@ const routeAliases = {
 };
 
 const tabs = [
-  { name: 'Reels', icon: 'play-square' },
   { name: 'Chats', icon: 'message-circle' },
+  { name: 'Reels', icon: 'play-square' },
   { name: 'Status', icon: 'circle-dot' },
   { name: 'Discover', icon: 'compass' },
-  { name: 'Calls', icon: 'phone' },
   { name: 'Profile', icon: 'user-round' }
 ];
 

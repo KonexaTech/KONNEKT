@@ -59,7 +59,7 @@ async function installMedia(f,{pendingFirst=false}={}){
 }
 async function mediaFixture(f,{pendingFirst=false}={}){
  await installMedia(f,{pendingFirst});
- await f.page.getByRole('tab',{name:'Calls',exact:true}).click();await f.page.getByRole('button',{name:'Start video call with Other Member',exact:true}).click();await f.page.getByText('VIDEO CALL',{exact:true}).waitFor();
+ await f.page.getByRole('tab',{name:'Profile',exact:true}).click();await f.page.getByText('☰  ALL FEATURES',{exact:true}).click();await f.page.getByRole('button',{name:'Open Calls',exact:true}).click();await f.page.getByRole('button',{name:'Start video call with Other Member',exact:true}).click();await f.page.getByText('VIDEO CALL',{exact:true}).waitFor();
  if(!pendingFirst)await f.page.getByText('Ringing…',{exact:true}).waitFor().catch(async()=>{throw Error('Fixture call view: '+await f.page.locator('body').innerText());});
 }
 
@@ -68,7 +68,7 @@ test('a camera granted after hang-up is stopped instead of surviving the call',a
  try{
   await mediaFixture(f);await f.page.getByText('Ringing…',{exact:true}).waitFor();
   await f.page.getByText('Switch camera',{exact:true}).click();await f.page.waitForFunction(()=>typeof window.__grantCamera==='function');
-  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();
+  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();
   await f.page.evaluate(()=>window.__grantCamera());await frames(f.page);
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.length),2);
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.every(track=>track.readyState==='ended')),true);
@@ -81,7 +81,7 @@ test('hang-up remains available during camera consent and cleans up a late first
  try{
   await mediaFixture(f,{pendingFirst:true});await f.page.waitForFunction(()=>typeof window.__grantCamera==='function');
   assert.equal(await f.page.getByText('End call',{exact:true}).isEnabled(),true);
-  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();
+  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();
   await f.page.evaluate(()=>window.__grantCamera());await frames(f.page);
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.every(track=>track.readyState==='ended')),true);
   assert.equal(await f.page.evaluate(()=>window.__peers.length),0);assert.deepEqual(f.errors,[]);
@@ -95,7 +95,7 @@ test('a notification tap cannot unmount an ongoing call',async()=>{
   await f.page.evaluate(async()=>{const{notificationOpener}=await import('/KONNEKT/src/services/pushOpen.js');notificationOpener.receive({notification:{additionalData:{screen:'Notifications'}}});});await frames(f.page);
   assert.equal(await f.page.getByText('VIDEO CALL',{exact:true}).count(),1);
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.every(track=>track.readyState==='live')),true);
-  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();assert.deepEqual(f.errors,[]);
+  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();assert.deepEqual(f.errors,[]);
  }finally{await f.close();}
 });
 
@@ -107,7 +107,7 @@ test('turning the camera off during a pending switch also disables the replaceme
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.length),2);
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks[1].enabled),false);
   await f.page.getByText('Camera on',{exact:true}).click();assert.equal(await f.page.evaluate(()=>window.__mediaTracks[1].enabled),true);
-  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();assert.deepEqual(f.errors,[]);
+  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();assert.deepEqual(f.errors,[]);
  }finally{await f.close();}
 });
 
@@ -168,7 +168,7 @@ test('hang-up stops capture immediately and still ends the server session when i
  try{
   await mediaFixture(f);f.failures.set('POST:call_signals',{message:'Fixture signal unavailable'});
   const ended=f.page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/rest/v1/call_sessions'&&r.request().postDataJSON()?.status==='ended');
-  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();
+  await f.page.getByText('End call',{exact:true}).click();await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();
   assert.equal(await f.page.evaluate(()=>window.__mediaTracks.every(track=>track.readyState==='ended')),true);
   await(await ended).finished();assert.equal(f.db.call_sessions[0].status,'ended');assert.deepEqual(f.errors,[]);
  }finally{await f.close();}
@@ -181,7 +181,7 @@ test('canonical and legacy terminal updates stop media, preserve history and can
    await f.page.clock.install({time:new Date()});
    await f.page.evaluate(async()=>{const{supabase}=await import('/KONNEKT/src/lib_supabase.js');const original=supabase.channel.bind(supabase);supabase.channel=(name,...args)=>{const channel=original(name,...args);if(name.startsWith('konnekt-call-')){const on=channel.on.bind(channel);channel.on=(type,filter,callback)=>{if(filter.table==='call_sessions'&&filter.event==='UPDATE')window.__callSessionChanged=callback;return on(type,filter,callback);};}return channel;};});
    await mediaFixture(f);f.db.call_sessions[0].status=status;
-   await f.page.evaluate(status=>window.__callSessionChanged({new:{status}}),status);await f.page.getByRole('tab',{name:'Calls',exact:true}).waitFor();
+   await f.page.evaluate(status=>window.__callSessionChanged({new:{status}}),status);await f.page.getByRole('button',{name:'Back from Calls',exact:true}).waitFor();
    await f.page.getByText(new RegExp('Outgoing.*'+label)).waitFor();assert.equal(await f.page.evaluate(()=>window.__mediaTracks.every(track=>track.readyState==='ended')),true);
    await f.page.clock.fastForward(46000);await frames(f.page);assert.equal(f.db.call_sessions[0].status,status);
    assert.equal(await f.page.getByRole('alertdialog',{name:'Call not answered',exact:true}).count(),0);assert.deepEqual(f.errors,[]);

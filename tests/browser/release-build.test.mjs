@@ -12,8 +12,8 @@ for (const width of [390, 1280]) {
     try {
       const { page, errors, requests } = app;
       await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor();
-      assert.deepEqual(await page.getByRole('tab').allTextContents(), ['▶Reels','✉Chats','◉Status','◎Discover','☎Calls','◌Profile']);
-      for (const name of ['Chats', 'Status', 'Discover', 'Calls', 'Profile', 'Reels']) {
+      assert.deepEqual(await page.getByRole('tab').allTextContents(), ['✉Chats','▶Reels','◉Status','◎Discover','◌Profile']);
+      for (const name of ['Chats', 'Status', 'Discover', 'Profile', 'Reels']) {
         const tab = page.getByRole('tab', { name, exact: true });
         await tab.click();
         await page.waitForFunction(name => document.querySelector(`[role="tab"][aria-label="${name}"]`)?.getAttribute('aria-selected') === 'true', name);
@@ -22,6 +22,10 @@ for (const width of [390, 1280]) {
       await page.getByRole('button', { name: 'Create group', exact: true }).click();
       await page.getByPlaceholder('Enter group name').waitFor();
       await page.reload();
+      await openFeature(page, 'Calls');
+      await page.getByLabel('Search people to call').waitFor();
+      await page.getByRole('button', { name: 'Back from Calls', exact: true }).click();
+      await page.getByText('‹ Back', { exact: true }).click();
       await openFeature(page, 'Live rooms');
       await page.getByText('Unavailable in this release', { exact: true }).waitFor();
       assert.equal(requests.filter(r => /live_stream|payment|payout|subscription|gift/.test(r.path)).length, 0);
