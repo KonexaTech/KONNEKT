@@ -2,11 +2,12 @@ import { Capacitor } from '@capacitor/core';
 import { createPushIdentity } from './services/pushIdentity';
 import { supabase,SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY } from './lib_supabase';
 import { resolvePushIdentity,installationKey } from './services/pushRegistration';
+import { notificationOpener } from './services/pushOpen';
 
 const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
 const enabled=!!appId&&Capacitor.isNativePlatform();
 export async function syncPushPreferences(userId){
-  if(enabled)await resolvePushIdentity({client:supabase,userId});
+  if(enabled)await resolvePushIdentity({client:supabase,userId,appId});
 }
 export async function retirePushSession(accessToken){
   if(!enabled||!accessToken)return;
@@ -19,11 +20,12 @@ export async function retirePushSession(accessToken){
 }
 export const initialisePushNotifications = createPushIdentity({
   enabled,
-  resolveIdentity:userId=>resolvePushIdentity({client:supabase,userId}),
+  resolveIdentity:userId=>resolvePushIdentity({client:supabase,userId,appId}),
   loadClient: async () => {
     const sdk = await import('onesignal-cordova-plugin');
     const client = sdk.default || sdk.OneSignal;
     client.initialize(appId);
+    client.Notifications.addEventListener('click', event=>notificationOpener.receive(event));
     return client;
   },
   onError: () => console.warn('KONNEKT push identity update failed; retry sign-in before relying on notifications.'),

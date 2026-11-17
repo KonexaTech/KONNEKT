@@ -176,8 +176,6 @@ jobs:
         run: ./gradlew --no-daemon clean assembleDebug
 
       - name: Verify APK file and signature
-        env:
-          EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
 
@@ -195,18 +193,28 @@ jobs:
 
           "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/konnekt-apk-signature.txt"
           cat "$RUNNER_TEMP/konnekt-apk-signature.txt"
-          if [ -n "$EXPECTED_STAGING_CERTIFICATE" ]; then
-            ACTUAL_CERTIFICATE="$(awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}' "$RUNNER_TEMP/konnekt-apk-signature.txt")"
-            test "$ACTUAL_CERTIFICATE" = "$EXPECTED_STAGING_CERTIFICATE"
-          fi
-
           echo "APK signature verification passed."
+
+      - name: Record staging APK installation evidence
+        if: ${{ inputs.staging }}
+        env:
+          KONNEKT_EXPECTED_PACKAGE: com.konnekt.staging
+          EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$SDK/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          test -n "$AAPT"
+          node scripts/android-apk-evidence.mjs android/app/build/outputs/apk/debug/app-debug.apk "$APKSIGNER" "$AAPT" android/app/build/outputs/apk/debug/apk-evidence.json
 
       - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.staging && (inputs.ephemeral_staging_signing && 'KONNEKT-Android-API26-Staging-Fresh-Install-Only' || 'KONNEKT-Android-API26-Staging-Stable') || 'KONNEKT-Android-API26-Test' }}
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/apk-evidence.json
           if-no-files-found: error
           retention-days: 30
       - name: Remove staging keystore

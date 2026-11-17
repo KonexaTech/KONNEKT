@@ -1,0 +1,49 @@
+{
+  "observedDateUTC": "2026-11-17",
+  "environment": "konnekt-staging",
+  "releaseDecision": "HOLD",
+  "runId": "11cd9613-56d0-4555-a7ee-fddae00fc7e2",
+  "decision": "PASS_SCOPED_IN_APP_NOTIFICATION_NAVIGATION_ONLY",
+  "checks": [
+    {
+      "check": "three actual signed accounts open their own notification inbox despite forged provider recipient, URL and conversation parameters",
+      "result": "PASS"
+    },
+    {
+      "check": "all actual notification responses and query filters remain scoped to the signed account; arbitrary privileged routes are rejected",
+      "result": "PASS"
+    },
+    {
+      "check": "the Notifications Back button returns each actual account to the existing tabs",
+      "result": "PASS"
+    },
+    {
+      "check": "no unexpected network origin was contacted",
+      "result": "PASS"
+    }
+  ],
+  "privateReportSHA256": "c78ba964d024a3109c947b1a13f43e5ad7f78101bf47149c7d17edb6614b3650",
+  "stagingCompletionGuard": {
+    "migration": "20261117035233_release_staging_erasure_completion_restore_guard",
+    "authStorageCheckBeforeIdempotentReturn": true,
+    "anonymousExecute": false,
+    "authenticatedExecute": false,
+    "operatorExecute": true,
+    "authUsersUnchanged": 7,
+    "storageFilesUnchanged": 30,
+    "processingDeletions": 0
+  },
+  "localVerification": {
+    "unitDatabaseServiceWorker": 61,
+    "browser": 45,
+    "webBuildSmoke": 3,
+    "mobileBuildSmoke": 3,
+    "productionDependencyVulnerabilities": 0
+  },
+  "physicalInstallation": "BLOCKED",
+  "stableSigning": "BLOCKED",
+  "nativePushDelivery": "BLOCKED",
+  "crossNetworkCalls": "BLOCKED",
+  "liveDeletionAndFullRestore": "BLOCKED",
+  "productionSecurityPromotion": "BLOCKED"
+}

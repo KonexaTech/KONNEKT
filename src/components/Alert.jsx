@@ -7,8 +7,9 @@ const listeners = new Set();
 const emit = () => listeners.forEach(listener => listener());
 export const Alert = {
   dismissAll() { queue = []; emit(); },
-  alert(title, message = '', buttons) {
-    queue = [...queue, { title, message, buttons: buttons?.length ? buttons : [{ text: 'OK' }] }];
+  dismiss(key) { queue=queue.filter(item=>item.key!==key);emit(); },
+  alert(title, message = '', buttons, options={}) {
+    queue = [...queue, { title, message, key:options.key, buttons: buttons?.length ? buttons : [{ text: 'OK' }] }];
     emit();
   }
 };

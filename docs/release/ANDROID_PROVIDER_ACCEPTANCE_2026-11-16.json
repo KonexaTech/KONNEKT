@@ -1,0 +1,58 @@
+{
+  "observedDateUTC": "2026-11-16",
+  "environment": "konnekt-staging",
+  "releaseDecision": "HOLD",
+  "registrationRunId": "914e4775-2539-4bc1-819f-d5b4740b9dd5",
+  "registrationDecision": "PASS_SCOPED_PUSH_REGISTRATION_ONLY",
+  "checks": [
+    {
+      "check": "three actual authenticated fixtures receive distinct opaque identities without public-ID login",
+      "result": "PASS"
+    },
+    {
+      "check": "actual outsider cannot register another account, enumerate private identities or call server-only targeting",
+      "result": "PASS"
+    },
+    {
+      "check": "actual outsider cannot configure the provider app or plan, prepare or confirm provider erasure",
+      "result": "PASS"
+    },
+    {
+      "check": "actual TURN session authorization accepts its signed owner and rejects another account",
+      "result": "PASS"
+    },
+    {
+      "check": "actual settings UI stores an account-scoped opt-out and sync preserves its identity",
+      "result": "PASS"
+    },
+    {
+      "check": "real encrypted messages create generic unread notifications for server target probes",
+      "result": "PASS"
+    },
+    {
+      "check": "actual newer account switch rejects the stale JWT registration and a late old-account cleanup cannot remove the new target",
+      "result": "PASS"
+    },
+    {
+      "check": "both isolated fixture sessions are signed out and the genuine old JWT cannot authorize fresh TURN credentials",
+      "result": "PASS"
+    }
+  ],
+  "privateReportSHA256": "96e619cf90ca98f161dcc8ce3f4acac8b62d5086ba67affd4ed549cf4830385b",
+  "deployedProviderErasureMigration": "20261116203424_release_staging_provider_erasure_manifests",
+  "deployedPushHandlerVersion": 3,
+  "providerAppConfigured": false,
+  "providerDelivery": "BLOCKED",
+  "physicalDevices": "BLOCKED",
+  "stableSigning": "BLOCKED",
+  "productionSecurityAcceptance": "BLOCKED",
+  "sourceCompletionRestoreGuard": "Locally tested; staging follow-up migration interrupted and not applied",
+  "localVerification": {
+    "unitDatabaseServiceWorker": 58,
+    "browser": 43,
+    "webBuildSmoke": 3,
+    "mobileBuildSmoke": 3,
+    "productionDependencyVulnerabilities": 0,
+    "completionRestoreGuardRegression": 1
+  }
+}
