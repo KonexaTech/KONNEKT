@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from 'node:fs';
@@ -15,6 +16,10 @@ test('stable signing fails without secrets and preserves one certificate across 
     const env={...process.env,KONNEKT_STAGING_KEYSTORE_PASSWORD:'fixture-store-password',KONNEKT_STAGING_KEY_PASSWORD:'fixture-store-password',KONNEKT_STAGING_KEY_ALIAS:'staging'};
     execFileSync('keytool',['-genkeypair','-keystore',key,'-storepass:env','KONNEKT_STAGING_KEYSTORE_PASSWORD','-keypass:env','KONNEKT_STAGING_KEY_PASSWORD','-alias','staging','-keyalg','RSA','-keysize','2048','-validity','30','-dname','CN=Disposable Local Fixture','-noprompt'],{env,stdio:'ignore'});
     env.KONNEKT_STAGING_KEYSTORE_BASE64=readFileSync(key).toString('base64');
+    assert.throws(()=>configureStagingSigning({projectRoot:root,tempRoot:root,env}),/owner-verified SHA-256/);
+    const cert=execFileSync('keytool',['-exportcert','-keystore',key,'-storepass:env','KONNEKT_STAGING_KEYSTORE_PASSWORD','-alias','staging'],{env});
+    env.KONNEKT_STAGING_CERT_SHA256=createHash('sha256').update(cert).digest('hex');
+    assert.throws(()=>configureStagingSigning({projectRoot:root,tempRoot:root,env:{...env,KONNEKT_STAGING_CERT_SHA256:'0'.repeat(64)}}),/differs from the pinned fingerprint/);
     const first=configureStagingSigning({projectRoot:root,tempRoot:root,env});
     const second=configureStagingSigning({projectRoot:root,tempRoot:root,env});
     assert.equal(first.sha256,second.sha256);assert.match(first.sha256,/^[a-f0-9]{64}$/);
