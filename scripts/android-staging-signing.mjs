@@ -23,7 +23,10 @@ export function configureStagingSigning({ projectRoot, tempRoot, env }) {
   // A pinned fingerprint protects existing testers from an accidental signing-key
   // rotation that would make subsequent APK updates uninstallable.
   const pinned = (env.KONNEKT_STAGING_CERT_SHA256 || '').replace(/[^a-fA-F0-9]/g, '').toLowerCase();
-  if (env.KONNEKT_STAGING_CERT_SHA256 && (pinned.length !== 64 || pinned !== sha256)) {
+  if (pinned.length !== 64 || !/^(?:[a-fA-F0-9]{64}|(?:[a-fA-F0-9]{2}:){31}[a-fA-F0-9]{2})$/.test(env.KONNEKT_STAGING_CERT_SHA256 || '')) {
+    throw new Error('Stable staging signing requires an owner-verified SHA-256 certificate fingerprint.');
+  }
+  if (pinned !== sha256) {
     throw new Error('Staging signing certificate differs from the pinned fingerprint; stop before distributing an incompatible update.');
   }
   const file = join(projectRoot, 'android/app/build.gradle');
