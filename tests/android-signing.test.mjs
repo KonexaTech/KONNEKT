@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
