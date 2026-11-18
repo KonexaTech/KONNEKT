@@ -27,6 +27,8 @@ as $$
       where c.singleton and c.enabled
         and c.started_at <= now() and now() < c.ends_at
     )
+    -- Fail closed unless the operator enrolled exactly twenty testers.
+    and (select count(*) from konnekt_beta.testers) = 20
     and exists (
       select 1 from konnekt_beta.testers t
       where t.user_id = (select auth.uid())
