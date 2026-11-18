@@ -35,9 +35,9 @@ as $$
     );
 $$;
 revoke all on function konnekt_beta.allowed() from public, anon;
-grant usage on schema konnekt_beta to authenticated;
-grant execute on function konnekt_beta.allowed() to authenticated;
--- Restrictive policies combine with existing ownership and membership policies.
+grant usage on schema konnekt_beta to anon, authenticated;
+grant execute on function konnekt_beta.allowed() to anon, authenticated;
+-- Restrictive PUBLIC policies cover anon and authenticated roles; auth.uid() is null for anon, so deny.\n-- Restrictive policies combine with existing ownership and membership policies.
 -- This deliberately does not modify public RPCs or Realtime authorization.
 do $block$
 declare r record;
@@ -47,7 +47,7 @@ begin
  where c.relkind='r' and (n.nspname='public' or (n.nspname='storage' and c.relname='objects'))
  loop
    if not r.relrowsecurity then raise exception 'RLS missing on %.%',r.nspname,r.relname; end if;
-   execute format('create policy beta_14_day_gate on %I.%I as restrictive for all to authenticated using ((select konnekt_beta.allowed())) with check ((select konnekt_beta.allowed()))',r.nspname,r.relname);
+   execute format('create policy beta_14_day_gate on %I.%I as restrictive for all to public using ((select konnekt_beta.allowed())) with check ((select konnekt_beta.allowed()))',r.nspname,r.relname);
  end loop;
 end $block$;
 commit;
