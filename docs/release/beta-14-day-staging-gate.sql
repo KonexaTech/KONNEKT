@@ -37,7 +37,8 @@ $$;
 revoke all on function konnekt_beta.allowed() from public, anon;
 grant usage on schema konnekt_beta to anon, authenticated;
 grant execute on function konnekt_beta.allowed() to anon, authenticated;
--- Restrictive PUBLIC policies cover anon and authenticated roles; auth.uid() is null for anon, so deny.\n-- Restrictive policies combine with existing ownership and membership policies.
+-- Restrictive PUBLIC policies cover anon and authenticated roles; auth.uid() is null for anon, so deny.
+-- Restrictive policies combine with existing ownership and membership policies.
 -- This deliberately does not modify public RPCs or Realtime authorization.
 do $block$
 declare r record;
