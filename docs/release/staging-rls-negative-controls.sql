@@ -8,11 +8,13 @@ SET LOCAL ROLE authenticated;
 SELECT 'no-jwt' AS scenario,
   (SELECT count(*) FROM public.messages) AS messages_visible,
   (SELECT count(*) FROM public.conversation_members) AS memberships_visible,
+  (SELECT count(*) FROM public.message_receipts) AS receipts_visible,
   (SELECT count(*) FROM public.user_reports) AS reports_visible;
 -- Deliberately nonexistent test identity: never impersonate a real user.
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000001', true);
 SELECT 'unknown-identity' AS scenario,
   (SELECT count(*) FROM public.messages) AS messages_visible,
   (SELECT count(*) FROM public.conversation_members) AS memberships_visible,
+  (SELECT count(*) FROM public.message_receipts) AS receipts_visible,
   (SELECT count(*) FROM public.user_reports) AS reports_visible;
 ROLLBACK;
