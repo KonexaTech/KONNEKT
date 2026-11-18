@@ -25,6 +25,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  if(!apkPath||!apksigner||!aapt||!output)throw Error('Usage: android-apk-evidence.mjs APK APKSIGNER AAPT OUTPUT [PREVIOUS_EVIDENCE]');
  const signature=execFileSync(apksigner,['verify','--min-sdk-version','26','--verbose','--print-certs',apkPath],{encoding:'utf8'});
  const badging=execFileSync(aapt,['dump','badging',apkPath],{encoding:'utf8'});
+ if(process.env.KONNEKT_REQUIRE_STABLE_SIGNING==='true'&&!process.env.EXPECTED_STAGING_CERTIFICATE)throw Error('Stable staging APK evidence requires a verified signing certificate output.');
  const evidence=apkEvidence({apk:readFileSync(apkPath),signature,badging,commit:process.env.GITHUB_SHA,expectedPackage:process.env.KONNEKT_EXPECTED_PACKAGE,expectedCertificate:process.env.EXPECTED_STAGING_CERTIFICATE,previous:previousPath?JSON.parse(readFileSync(previousPath,'utf8')):undefined});
  writeFileSync(output,JSON.stringify(evidence,null,2)+'\n');
  console.log(JSON.stringify(evidence));
