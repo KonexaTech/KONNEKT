@@ -210,6 +210,7 @@ jobs:
         env:
           KONNEKT_EXPECTED_PACKAGE: com.konnekt.staging
           EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
+          KONNEKT_REQUIRE_STABLE_SIGNING: ${{ inputs.staging && !inputs.ephemeral_staging_signing }}
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
