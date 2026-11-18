@@ -31,3 +31,8 @@
 
 ## Known limitation
 The proposed RLS policies guard table access but do not automatically cover privileged RPCs, Auth endpoints, cached data, already issued signed URLs, external media services or existing Realtime sessions. Treat full shutdown as **unverified** until those surfaces are covered and tested.
+
+## Read-only staging privileged-RPC inventory (18 November 2026)
+Staging catalog confirms authenticated EXECUTE on SECURITY DEFINER routines `konnekt_private.session_allowed`, `public.is_konnekt_conversation_creator`, `public.is_konnekt_conversation_member`, `public.is_konnekt_moderator`, `public.konnekt_authorize_turn`, `public.konnekt_can_view_reel`, `public.konnekt_create_group_conversation`, `public.konnekt_is_blocked_pair`, `public.konnekt_register_push_session`, `public.konnekt_retired_peer`, `public.konnekt_start_direct_conversation`, and `public.konnekt_unregister_push_session`. This inventory is not proof of a vulnerability, but the beta RLS gate alone cannot enforce enrollment or expiration on their side effects. Review and enforce beta authorization in every callable privileged operation before deploying this proposal. In particular, group/direct conversation creation, push registration and TURN authorization must reject unenrolled/expired sessions, and helper functions must not become data-exposure paths. No SQL was deployed during this inventory.
+
+The proposed `allowed()` function now denies **all** access unless exactly 20 testers are enrolled. This is a fail-closed check, not a substitute for atomic enrollment controls or full service-level shutdown verification.
