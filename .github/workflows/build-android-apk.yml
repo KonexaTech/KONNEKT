@@ -65,7 +65,16 @@ jobs:
           KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
           KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
           KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+          KONNEKT_STAGING_CERT_SHA256: ${{ vars.KONNEKT_STAGING_CERT_SHA256 }}
         run: |
+          # Stable test builds must be pinned to an owner-verified signing certificate.
+          # A new certificate can be bootstrapped with a fresh-install-only build,
+          # but that build is not eligible for the 20-person update-continuity gate.
+          if ! [[ "$KONNEKT_STAGING_CERT_SHA256" =~ ^([[:xdigit:]]{2}:){31}[[:xdigit:]]{2}$|^[[:xdigit:]]{64}$ ]]; then
+            echo "Missing or invalid KONNEKT_STAGING_CERT_SHA256 repository variable."
+            echo "Pin the owner-verified signing certificate before producing a stable staging APK."
+            exit 1
+          fi
           for NAME in KONNEKT_STAGING_KEYSTORE_BASE64 KONNEKT_STAGING_KEYSTORE_PASSWORD KONNEKT_STAGING_KEY_ALIAS KONNEKT_STAGING_KEY_PASSWORD; do
             if [ -z "${!NAME}" ]; then
               echo "Missing Actions secret: $NAME. An owner must configure stable signing."
@@ -165,6 +174,7 @@ jobs:
           KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
           KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
           KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+          KONNEKT_STAGING_CERT_SHA256: ${{ vars.KONNEKT_STAGING_CERT_SHA256 }}
         run: node scripts/android-staging-signing.mjs
 
       - name: Build Android APK
@@ -200,6 +210,7 @@ jobs:
         env:
           KONNEKT_EXPECTED_PACKAGE: com.konnekt.staging
           EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
+          KONNEKT_REQUIRE_STABLE_SIGNING: ${{ inputs.staging && !inputs.ephemeral_staging_signing }}
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
