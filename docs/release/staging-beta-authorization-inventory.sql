@@ -66,3 +66,24 @@ from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public' and c.relkind = 'v'
 order by n.nspname, c.relname;
+
+-- Confirm that the beta gate schema exists before interpreting RLS results.
+-- Schema existence alone does not establish that enrollment, expiry, shutdown,
+-- privileged RPCs, storage or Realtime are enforced. Verify with live negative tests.
+select to_regnamespace('konnekt_beta') is not null as beta_schema_present,
+       has_schema_privilege('anon', 'public', 'USAGE') as anon_public_schema_usage,
+       has_schema_privilege('authenticated', 'public', 'USAGE') as authenticated_public_schema_usage;
+
+-- SECURITY DEFINER owners and search_path are material to privileged RPC review.
+-- Flag missing explicit search_path for manual inspection; not automatically a flaw.
+select n.nspname as schema_name, p.proname as function_name,
+       pg_get_function_identity_arguments(p.oid) as argument_types,
+       pg_get_userbyid(p.proowner) as function_owner,
+       p.proconfig as execution_settings,
+       not exists (select 1 from unnest(coalesce(p.proconfig, array[]::text[])) cfg
+                   where cfg like 'search_path=%') as no_explicit_search_path
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prosecdef
+  and (has_function_privilege('anon',p.oid,'EXECUTE')
+    or has_function_privilege('authenticated',p.oid,'EXECUTE'))
+order by n.nspname,p.proname,argument_types;
