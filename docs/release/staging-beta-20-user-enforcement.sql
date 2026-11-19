@@ -1,6 +1,6 @@
 -- STAGING ONLY: oiwtfkgrnpzirghbsvim. Manual review/deployment; NEVER production.
 -- Inactive by default. Applying this migration would intentionally deny staging app
--- access until exactly 20 approved staging accounts are enrolled and activated.
+-- access until exactly 20 approved tester accounts and one distinct owner account are enrolled and activated.
 -- Prior to deployment verify service-role/Edge/Realtime/public URL bypass controls.
 begin;
 -- Fail closed before installing policies: a public Supabase Storage bucket can
@@ -30,9 +30,46 @@ create table if not exists konnekt_beta.testers (
  user_id uuid primary key references auth.users(id) on delete cascade,
  enrolled_at timestamptz not null default now()
 );
+-- This singleton reserves exactly one separately verified founder/owner UUID.
+-- It does not authorize anyone merely by knowing the owner's email or tester code.
+create table if not exists konnekt_beta.owner_access (
+ singleton boolean primary key default true check (singleton),
+ user_id uuid not null unique references auth.users(id) on delete restrict,
+ enrolled_at timestamptz not null default now()
+);
+-- Serialize privileged enrollment operations, including concurrent inserts, and
+-- hard-cap testers at 20 while prohibiting the owner's UUID in tester slots.
+create or replace function konnekt_beta.enforce_roster_limit()
+returns trigger language plpgsql security definer set search_path=''
+as $limit$
+begin
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('konnekt-beta-21-person-roster',0));
+ if TG_TABLE_NAME = 'testers' then
+   if exists(select 1 from konnekt_beta.owner_access o where o.user_id=NEW.user_id) then
+     raise exception using errcode='23514',message='The owner account cannot use a tester slot.';
+   end if;
+   if (select count(*) from konnekt_beta.testers) > 20 then
+     raise exception using errcode='23514',message='Only 20 tester accounts may be enrolled.';
+   end if;
+ else
+   if exists(select 1 from konnekt_beta.testers t where t.user_id=NEW.user_id) then
+     raise exception using errcode='23514',message='The owner account must be separate from all testers.';
+   end if;
+ end if;
+ return NEW;
+end;
+$limit$;
+create trigger beta_tester_roster_limit
+after insert or update of user_id on konnekt_beta.testers
+for each row execute function konnekt_beta.enforce_roster_limit();
+create trigger beta_owner_roster_limit
+after insert or update of user_id on konnekt_beta.owner_access
+for each row execute function konnekt_beta.enforce_roster_limit();
 alter table konnekt_beta.control enable row level security;
 alter table konnekt_beta.testers enable row level security;
+alter table konnekt_beta.owner_access enable row level security;
 revoke all on all tables in schema konnekt_beta from public, anon, authenticated;
+revoke all on function konnekt_beta.enforce_roster_limit() from public, anon, authenticated;
 create or replace function konnekt_beta.allowed()
 returns boolean language sql stable security definer set search_path=''
 as $fn$
@@ -43,7 +80,15 @@ as $fn$
        and now() < c.ends_at
    )
    and (select count(*) from konnekt_beta.testers)=20
-   and exists (select 1 from konnekt_beta.testers t where t.user_id=auth.uid());
+   and (select count(*) from konnekt_beta.owner_access)=1
+   and not exists (
+     select 1 from konnekt_beta.testers t
+     join konnekt_beta.owner_access o on t.user_id=o.user_id
+   )
+   and (
+     exists (select 1 from konnekt_beta.testers t where t.user_id=auth.uid())
+     or exists (select 1 from konnekt_beta.owner_access o where o.user_id=auth.uid())
+   );
 $fn$;
 revoke all on function konnekt_beta.allowed() from public, anon, authenticated;
 grant usage on schema konnekt_beta to authenticated;
@@ -83,6 +128,6 @@ begin
  end loop;
 end $block$;
 commit;
--- Deliberately NO activation here. Never enable without live negative tests.
+-- Deliberately NO activation here. Provision exactly 20 distinct tester UUIDs\n-- and 1 separately verified owner UUID privately with a privileged connection.\n-- Operator MUST bind owner_access.user_id to the owner's real staging Auth UUID.\n-- The 14-day clock starts on explicit activation, not APK build or first login.\n-- This is an APP ADMISSION gate, not a pre-signup Auth hook: unapproved\n-- people might create Auth identities but cannot access protected app data.\n-- To prevent extra Auth signups themselves, separately configure/review an\n-- invite-only Supabase Auth admission mechanism before distribution.\n-- Never enable without live negative tests.
 -- Operator shutdown after activation:
 -- update konnekt_beta.control set enabled=false where singleton;
