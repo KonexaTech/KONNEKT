@@ -73,18 +73,20 @@ returns trigger language plpgsql security definer set search_path=''
 as $freeze$
 begin
  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('konnekt-beta-21-person-roster',0));
+ -- Privacy deletion must remain possible, including auth.users ON DELETE CASCADE.
+ -- Removing a roster member makes the exact-count admission check fail closed.
+ if TG_OP = 'DELETE' then return OLD; end if;
  if exists(select 1 from konnekt_beta.control c where c.singleton and c.started_at is not null) then
    raise exception using errcode='42501',message='Beta roster is frozen after activation.';
  end if;
- if TG_OP = 'DELETE' then return OLD; end if;
  return NEW;
 end;
 $freeze$;
 create trigger beta_testers_frozen
-before insert or update on konnekt_beta.testers
+before insert or update or delete on konnekt_beta.testers
 for each row execute function konnekt_beta.lock_roster_after_start();
 create trigger beta_owner_frozen
-before insert or update on konnekt_beta.owner_access
+before insert or update or delete on konnekt_beta.owner_access
 for each row execute function konnekt_beta.lock_roster_after_start();
 revoke all on function konnekt_beta.lock_roster_after_start() from public, anon, authenticated;
 alter table konnekt_beta.control enable row level security;
