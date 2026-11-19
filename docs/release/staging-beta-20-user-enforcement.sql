@@ -48,7 +48,7 @@ begin
    if exists(select 1 from konnekt_beta.owner_access o where o.user_id=NEW.user_id) then
      raise exception using errcode='23514',message='The owner account cannot use a tester slot.';
    end if;
-   if (select count(*) from konnekt_beta.testers) > 20 then
+   if TG_OP = 'INSERT' and (select count(*) from konnekt_beta.testers) >= 20 then
      raise exception using errcode='23514',message='Only 20 tester accounts may be enrolled.';
    end if;
  else
@@ -60,10 +60,10 @@ begin
 end;
 $limit$;
 create trigger beta_tester_roster_limit
-after insert or update of user_id on konnekt_beta.testers
+before insert or update of user_id on konnekt_beta.testers
 for each row execute function konnekt_beta.enforce_roster_limit();
 create trigger beta_owner_roster_limit
-after insert or update of user_id on konnekt_beta.owner_access
+before insert or update of user_id on konnekt_beta.owner_access
 for each row execute function konnekt_beta.enforce_roster_limit();
 alter table konnekt_beta.control enable row level security;
 alter table konnekt_beta.testers enable row level security;
