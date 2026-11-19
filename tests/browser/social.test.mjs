@@ -9,7 +9,7 @@ const reels=[reel('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Newest fixture Reel #n
 async function app(options={}){
   const fixture=await setup(server.base,{db:{reels,reel_likes:[],reel_comments:[],...options.db}});
   const video=await readFile(new URL('../fixtures/social-video.webm',import.meta.url));
-  await fixture.context.route('**/storage/v1/object/public/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
+  await fixture.context.route('**/storage/v1/object/sign/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
   await fixture.page.reload();fixture.page.setDefaultTimeout(12000);return fixture;
 }
 test('multi-Reel feed stays within the viewport and a Discover selection opens that Reel',async()=>{
@@ -48,7 +48,7 @@ test('Reel playback, like rollback/persistence and comment retries use actual UI
 });
 test('an open status removes its content and stops video at expiry',{timeout:25000},async()=>{
   const now=Date.now();
-  const f=await app({db:{statuses:[{id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',user_id:OTHER,text_content:'Expiring fixture status',media_url:`https://itkoagpigiifodfhoujt.supabase.co/storage/v1/object/public/konnekt-public-media/status.webm`,media_type:'video',created_at:new Date(now).toISOString(),expires_at:new Date(now+60000).toISOString()}]}});
+  const f=await app({db:{statuses:[{id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',user_id:OTHER,text_content:'Expiring fixture status',media_url:`https://oiwtfkgrnpzirghbsvim.supabase.co/storage/v1/object/public/konnekt-public-media/status.webm`,media_type:'video',created_at:new Date(now).toISOString(),expires_at:new Date(now+60000).toISOString()}]}});
   try{
     const {page}=f;await page.clock.install({time:now});await page.getByRole('tab',{name:'Status',exact:true}).click();
     await page.getByText('Expiring fixture status',{exact:true}).click();await page.getByText('Expiring fixture status',{exact:true}).waitFor();
