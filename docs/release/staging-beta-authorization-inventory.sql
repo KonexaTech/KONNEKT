@@ -44,3 +44,25 @@ order by pubname, schemaname, tablename;
 select id, name, public, file_size_limit, allowed_mime_types
 from storage.buckets
 order by id;
+
+-- Policy role targeting matters: a restrictive policy applying only to
+-- authenticated does not restrict anon. PUBLIC applies to both roles.
+-- Inspect the exact roles alongside the expressions above.
+select schemaname, tablename, policyname, permissive, roles, cmd,
+       qual as using_expression, with_check as check_expression
+from pg_policies
+where schemaname in ('public', 'storage')
+order by schemaname, tablename, policyname;
+
+-- View ownership/security context: default views may run with the view
+-- owner's privileges, even when underlying tables have RLS enabled.
+-- A view's presence here is not proof of a bypass; test its grants and rows.
+select n.nspname as schema_name, c.relname as view_name,
+       c.reloptions as view_options,
+       pg_get_userbyid(c.relowner) as view_owner,
+       has_table_privilege('anon', c.oid, 'SELECT') as anon_can_select,
+       has_table_privilege('authenticated', c.oid, 'SELECT') as authenticated_can_select
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public' and c.relkind = 'v'
+order by n.nspname, c.relname;
