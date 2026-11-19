@@ -10,7 +10,8 @@ test('staging beta gate remains fail-closed and requires exactly 20 enrolled use
   assert.match(sql, /\(select count\(\*\) from konnekt_beta\.testers\) = 20/i);
   assert.match(sql, /t\.user_id = \(select auth\.uid\(\)\)/i);
   assert.match(sql, /c\.started_at <= now\(\) and now\(\) < c\.ends_at/i);
-  assert.match(sql, /as restrictive for all to authenticated/i);
+  assert.match(sql, /as restrictive for all to public/i);
+  assert.match(sql, /grant execute on function konnekt_beta\.allowed\(\) to anon, authenticated/i);
   assert.match(sql, /enable row level security/i);
   assert.match(sql, /revoke all on all tables in schema konnekt_beta from public, anon, authenticated/i);
 });
