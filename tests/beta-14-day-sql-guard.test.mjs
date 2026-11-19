@@ -16,7 +16,7 @@ test('staging beta access fails closed without exact enrollment and active windo
 
 test('beta table policies remain restrictive and require both read and write authorization', () => {
   assert.match(sql, /r\.relrowsecurity\s+then raise exception/i);
-  assert.match(sql, /create policy beta_14_day_gate.*as restrictive for all to authenticated using.*with check/i);
+  assert.match(sql, /create policy beta_14_day_gate.*as restrictive for all to public using.*with check/i);
   assert.match(sql, /n\.nspname='public'.*n\.nspname='storage'.*c\.relname='objects'/i);
   assert.match(sql, /revoke all on all tables in schema konnekt_beta from public, anon, authenticated/i);
   assert.match(sql, /revoke all on function konnekt_beta\.allowed\(\) from public, anon/i);
