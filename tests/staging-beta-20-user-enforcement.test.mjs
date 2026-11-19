@@ -68,7 +68,10 @@ test('deployment fails closed if public media URLs could bypass beta shutdown',(
 test('enrollment roster becomes immutable after beta first starts',()=>{
  assert.match(sql,/create or replace function konnekt_beta\.lock_roster_after_start\(\)/i);
  assert.match(sql,/c\.started_at is not null/i);
- assert.match(sql,/before insert or update on konnekt_beta\.testers/i);
- assert.match(sql,/before insert or update on konnekt_beta\.owner_access/i);
+ assert.match(sql,/before insert or update or delete on konnekt_beta\.testers/i);
+ assert.match(sql,/before insert or update or delete on konnekt_beta\.owner_access/i);
  assert.match(sql,/Beta roster is frozen after activation/i);
+ // Deletion must remain permitted for privacy and auth.users CASCADE;
+ // removed identities fail the exact-count admission check closed.
+ assert.match(sql,/if TG_OP = 'DELETE' then return OLD; end if/i);
 });
