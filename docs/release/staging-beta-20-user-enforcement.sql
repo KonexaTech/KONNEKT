@@ -65,6 +65,28 @@ for each row execute function konnekt_beta.enforce_roster_limit();
 create trigger beta_owner_roster_limit
 before insert or update of user_id on konnekt_beta.owner_access
 for each row execute function konnekt_beta.enforce_roster_limit();
+-- Enrollment roster is immutable after the first beta activation, even if
+-- access is later disabled or the fourteen-day window has expired.
+-- This prevents replacing expired testers to quietly extend the beta.
+create or replace function konnekt_beta.lock_roster_after_start()
+returns trigger language plpgsql security definer set search_path=''
+as $freeze$
+begin
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('konnekt-beta-21-person-roster',0));
+ if exists(select 1 from konnekt_beta.control c where c.singleton and c.started_at is not null) then
+   raise exception using errcode='42501',message='Beta roster is frozen after activation.';
+ end if;
+ if TG_OP = 'DELETE' then return OLD; end if;
+ return NEW;
+end;
+$freeze$;
+create trigger beta_testers_frozen
+before insert or update or delete on konnekt_beta.testers
+for each row execute function konnekt_beta.lock_roster_after_start();
+create trigger beta_owner_frozen
+before insert or update or delete on konnekt_beta.owner_access
+for each row execute function konnekt_beta.lock_roster_after_start();
+revoke all on function konnekt_beta.lock_roster_after_start() from public, anon, authenticated;
 alter table konnekt_beta.control enable row level security;
 alter table konnekt_beta.testers enable row level security;
 alter table konnekt_beta.owner_access enable row level security;
