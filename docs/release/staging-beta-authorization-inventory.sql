@@ -34,12 +34,11 @@ order by n.nspname, c.relname, pol.polname;
 
 -- Realtime publication membership; separately audit channel authorization
 -- and subscriptions with authenticated, expired and excluded tester sessions.
-select pub.pubname, n.nspname as schema_name, c.relname as relation_name
-from pg_publication pub
-join pg_publication_rel pr on pr.prpubid = pub.oid
-join pg_class c on c.oid = pr.prrelid
-join pg_namespace n on n.oid = c.relnamespace
-order by pub.pubname, n.nspname, c.relname;
+-- pg_publication_tables expands FOR ALL TABLES and FOR TABLES IN SCHEMA
+-- publications; pg_publication_rel alone misses those memberships.
+select pubname, schemaname as schema_name, tablename as relation_name
+from pg_publication_tables
+order by pubname, schemaname, tablename;
 
 -- Storage bucket exposure. Never print object contents or signed URLs.
 select id, name, public, file_size_limit, allowed_mime_types
