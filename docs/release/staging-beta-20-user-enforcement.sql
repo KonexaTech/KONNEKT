@@ -65,9 +65,9 @@ for each row execute function konnekt_beta.enforce_roster_limit();
 create trigger beta_owner_roster_limit
 before insert or update of user_id on konnekt_beta.owner_access
 for each row execute function konnekt_beta.enforce_roster_limit();
--- Enrollment roster is immutable after the first beta activation, even if
--- access is later disabled or the fourteen-day window has expired.
--- This prevents replacing expired testers to quietly extend the beta.
+-- New approvals and identity replacements are forbidden after first activation.
+-- Account deletion remains possible for privacy, but drops the exact-count gate
+-- fail-closed; nobody can fill the vacated place or extend the original beta.
 create or replace function konnekt_beta.lock_roster_after_start()
 returns trigger language plpgsql security definer set search_path=''
 as $freeze$
@@ -81,10 +81,10 @@ begin
 end;
 $freeze$;
 create trigger beta_testers_frozen
-before insert or update or delete on konnekt_beta.testers
+before insert or update on konnekt_beta.testers
 for each row execute function konnekt_beta.lock_roster_after_start();
 create trigger beta_owner_frozen
-before insert or update or delete on konnekt_beta.owner_access
+before insert or update on konnekt_beta.owner_access
 for each row execute function konnekt_beta.lock_roster_after_start();
 revoke all on function konnekt_beta.lock_roster_after_start() from public, anon, authenticated;
 alter table konnekt_beta.control enable row level security;
