@@ -1,4 +1,4 @@
-import { supabase } from '../lib_supabase';
+import { supabase, SUPABASE_URL } from '../lib_supabase';
 
 export const PUBLIC_MEDIA_BUCKET = 'konnekt-public-media';
 // Short streaming URLs are deliberately temporary, not permanent share links.
@@ -29,8 +29,7 @@ export function publicMediaPath(value, projectUrl) {
 }
 
 export async function authorizedPublicMediaUrl(value) {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-  const path = publicMediaPath(value, projectUrl);
+  const path = publicMediaPath(value, SUPABASE_URL);
   if (!path) throw new Error('Media path is not from the expected staging bucket.');
   // A caller must have a current authenticated session, and Storage SELECT RLS
   // must authorize signing the URL; never expose a service-role key in the app.
