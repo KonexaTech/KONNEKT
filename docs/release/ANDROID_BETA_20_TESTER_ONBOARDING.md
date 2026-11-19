@@ -45,3 +45,27 @@
 
 ## Release decision
 This document prepares recruitment, not approval. **Hold distribution and activation** until the gate has live fail-closed acceptance evidence, no unresolved bypasses, and physical-device tests pass. Keep production and existing navigation/design unchanged.
+
+## Tester checklist software (development branch; not yet distributed)
+- The **Profile → Beta Testing Checklist** screen contains 18 checks. Every item is marked Pass, Fail or Not tested; every failure requires a short description.
+- A private **T01–T20** code and Android model/version are required. A code alone does not authenticate or approve a tester; verify the signed-in `reporter_id` against the private enrollment roster.
+- A draft is saved locally on the tester's own installation and submitted to the **existing `public.user_reports` moderation queue** with reason `App bug: Beta checklist`. Do not mistake locally saved ticks for submitted reports.
+- If submission fails, the UI shows an error; the tester retries while access is still active.
+- Ask testers to submit their full checklist **before the backend 14-day expiry**, preferably by day 13. Once access expires, the server must refuse further submissions. An alternative private coordinator channel can accept late feedback without re-enabling app access.
+- An urgent bug should also be sent immediately via **Profile → Report a Problem**, not held until the end.
+- Store the association of Txx codes to approved Auth IDs **only** in a private roster. The reporter must not include passwords, recovery phrases, access tokens or private chats.
+- This screen is on the **PR #29 development branch** only; it is not a shipped feature or a claim that the beta security gate has passed.
+
+## After the test: generate an actionable fix list
+1. With authorized administrative access, privately export staging `user_reports` rows whose `reason` is `App bug: Beta checklist`. Include only `reason` and `details` in the local analysis export; retain `reporter_id` only in the secure roster if you need to verify identity. Do not upload participant records to a public repository.
+2. Run locally: `node scripts/beta/summarize-checklists.mjs /private/staging-beta-reports.json > /private/konnekt-beta-fix-list.md`
+3. The script groups reports by tester code, uses the latest submission for each tester, counts Pass/Fail/Not tested for every feature and lists short example failures.
+4. Compare the unique codes with the private signed-in-user roster; a claimed code is not proof of a tester's identity. Follow up missing checklists individually.
+5. Categorize issues as **release blockers** (security, unauthorized access, crashes, data loss), **major** (messaging, media, notifications, calls) or **minor** (layout/usability). Counts determine frequency, **not** security severity.
+6. Create one minimal-risk issue per reproducible defect, include test conditions and acceptance criteria, fix on separate branches, and rerun regressions and device tests before public release.
+
+## Enrollment operator notes
+- Do **not** enroll by email/password export. Approved testers register using their own credentials; the coordinator resolves their verified staging Auth UUIDs through authorized administration.
+- The database-controlled roster `konnekt_beta.testers` is **not installed yet**. Do not create or enroll live records until the reviewed beta restrictions are safe to deploy and all bypass paths are addressed.
+- Keep tester consent and contact details in a protected private roster, not GitHub, and use separate test accounts/data from production.
+- Exactly twenty approved user IDs is an application admission condition, not an invitation to recruit a twenty-first active tester.
