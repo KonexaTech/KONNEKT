@@ -3,6 +3,16 @@
 -- access until exactly 20 approved staging accounts are enrolled and activated.
 -- Prior to deployment verify service-role/Edge/Realtime/public URL bypass controls.
 begin;
+-- Fail closed before installing policies: a public Supabase Storage bucket can
+-- serve already-known file URLs without consulting storage.objects RLS.
+-- Private buckets still require separate tests of issued signed URLs.
+do $public_media_preflight$
+begin
+ if exists(select 1 from storage.buckets where public) then
+   raise exception using errcode='42501',
+     message='Beta activation blocked: a public Storage bucket bypasses session expiry and shutdown. Review and migrate public media URLs before deployment.';
+ end if;
+end $public_media_preflight$;
 create schema if not exists konnekt_beta;
 revoke all on schema konnekt_beta from public, anon, authenticated;
 create table if not exists konnekt_beta.control (
