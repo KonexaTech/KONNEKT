@@ -55,16 +55,17 @@ export default function BetaChecklistScreen({ user, navigation }) {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
   const [sent, setSent] = useState(false);
+  const [loadedFor, setLoadedFor] = useState(null);
   useEffect(() => {
     const saved = loadDraft(user?.id);
     setCode(saved.code || ''); setDevice(saved.device || '');
     setResults(saved.results || {}); setNotes(saved.notes || {});
-    setSent(false); setNotice('');
+    setSent(false); setNotice(''); setLoadedFor(user?.id || null);
   }, [user?.id]);
   useEffect(() => {
-    if (!user?.id || typeof localStorage === 'undefined') return;
+    if (!user?.id || loadedFor !== user.id || typeof localStorage === 'undefined') return;
     try { localStorage.setItem(storageKey(user.id), JSON.stringify({ code, device, results, notes })); } catch { /* storage may be unavailable */ }
-  }, [user?.id, code, device, results, notes]);
+  }, [user?.id, loadedFor, code, device, results, notes]);
   const marked = BETA_CHECKS.filter(([id]) => STATES.includes(results[id])).length;
   const failed = BETA_CHECKS.filter(([id]) => results[id] === 'Fail').length;
   const submit = async () => {
