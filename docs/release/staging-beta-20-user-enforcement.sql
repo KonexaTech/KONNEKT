@@ -34,7 +34,7 @@ create table if not exists konnekt_beta.testers (
 -- It does not authorize anyone merely by knowing the owner's email or tester code.
 create table if not exists konnekt_beta.owner_access (
  singleton boolean primary key default true check (singleton),
- user_id uuid not null unique references auth.users(id) on delete restrict,
+ user_id uuid not null unique references auth.users(id) on delete cascade,
  enrolled_at timestamptz not null default now()
 );
 -- Serialize privileged enrollment operations, including concurrent inserts, and
