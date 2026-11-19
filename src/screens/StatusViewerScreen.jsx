@@ -1,12 +1,29 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useExpiryTime } from '../services/useExpiryTime';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { authorizedPublicMediaUrl } from '../services/privateMedia';
 export default function StatusViewerScreen({ navigation, route }) {
   const item = route?.params?.status;
   const now = useExpiryTime([item?.expires_at]);
   const video = useRef(null);
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaError, setMediaError] = useState('');
   const available = !!item && Date.parse(item.expires_at) > now;
-  useEffect(() => { const player = video.current; if (player && available) { player.src = item.media_url; player.load(); } return () => { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } }; }, [available, item?.media_url]);
+  useEffect(() => {
+    let active = true;
+    setMediaUrl(''); setMediaError('');
+    if (available && item?.media_url) {
+      authorizedPublicMediaUrl(item.media_url)
+        .then(url => { if (active) setMediaUrl(url); })
+        .catch(() => { if (active) setMediaError('Media cannot be opened with your current access.'); });
+    }
+    return () => { active = false; };
+  }, [available, item?.media_url]);
+  useEffect(() => {
+    const player = video.current;
+    if (player && available && mediaUrl) { player.src = mediaUrl; player.load(); }
+    return () => { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } };
+  }, [available, mediaUrl]);
   if (!available) return <View style={s.root}><Text style={s.text}>This status is no longer available.</Text><TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>Go back</Text></TouchableOpacity></View>;
   const name = item.profile?.full_name || (item.profile?.username ? `@${item.profile.username}` : 'KONNEKT member');
   return <View style={s.root}>
@@ -14,7 +31,7 @@ export default function StatusViewerScreen({ navigation, route }) {
     <View style={s.progress}><View style={s.progressFill}/></View>
     <Text style={s.name}>{name}</Text>
     <Text style={s.created}>{new Date(item.created_at).toLocaleString()}</Text>
-    <View style={s.mediaBox}>{item.media_url ? (item.media_type === 'image' ? <Image source={{ uri: item.media_url }} style={s.media} resizeMode="contain"/> : <video ref={video} src={item.media_url} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
+    <View style={s.mediaBox}>{item.media_url ? (mediaError ? <Text style={s.text}>{mediaError}</Text> : !mediaUrl ? <Text style={s.text}>Loading protected media…</Text> : item.media_type === 'image' ? <Image source={{ uri: mediaUrl }} style={s.media} resizeMode="contain"/> : <video ref={video} src={mediaUrl} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
     {!!item.media_url && !!item.text_content && <Text style={s.caption}>{item.text_content}</Text>}
     <Text style={s.time}>Expires {new Date(item.expires_at).toLocaleString()}</Text>
   </View>;
