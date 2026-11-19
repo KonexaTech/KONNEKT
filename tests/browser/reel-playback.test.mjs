@@ -14,7 +14,7 @@ async function feed() {
   }));
   const f = await setup(server.base, { db: { reels, reel_likes: [], reel_comments: [] } });
   const bytes = await readFile(new URL('../fixtures/social-video.webm', import.meta.url));
-  await f.context.route('**/storage/v1/object/sign/konnekt-public-media/**', route => route.fulfill({ status: 200, contentType: 'video/webm', body: bytes }));
+  await f.context.route('**/storage/v1/object/sign/konnekt-public-media/**', route => route.request().method() === 'GET' ? route.fulfill({ status: 200, contentType: 'video/webm', body: bytes }) : route.fallback());
   await f.page.reload();
   await f.page.waitForFunction(() => document.querySelector('video')?.readyState >= 2);
   return f;
