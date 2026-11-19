@@ -77,3 +77,11 @@ This document prepares recruitment, not approval. **Hold distribution and activa
 - Never expose private signing keys, staging service-role credentials or tester UUIDs in client code or a GitHub issue.
 - The APK is not permitted for distribution until staging gate deployment and authenticated negative tests pass, public-media bypasses are addressed, and stable staging signing plus actual Android device installation and update are verified.
 - The 14-day restriction is checked by the backend on every protected request; simply expiring an APK's UI or checking an embedded date would not protect calls, notifications, media or existing sessions.
+
+## Private-media compatibility and strict expiry review (19 November 2026)
+- Staging buckets are now marked private; the client branch no longer creates public links for new Reels/Status uploads.
+- Existing Status records may contain prior public Storage URLs; the private-media resolver extracts only the matching project's known bucket/path and requests an authenticated, short-lived streaming URL.
+- **Do not equate a signed URL with immediate revocation:** Supabase Storage signed URLs can remain accessible until expiry, even if the user's beta account is disabled; browser/CDN caches can retain earlier responses. <https://supabase.com/docs/guides/storage/serving/downloads>
+- Streaming URLs in this branch are limited to **60 seconds**. A strict zero-grace shutdown for media requires an individually authorized server-side media gateway that checks current beta access at every request and handles media Range requests, plus cache invalidation. This must be acceptance tested before claiming a complete 14-day remote cutoff.
+- Confirm that already issued longer-lived signed URLs and cached responses cannot bypass the beta restrictions; rotating Storage signing keys may impact existing media access and must be reviewed before changing configuration.
+- Old objects and database rows are **not** rewritten/deleted by this source change. Reels, Status, uploads, chat attachments, and playback must still be tested against live staging using approved authenticated fixtures.
