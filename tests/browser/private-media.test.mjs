@@ -30,6 +30,26 @@ test('media uploads no longer persist public URLs and signed URL duration stays 
  const privateMedia=readFileSync(new URL('../../src/services/privateMedia.js',import.meta.url),'utf8');
  assert.doesNotMatch(service,/\.getPublicUrl\(/);
  assert.doesNotMatch(media,/\.getPublicUrl\(/);
+ assert.doesNotMatch(media,/\.createSignedUrl\(/);
+ assert.match(media,/return \{ path, type \}/);
  assert.match(privateMedia,/PRIVATE_MEDIA_URL_TTL_SECONDS = 60/);
  assert.match(privateMedia,/\.createSignedUrl\(path, PRIVATE_MEDIA_URL_TTL_SECONDS\)/);
+});
+
+test('denied private-media signing does not fall back to a public URL',async()=>{
+ const f=await setup(server.base);
+ try{
+  const {page,failures,requests}=f;
+  failures.set('POST:media.webm',{code:'42501',message:'Storage SELECT denied'});
+  const outcome=await page.evaluate(async()=>{
+   const {authorizedPublicMediaUrl}=await import('/KONNEKT/src/services/privateMedia.js');
+   try {
+     const url=await authorizedPublicMediaUrl('statuses/user-1/media.webm');
+     return {accepted:true,url};
+   }catch(error){return {accepted:false,message:error.message};}
+  });
+  assert.deepEqual(outcome,{accepted:false,message:'Media access denied or unavailable.'});
+  assert.equal(requests.some(x=>x.path.includes('/storage/v1/object/public/')),false);
+  assert.deepEqual(f.errors,[]);
+ }finally{await f.close();}
 });
