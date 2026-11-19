@@ -38,3 +38,9 @@ test('privileged session helper includes beta gate in addition to MFA/account de
  assert.match(sql,/auth\.mfa_factors/i);
  assert.match(sql,/and \(select konnekt_beta\.allowed\(\)\)/i);
 });
+
+test('deployment fails closed if public media URLs could bypass beta shutdown',()=>{
+ assert.match(sql,/if exists\(select 1 from storage\.buckets where public\)/i);
+ assert.match(sql,/raise exception using errcode='42501'/i);
+ assert.match(sql,/public Storage bucket bypasses session expiry and shutdown/i);
+});
