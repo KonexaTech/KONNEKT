@@ -30,7 +30,8 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   if (bucket === 'konnekt-public-media') {
     return { path, url: path, type };
   }
-  const { data, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
-  if (signedError) throw signedError;
-  return { path, url: data.signedUrl, type };
+  // The upload operation must not mint a transferable bearer URL. Recipients
+  // resolve the saved path through authorized Storage access at view time.
+  // This also avoids returning links that outlive beta admission.
+  return { path, type };
 }
