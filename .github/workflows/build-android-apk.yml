@@ -70,6 +70,9 @@ jobs:
           # Stable test builds must be pinned to an owner-verified signing certificate.
           # A new certificate can be bootstrapped with a fresh-install-only build,
           # but that build is not eligible for the 20-person update-continuity gate.
+          # GitHub variables sometimes contain a trailing CR/LF from mobile copy/paste.
+          # Normalize whitespace only; keep the 64-hex or colon-separated format check.
+          KONNEKT_STAGING_CERT_SHA256="$(printf '%s' "$KONNEKT_STAGING_CERT_SHA256" | tr -d '[:space:]')"
           if ! [[ "$KONNEKT_STAGING_CERT_SHA256" =~ ^([[:xdigit:]]{2}:){31}[[:xdigit:]]{2}$|^[[:xdigit:]]{64}$ ]]; then
             echo "Missing or invalid KONNEKT_STAGING_CERT_SHA256 repository variable."
             echo "Pin the owner-verified signing certificate before producing a stable staging APK."
