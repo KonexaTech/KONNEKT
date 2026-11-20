@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingTop: 43,
     padding: 17,
     flexDirection: 'row',
@@ -254,13 +254,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerIcon: {
     fontSize: 20,
   },
   hero: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     margin: 14,
     padding: 23,
     borderRadius: 13,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 9,
   },
   heroDescription: {
@@ -283,10 +283,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   previewLabel: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     color: '#075E54',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   noticeTitle: {
     color: '#9A6700',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 5,
   },
   noticeText: {
@@ -311,15 +311,15 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   sectionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 15,
     marginTop: 21,
     marginBottom: 10,
   },
   settingsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     marginHorizontal: 14,
     borderRadius: 10,
     paddingHorizontal: 13,
@@ -334,12 +334,12 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   settingDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     lineHeight: 14,
     marginTop: 4,
@@ -361,12 +361,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   actionDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     lineHeight: 14,
     marginTop: 4,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   guidelines: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 14,
     padding: 15,
     borderRadius: 10,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   guidelinesTitle: {
     color: '#075E54',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 9,
   },
   guideline: {
