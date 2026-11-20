@@ -254,10 +254,10 @@ export default function PrivacySettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -288,14 +288,14 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 15,
     marginBottom: 10,
   },
   settingsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     paddingHorizontal: 14,
     borderWidth: 1,
@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   settingSubtitle: {
     color: '#98A2B3',
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   settingValue: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 7,
   },
   arrow: {
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   blockedCount: {
     color: '#075E54',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   infoBox: {
     backgroundColor: '#EAF2F1',
