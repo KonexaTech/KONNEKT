@@ -192,10 +192,10 @@ export default function TermsPrivacyScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   introCard: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     borderRadius: 14,
     padding: 20,
     alignItems: 'center',
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   introTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   introText: {
     color: '#D5EAE7',
@@ -249,13 +249,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionHeading: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 12,
   },
   legalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
@@ -272,18 +272,18 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   legalTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   expandIcon: {
     color: '#075E54',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   legalContent: {
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
     padding: 14,
     borderTopWidth: 1,
     borderTopColor: '#E8ECEF',
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   importantTitle: {
     color: '#9A5B00',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 8,
   },
   importantText: {
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   acceptCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderRadius: 12,
     marginTop: 20,
@@ -334,12 +334,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     borderColor: '#075E54',
   },
   checkmark: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   acceptText: {
     color: '#526B67',
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   acceptButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   footer: {
     color: '#98A2B3',
