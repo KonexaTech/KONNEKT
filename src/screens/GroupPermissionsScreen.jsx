@@ -206,12 +206,12 @@ export default function GroupPermissionsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 17,
   },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -235,20 +235,20 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   intro: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 12,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 22,
     marginBottom: 9,
   },
   permissionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 15,
     marginBottom: 9,
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   permissionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   permissionDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 17,
     marginTop: 5,
@@ -275,15 +275,15 @@ const styles = StyleSheet.create({
   permissionValue: {
     color: '#075E54',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   arrow: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 22,
     marginLeft: 7,
   },
   saveButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -292,10 +292,10 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   note: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 17,
     textAlign: 'center',
