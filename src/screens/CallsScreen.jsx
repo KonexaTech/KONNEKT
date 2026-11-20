@@ -6,7 +6,7 @@ import { createCall } from '../services/calls';
 
 const profileColumns = 'id,username,full_name,avatar_url';
 
-export default function CallsScreen({ navigation }) {
+export default function CallsScreen({ navigation, route }) {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [people, setPeople] = useState([]);
@@ -109,7 +109,7 @@ export default function CallsScreen({ navigation }) {
 
   return (
     <View style={s.page}>
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back from Calls" onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back</Text></TouchableOpacity>
+      {!route?.params?.fromMainTab && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back from Calls" onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back</Text></TouchableOpacity>}
       <View style={s.header}>
         <View><Text style={s.title}>Calls</Text><Text style={s.subtitle}>Voice and video conversations</Text></View>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh calls" style={s.refresh} onPress={load}>
