@@ -158,10 +158,10 @@ export default function FollowingScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   headerIcon: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   summaryNumber: {
     color: '#075E54',
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summaryLabel: {
     color: '#526B67',
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   searchBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     marginHorizontal: 15,
     borderRadius: 11,
     paddingHorizontal: 12,
@@ -209,14 +209,14 @@ const styles = StyleSheet.create({
     borderColor: '#EAECF0',
   },
   searchIcon: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 22,
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
     height: 43,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
   },
   sectionHeader: {
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   count: {
     color: '#98A2B3',
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
   },
   personCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
@@ -274,14 +274,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   name: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   verified: {
     color: '#1877F2',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   username: {
     color: '#98A2B3',
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   followingText: {
     color: '#475467',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyState: {
     flex: 1,
@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
     color: '#98A2B3',
