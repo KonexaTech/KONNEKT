@@ -184,10 +184,10 @@ export default function ChatNotificationSettingsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -212,21 +212,21 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   intro: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     lineHeight: 20,
     padding: 17,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 17,
     marginBottom: 7,
     marginHorizontal: 17,
   },
   settingItem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -243,12 +243,12 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
     fontWeight: '600',
   },
   description: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 16,
     marginTop: 4,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   infoButtonText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 13,
   },
   footer: {
