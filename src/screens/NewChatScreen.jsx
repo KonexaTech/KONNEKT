@@ -145,13 +145,13 @@ export default function NewChatScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  container:{flex:1,backgroundColor:'#10091B',padding:20}, back:{color:'#6A0DAD',fontSize:16,marginTop:20},
-  title:{color:'#FFF',fontSize:27,fontWeight:'bold',marginTop:22}, hint:{color:'#C4B4D0',marginTop:8,marginBottom:20,lineHeight:20},
-  searchRow:{flexDirection:'row',gap:8}, input:{flex:1,backgroundColor:'#241630',borderRadius:10,padding:13,color:'#FFF',borderWidth:1,borderColor:'#39244B'},
-  button:{backgroundColor:'#6A0DAD',borderRadius:10,paddingHorizontal:16,justifyContent:'center'},buttonText:{color:'#FFF',fontWeight:'bold'},
-  listHeading:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:25,marginBottom:8},listTitle:{color:'#EAF4FF',fontWeight:'bold',fontSize:16},
-  refresh:{color:'#C9A7F4',fontSize:13},person:{flexDirection:'row',alignItems:'center',paddingVertical:14,borderBottomWidth:1,borderColor:'#39244B',gap:12},
-  avatar:{width:44,height:44,borderRadius:22,backgroundColor:'#30203F',alignItems:'center',justifyContent:'center'},avatarText:{color:'#FFF',fontSize:19,fontWeight:'bold'},
-  name:{color:'#FFF',fontWeight:'bold'},username:{color:'#8EA3BB',marginTop:4,fontSize:12},arrow:{color:'#C9A7F4',fontWeight:'bold',fontSize:12},
+  container:{flex:1,backgroundColor: '#05030A',padding:20}, back:{color:'#6A0DAD',fontSize:16,marginTop:20},
+  title:{color:'#FFF',fontSize:27,fontWeight: '800',marginTop:22}, hint:{color:'#C4B4D0',marginTop:8,marginBottom:20,lineHeight:20},
+  searchRow:{flexDirection:'row',gap:8}, input:{flex:1,backgroundColor: '#181025',borderRadius:10,padding:13,color:'#FFF',borderWidth:1,borderColor: '#68408A'},
+  button:{backgroundColor:'#6A0DAD',borderRadius:10,paddingHorizontal:16,justifyContent:'center'},buttonText:{color:'#FFF',fontWeight: '800'},
+  listHeading:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:25,marginBottom:8},listTitle:{color:'#EAF4FF',fontWeight: '800',fontSize:16},
+  refresh:{color:'#C9A7F4',fontSize:13},person:{flexDirection:'row',alignItems:'center',paddingVertical:14,borderBottomWidth:1,borderColor: '#68408A',gap:12},
+  avatar:{width:44,height:44,borderRadius:22,backgroundColor:'#30203F',alignItems:'center',justifyContent:'center'},avatarText:{color:'#FFF',fontSize:19,fontWeight: '800'},
+  name:{color:'#FFF',fontWeight: '800'},username:{color:'#8EA3BB',marginTop:4,fontSize:12},arrow:{color:'#C9A7F4',fontWeight: '800',fontSize:12},
   empty:{color:'#C4B4D0',textAlign:'center',marginTop:35,lineHeight:22},notice:{color:'#FFC0C8',marginTop:16,lineHeight:20}
 });
