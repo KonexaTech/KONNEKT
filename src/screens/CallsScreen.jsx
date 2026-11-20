@@ -6,7 +6,7 @@ import { createCall } from '../services/calls';
 
 const profileColumns = 'id,username,full_name,avatar_url';
 
-export default function CallsScreen({ navigation }) {
+export default function CallsScreen({ navigation, route }) {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [people, setPeople] = useState([]);
@@ -109,7 +109,7 @@ export default function CallsScreen({ navigation }) {
 
   return (
     <View style={s.page}>
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back from Calls" onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back</Text></TouchableOpacity>
+      {!route?.params?.fromMainTab && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back from Calls" onPress={() => navigation.goBack()}><Text style={s.back}>‹ Back</Text></TouchableOpacity>}
       <View style={s.header}>
         <View><Text style={s.title}>Calls</Text><Text style={s.subtitle}>Voice and video conversations</Text></View>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh calls" style={s.refresh} onPress={load}>
@@ -148,7 +148,7 @@ const s = StyleSheet.create({
   page: { flex: 1, minHeight: 0, backgroundColor: '#05030A', paddingHorizontal: 18, paddingTop: 10 },
   back: { color: '#D8B8F5', fontSize: 16, marginTop: 12 },
   header: { marginTop: 12, marginBottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { color: '#FFF', fontSize: 28, fontWeight: '800' },
+  title: { color: '#FFF', fontSize: 30, fontWeight: '900' },
   subtitle: { color: '#CBBBD9', marginTop: 4, fontSize: 12 },
   refresh: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#181025', borderWidth: 1, borderColor: '#352047' },
   refreshText: { color: '#00E6FF', fontSize: 24 },
@@ -171,8 +171,8 @@ const s = StyleSheet.create({
   avatarImage: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#181025' },
   avatarText: { color: '#FFF', fontWeight: '800' },
   personCopy: { flex: 1, minWidth: 0 },
-  voiceButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center' },
-  videoButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
+  voiceButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center' },
+  videoButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
   actionText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   empty: { color: '#CBBBD9', textAlign: 'center', padding: 16, fontSize: 12, lineHeight: 18 },
   notice: { color: '#FFD0B5', backgroundColor: 'rgba(255,107,0,.12)', padding: 10, borderRadius: 9, marginBottom: 8 },

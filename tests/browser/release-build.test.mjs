@@ -12,8 +12,8 @@ for (const width of [390, 1280]) {
     try {
       const { page, errors, requests } = app;
       await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor();
-      assert.deepEqual(await page.getByRole('tab').allTextContents(), ['✉Chats','▶Reels','◉Status','◎Discover','◌Profile']);
-      for (const name of ['Chats', 'Status', 'Discover', 'Profile', 'Reels']) {
+      assert.deepEqual(await page.getByRole('tab').allTextContents(), ['✉Chats','▶Reels','◉Status','◎Discover','☎Calls','◌Profile']);
+      for (const name of ['Chats', 'Status', 'Discover', 'Calls', 'Profile', 'Reels']) {
         const tab = page.getByRole('tab', { name, exact: true });
         await tab.click();
         await page.waitForFunction(name => document.querySelector(`[role="tab"][aria-label="${name}"]`)?.getAttribute('aria-selected') === 'true', name);

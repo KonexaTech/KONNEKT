@@ -5,13 +5,13 @@ let server;
 before(async () => { server = await startServer({ preview: process.env.KONNEKT_TEST_PREVIEW === '1' }); });
 after(() => server?.stop());
 
-for (const width of [390, 1280]) test(`reference palette preserves five tabs, light mode and chat access at ${width}px`, async () => {
+for (const width of [390, 1280]) test(`reference palette preserves six tabs, light mode and chat access at ${width}px`, async () => {
   const f = await setup(server.base, { width });
   try {
     const { page } = f;
     await page.getByRole('tab', { name: 'Chats', exact: true }).click();
     await page.getByText('Other Member', { exact: true }).waitFor();
-    assert.deepEqual(await page.getByRole('tab').allTextContents(), ['✉Chats', '▶Reels', '◉Status', '◎Discover', '◌Profile']);
+    assert.deepEqual(await page.getByRole('tab').allTextContents(), ['✉Chats', '▶Reels', '◉Status', '◎Discover', '☎Calls', '◌Profile']);
     const appearance = await page.evaluate(() => {
       const shell = document.querySelector('[data-testid="konnekt-app-shell"]');
       const selected = document.querySelector('[role="tab"][aria-selected="true"]');

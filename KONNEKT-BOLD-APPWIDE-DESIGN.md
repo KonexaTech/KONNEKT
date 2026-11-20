@@ -1,6 +1,6 @@
 # KONNEKT — Approved app-wide bold design standard
 
-**Owner decision, 20 November 2026:** The bold purple-and-gold mobile design demonstrated in the KONNEKT visual preview is the **default visual identity across the entire app**, not just the five main tabs. PR #30 implemented the first main-screen pass; this document records the continuing standard.
+**Owner decision, 20 November 2026:** The bold purple-and-gold mobile design demonstrated in the KONNEKT visual preview is the **default visual identity across the entire app**, not just the six main tabs. PR #30 implemented the first main-screen pass; this document records the continuing standard.
 
 ## Non-negotiable presentation style
 - Deep near-black / royal-purple surfaces (#05030A, #0C0714, #181025, #6A0DAD) and indigo (#3A0CA3); avoid unrelated green, white and blue full-screen themes.
@@ -18,7 +18,7 @@
 - Calls, notifications, settings, safety, account management, moderation, support and reports.
 
 ## Functional constraints
-- Keep the five existing tabs **Chats · Reels · Status · Discover · Profile**, their order and routing.
+- Keep the six owner-approved tabs **Chats · Reels · Status · Discover · Calls · Profile**, their order and routing. Calls was restored by the owner on 20 November 2026, with its existing call-history and voice/video workflows preserved.
 - No functionality, backend/RLS, data model, public media access, auth, encryption, posting/calling, accessibility semantics or production release-policy changes as part of visual migration.
 - No unsafe blanket CSS overrides. Update visual styles in each active React Native Web screen, retaining state and event handlers.
 - Separate draft PRs or small reviewable commits; run lint, tests, browser checks, web/mobile builds and manual Android width checks.
