@@ -228,10 +228,10 @@ export default function HelpSupportScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   welcomeCard: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 22,
     borderRadius: 15,
     alignItems: 'center',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
   },
   welcomeText: {
@@ -286,14 +286,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 12,
     marginTop: 8,
   },
   searchBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 11,
     paddingHorizontal: 13,
     flexDirection: 'row',
@@ -308,11 +308,11 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     padding: 14,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
   },
   topicCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
@@ -332,9 +332,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topicTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   topicDescription: {
     color: '#98A2B3',
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   arrow: {
     color: '#075E54',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   answerBox: {
     backgroundColor: '#F2F7F6',
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   contactCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 17,
     borderRadius: 13,
     marginTop: 22,
@@ -376,14 +376,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   contactTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 8,
   },
   contactDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 18,
     textAlign: 'center',
@@ -391,17 +391,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   messageInput: {
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
     borderWidth: 1,
     borderColor: '#E8ECEF',
     borderRadius: 10,
     minHeight: 105,
     padding: 12,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   safetyCard: {
     backgroundColor: '#FFF4E5',
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   safetyTitle: {
     color: '#9A5B00',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 6,
   },
   safetyText: {
