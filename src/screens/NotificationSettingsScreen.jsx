@@ -195,10 +195,10 @@ export default function NotificationSettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   headerIcon: {
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   introTitle: {
     color: '#075E54',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   introDescription: {
     color: '#526B67',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   quickButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderWidth: 1,
     borderColor: '#D0E5DF',
     borderRadius: 9,
@@ -260,17 +260,17 @@ const styles = StyleSheet.create({
   quickButtonText: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 10,
     marginTop: 8,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     paddingHorizontal: 14,
     marginBottom: 18,
@@ -287,9 +287,9 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   settingDescription: {
     color: '#98A2B3',
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     color: '#9A5B00',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 6,
   },
   infoText: {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   saveButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 11,
     alignItems: 'center',
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   demoNote: {
     color: '#98A2B3',
