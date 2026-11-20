@@ -259,7 +259,7 @@ export default function CreateGroupScreen({ navigation }) {
 const s = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#10091B'
+    backgroundColor: '#05030A'
   },
   header: {
     padding: 17,
@@ -268,7 +268,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderColor: '#39244B'
+    borderColor: '#68408A'
   },
   back: {
     color: '#D8B8F5',
@@ -295,8 +295,8 @@ const s = StyleSheet.create({
     marginTop: 8
   },
   input: {
-    backgroundColor: '#241630',
-    borderColor: '#39244B',
+    backgroundColor: '#181025',
+    borderColor: '#68408A',
     borderWidth: 1,
     borderRadius: 10,
     padding: 13,
@@ -311,7 +311,7 @@ const s = StyleSheet.create({
     marginHorizontal: 16,
     paddingVertical: 13,
     borderBottomWidth: 1,
-    borderColor: '#39244B',
+    borderColor: '#68408A',
     flexDirection: 'row',
     alignItems: 'center'
   },
