@@ -242,7 +242,7 @@ export default function AccountSettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     paddingHorizontal: 20
   },
 
@@ -256,15 +256,15 @@ const styles = StyleSheet.create({
   },
 
   back: {
-    color: '#00E5A8',
+    color: '#FFC107',
     fontSize: 16,
     marginBottom: 18
   },
 
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: 'bold'
+    fontSize: 30,
+    fontWeight: '900'
   },
 
   subtitle: {
@@ -274,17 +274,19 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: '#00E5A8',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#FFC107',
+    fontSize: 17,
+    fontWeight: '900',
     marginTop: 20,
     marginBottom: 12
   },
 
   settingItem: {
-    backgroundColor: '#241630',
+    backgroundColor: '#211232',
+    borderWidth: 1,
+    borderColor: '#4B3063',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -298,8 +300,8 @@ const styles = StyleSheet.create({
 
   settingTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold'
+    fontSize: 15,
+    fontWeight: '800'
   },
 
   description: {
@@ -309,7 +311,7 @@ const styles = StyleSheet.create({
   },
 
   arrow: {
-    color: '#00E5A8',
+    color: '#FFC107',
     fontSize: 25
   },
 
