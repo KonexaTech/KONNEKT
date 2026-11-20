@@ -161,10 +161,10 @@ export default function ForwardMessageScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   previewLabel: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 9,
   },
   previewCard: {
@@ -204,12 +204,12 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   previewText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
     lineHeight: 19,
   },
   searchContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 15,
@@ -225,13 +225,13 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 13,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 17,
     marginTop: 20,
     marginBottom: 8,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     borderRadius: 12,
     marginBottom: 8,
@@ -262,15 +262,15 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#075E54',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   contactInfo: {
     flex: 1,
   },
   contactName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   contactStatus: {
     color: '#98A2B3',
@@ -287,13 +287,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     borderColor: '#075E54',
   },
   checkmark: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
     color: '#98A2B3',
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderTopWidth: 1,
     borderTopColor: '#E8ECEF',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   forwardButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingVertical: 12,
     paddingHorizontal: 22,
     borderRadius: 22,
@@ -326,6 +326,6 @@ const styles = StyleSheet.create({
   forwardButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });
