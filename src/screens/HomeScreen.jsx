@@ -78,7 +78,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     padding: 20
   },
   header: {
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
   logo: {
     color: '#00E5A8',
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 3
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     fontSize: 25
   },
   welcomeCard: {
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderRadius: 18,
     padding: 22,
     marginBottom: 30
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     color: '#FFFFFF',
     fontSize: 27,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   welcomeDescription: {
     color: '#B8C4D4',
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 15
   },
   actionGrid: {
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     width: '48%',
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderRadius: 15,
     padding: 17,
     marginBottom: 15
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   actionTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   actionDescription: {
     color: '#BBA9CC',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   tipTitle: {
     color: '#00E5A8',
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   tipText: {
     color: '#FFFFFF',
