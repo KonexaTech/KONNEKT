@@ -44,6 +44,7 @@ const tabs = [
   { name: 'Reels', icon: 'play-square' },
   { name: 'Status', icon: 'circle-dot' },
   { name: 'Discover', icon: 'compass' },
+  { name: 'Calls', icon: 'phone' },
   { name: 'Profile', icon: 'user-round' }
 ];
 
@@ -307,7 +308,7 @@ function AppShell() {
   }), [navigate, goBack, replace, currentRoute.params]);
 
   const openTab = useCallback(name => {
-    setStack([{ name, params: {} }]);
+    setStack([{ name, params: name === 'Calls' ? { fromMainTab: true } : {} }]);
   }, []);
 
   const screenKey = routeAliases[currentRoute.name] || currentRoute.name;
@@ -392,6 +393,7 @@ function AppShell() {
                   </Text>
 
                   <Text
+                    numberOfLines={1}
                     style={[
                       styles.tabLabel,
                       active && styles.activeTabLabel
@@ -535,6 +537,7 @@ const styles = StyleSheet.create({
 
   tab: {
     flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 62,
@@ -559,8 +562,8 @@ const styles = StyleSheet.create({
 
   tabLabel: {
     color: '#CBBBD9',
-    fontSize: 11,
-    fontWeight: '700'
+    fontSize: 10,
+    fontWeight: '800'
   },
 
   activeTabLabel: {
