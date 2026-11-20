@@ -53,12 +53,12 @@ export function AlertHost() {
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: '#0009', zIndex: 10000, display: 'grid', placeItems: 'center', padding: 20 }}>
       <div ref={dialog} role="alertdialog" aria-modal="true" aria-labelledby="konnekt-alert-title" aria-describedby="konnekt-alert-message"
-        style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box', padding: 24, borderRadius: 16, border: '1px solid #503567', background: '#241630', color: '#fff', fontFamily: 'sans-serif' }}>
-        <h2 id="konnekt-alert-title" style={{ marginTop: 0, fontSize: 21 }}>{alert.title}</h2>
+        style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box', padding: 24, borderRadius: 20, border: '1px solid #8452AC', background: '#181025', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+        <h2 id="konnekt-alert-title" style={{ marginTop: 0, fontSize: 24, fontWeight: 900, color: '#FFC107' }}>{alert.title}</h2>
         <p id="konnekt-alert-message" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{alert.message}</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
           {alert.buttons.map((button, index) => <button key={index} onClick={() => choose(button)}
-            style={{ cursor: 'pointer', minHeight: 44, padding: '10px 16px', borderRadius: 9, border: '1px solid #705287', background: button.style === 'destructive' ? '#A92E49' : button.style === 'cancel' ? '#39244B' : '#6A0DAD', color: '#fff', fontSize: 14 }}>
+            style={{ cursor: 'pointer', minHeight: 44, padding: '10px 16px', borderRadius: 15, border: '1px solid #8452AC', background: button.style === 'destructive' ? '#A92E49' : button.style === 'cancel' ? '#39244B' : '#6A0DAD', color: '#fff', fontSize: 14, fontWeight: 800 }}>
             {button.text || 'OK'}
           </button>)}
         </div>
