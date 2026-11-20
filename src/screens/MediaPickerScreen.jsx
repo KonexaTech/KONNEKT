@@ -128,10 +128,10 @@ export default function MediaPickerScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   title: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   subtitle: {
     color: '#D5EAE7',
@@ -158,16 +158,16 @@ const styles = StyleSheet.create({
   count: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   albumBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   albumName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   videoLabel: {
     color: '#075E54',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 5,
   },
   selectionBadge: {
@@ -211,16 +211,16 @@ const styles = StyleSheet.create({
     width: 23,
     height: 23,
     borderRadius: 12,
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     justifyContent: 'center',
     alignItems: 'center',
   },
   selectionText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   bottomBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,11 +229,11 @@ const styles = StyleSheet.create({
     borderTopColor: '#E8ECEF',
   },
   selectedText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 20,
     paddingVertical: 13,
     borderRadius: 25,
@@ -244,6 +244,6 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });
