@@ -177,10 +177,10 @@ export default function DocumentPickerScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -207,11 +207,11 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    color: '#17202A',
+    color: '#FAF8FF',
     borderWidth: 1,
     borderColor: '#E8ECEF',
   },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   categoryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     paddingHorizontal: 17,
     paddingVertical: 10,
     borderRadius: 20,
@@ -228,10 +228,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   activeCategory: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
   },
   categoryText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -239,9 +239,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 17,
     marginTop: 20,
     marginBottom: 10,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   documentCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -272,38 +272,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   documentName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   documentDetails: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginTop: 5,
   },
   selection: {
     color: '#075E54',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
-    color: '#667085',
+    color: '#CBBBD9',
     textAlign: 'center',
     marginTop: 35,
   },
   bottomBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderTopWidth: 1,
     borderTopColor: '#E8ECEF',
   },
   selectionInfo: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginBottom: 10,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 14,
     borderRadius: 25,
     alignItems: 'center',
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 13,
   },
 });
