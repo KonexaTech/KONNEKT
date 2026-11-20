@@ -99,13 +99,13 @@ export default function CreateScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     padding: 20
   },
   title: {
     color: '#FFFFFF',
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 25
   },
   subtitle: {
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     marginBottom: 25
   },
   preview: {
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderRadius: 18,
     padding: 30,
     alignItems: 'center',
@@ -124,12 +124,12 @@ const styles = StyleSheet.create({
   previewIcon: {
     color: '#00E5A8',
     fontSize: 55,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   previewTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 12
   },
   previewDescription: {
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 13
   },
   typeGrid: {
@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
   },
   typeCard: {
     width: '48%',
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderWidth: 1,
-    borderColor: '#39244B',
+    borderColor: '#68408A',
     borderRadius: 14,
     padding: 18,
     alignItems: 'center',
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
   typeName: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   captionInput: {
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#39244B',
+    borderColor: '#68408A',
     minHeight: 110,
     padding: 15,
     color: '#FFFFFF',
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: '#10091B',
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   footer: {
     color: '#BBA9CC',
