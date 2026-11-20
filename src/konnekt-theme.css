@@ -30,6 +30,8 @@ body {
   color: var(--konnekt-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-weight: 500;
   overscroll-behavior-y: none;
 }
 #root { height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -57,14 +59,14 @@ video { max-width: 100%; }
 /* Reference-photo palette: near-black canvas, purple/indigo light and gold
    accents. Decorative treatment only; keep the existing five-tab geometry. */
 .konnekt-dark [data-testid="konnekt-brand-header"] {
-  background: linear-gradient(110deg, #0C0714, #160925 65%, #0C0714);
-  border-bottom-color: rgba(255, 193, 7, .24);
+  background: linear-gradient(110deg, #0C0714, #1D0A31 65%, #0C0714);
+  border-bottom-color: rgba(255, 193, 7, .36);
 }
 [data-testid="konnekt-brand-mark"] {
   position: relative;
   overflow: visible;
   background-image: linear-gradient(140deg, #B900ED, #6A0DAD 48%, #3A0CA3);
-  box-shadow: 0 0 14px rgba(106, 13, 173, .30);
+  box-shadow: 0 0 18px rgba(106, 13, 173, .44);
 }
 [data-testid="konnekt-brand-mark"]::after {
   content: "";
@@ -85,7 +87,7 @@ video { max-width: 100%; }
 .konnekt-dark [data-testid="konnekt-main-tabs"] [role="tab"][aria-selected="true"] {
   background: linear-gradient(145deg, #6A0DAD, #3A0CA3);
   border-radius: 14px 14px 0 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 0 14px rgba(106, 13, 173, .23);
 }
 .konnekt-light {
   color-scheme: light;

@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
 
   brandBar: {
-    minHeight: 58,
+    minHeight: 64,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -469,9 +469,9 @@ const styles = StyleSheet.create({
   },
 
   brandMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 14,
     backgroundColor: '#6A0DAD',
     borderWidth: 1,
     borderColor: '#FFC107',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   brandMarkText: {
     color: '#FFFFFF',
     fontWeight: '900',
-    fontSize: 19
+    fontSize: 22
   },
 
   brandCopy: {
@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
   brandName: {
     color: '#FFFFFF',
     fontWeight: '900',
-    letterSpacing: 2,
-    fontSize: 14
+    letterSpacing: 1.4,
+    fontSize: 17
   },
 
   brandTagline: {
     color: '#CBBBD9',
-    fontSize: 9,
+    fontSize: 10,
     marginTop: 2
   },
 
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
 
   /* TOP NAVIGATION */
   tabBar: {
-    minHeight: 62,
+    minHeight: 64,
     flexDirection: 'row',
     backgroundColor: '#0C0714',
     borderBottomWidth: 1,
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 60,
+    minHeight: 62,
     paddingHorizontal: 1,
     borderBottomWidth: 3,
     borderBottomColor: 'transparent'
@@ -548,8 +548,8 @@ const styles = StyleSheet.create({
   },
 
   tabIcon: {
-    color: '#A998B8',
-    fontSize: 18,
+    color: '#CBBBD9',
+    fontSize: 20,
     marginBottom: 3
   },
 
@@ -558,13 +558,14 @@ const styles = StyleSheet.create({
   },
 
   tabLabel: {
-    color: '#A998B8',
-    fontSize: 9,
-    fontWeight: '600'
+    color: '#CBBBD9',
+    fontSize: 11,
+    fontWeight: '700'
   },
 
   activeTabLabel: {
-    color: '#FFC107'
+    color: '#FFC107',
+    fontWeight: '900'
   },
 
   screen: {

@@ -893,13 +893,15 @@ const s = StyleSheet.create({
     gap: 10
   },
   back: { color: '#00E6FF', fontSize: 32 },
-  name: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  sub: { color: '#91A4BA', fontSize: 10, marginTop: 3 },
+  name: { color: '#FFF', fontSize: 18, fontWeight: '900' },
+  sub: { color: '#CBBBD9', fontSize: 11, fontWeight: '600', marginTop: 3 },
   call: {
-    backgroundColor: '#352047',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
+    backgroundColor: '#2B153F',
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: '#FFC107',
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -907,19 +909,21 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row', marginBottom: 10 },
   mine: { justifyContent: 'flex-end' },
   theirs: { justifyContent: 'flex-start' },
-  bubble: { maxWidth: '84%', padding: 11, borderRadius: 14 },
+  bubble: { maxWidth: '86%', padding: 13, borderRadius: 17 },
   myBubble: {
     backgroundColor: '#6A0DAD',
     borderBottomRightRadius: 3
   },
   otherBubble: {
-    backgroundColor: '#181025',
+    backgroundColor: '#211232',
+    borderWidth: 1,
+    borderColor: '#4B3063',
     borderBottomLeftRadius: 3
   },
-  message: { color: '#FFF', fontSize: 14, lineHeight: 20 },
+  message: { color: '#FFF', fontSize: 15, lineHeight: 22 },
   time: {
-    color: '#B4C4D6',
-    fontSize: 9,
+    color: '#CBBBD9',
+    fontSize: 11,
     textAlign: 'right',
     marginTop: 5
   },
@@ -928,27 +932,33 @@ const s = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     backgroundColor: '#0C0714',
+    borderTopWidth: 1,
+    borderTopColor: '#4B3063',
     gap: 8
   },
   clip: { padding: 6 },
   input: {
     flex: 1,
-    backgroundColor: '#352047',
-    borderRadius: 20,
+    backgroundColor: '#211232',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#68408A',
     paddingHorizontal: 14,
     paddingVertical: 10,
     color: '#FFF',
     maxHeight: 100
   },
   send: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#6A0DAD',
+    borderWidth: 1,
+    borderColor: '#FFC107',
     alignItems: 'center',
     justifyContent: 'center'
   },
   disabled: { opacity: 0.4 },
-  sendText: { color: '#FFF', fontSize: 20 },
+  sendText: { color: '#FFF', fontSize: 20, fontWeight: '800' },
   error: { color: '#FF9CA8', padding: 8 }
 });
