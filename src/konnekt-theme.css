@@ -57,7 +57,7 @@ video { max-width: 100%; }
 }
 
 /* Reference-photo palette: near-black canvas, purple/indigo light and gold
-   accents. Decorative treatment only; keep the existing five-tab geometry. */
+   accents. Decorative treatment only; keep the approved six-tab geometry. */
 .konnekt-dark [data-testid="konnekt-brand-header"] {
   background: linear-gradient(110deg, #0C0714, #1D0A31 65%, #0C0714);
   border-bottom-color: rgba(255, 193, 7, .36);
