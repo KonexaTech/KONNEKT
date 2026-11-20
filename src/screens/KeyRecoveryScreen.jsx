@@ -269,7 +269,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 const s = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#10091B'
+    backgroundColor: '#05030A'
   },
   content: {
     padding: 20,
@@ -290,7 +290,7 @@ const s = StyleSheet.create({
   title: {
     color: '#FFFFFF',
     fontSize: 25,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 7,
     marginBottom: 12
   },
@@ -300,16 +300,16 @@ const s = StyleSheet.create({
     marginBottom: 20
   },
   card: {
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     padding: 16,
     borderRadius: 14,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#39244B'
+    borderColor: '#68408A'
   },
   label: {
     color: '#D8B8F5',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 11,
     marginBottom: 9
   },
@@ -321,7 +321,7 @@ const s = StyleSheet.create({
   fingerprint: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 1,
     lineHeight: 25
   },
@@ -332,8 +332,8 @@ const s = StyleSheet.create({
     marginTop: 10
   },
   input: {
-    backgroundColor: '#241630',
-    borderColor: '#39244B',
+    backgroundColor: '#181025',
+    borderColor: '#68408A',
     borderWidth: 1,
     borderRadius: 10,
     padding: 14,
@@ -359,7 +359,7 @@ const s = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   notice: {
     lineHeight: 20,
@@ -382,7 +382,7 @@ const s = StyleSheet.create({
   },
   warningTitle: {
     color: '#FFCF85',
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 8
   },
   warning: {
