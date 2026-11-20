@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#181025',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerIcon: {
     fontSize: 19,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   introTitle: {
     color: '#FAF8FF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   introDescription: {
     color: '#CBBBD9',
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   periodText: {
     color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   activePeriodText: {
     color: '#181025',
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 15,
     marginTop: 22,
     marginBottom: 12,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   metricValue: {
     color: '#FFC107',
     fontSize: 19,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 9,
   },
   metricTitle: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   growthValue: {
     color: '#FFC107',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 5,
   },
   growthCaption: {
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   videoTitle: {
     color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   videoStats: {
     color: '#CBBBD9',
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   liveTitle: {
     color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   liveDescription: {
     color: '#CBBBD9',
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   tipTitle: {
     color: '#FFC107',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   tipText: {
     color: '#FAF8FF',
