@@ -159,10 +159,10 @@ export default function ShareLocationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   mapTitle: {
     color: '#075E54',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 8,
   },
   mapText: {
@@ -214,18 +214,18 @@ const styles = StyleSheet.create({
   mapPlaceholder: {
     color: '#075E54',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 2,
     marginTop: 12,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 10,
   },
   option: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
@@ -246,12 +246,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   optionDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     lineHeight: 16,
     marginTop: 5,
@@ -261,16 +261,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   durationSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderRadius: 12,
     marginTop: 5,
     marginBottom: 15,
   },
   durationTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 10,
   },
   durationRow: {
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F2F4',
   },
   durationText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
   },
   privacyNotice: {
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   privacyTitle: {
     color: '#075E54',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   privacyText: {
     color: '#426B59',
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   shareButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 28,
     alignItems: 'center',
@@ -311,6 +311,6 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });
