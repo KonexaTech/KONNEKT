@@ -126,13 +126,13 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     padding: 24,
   },
   logo: {
     color: '#6A0DAD',
     fontSize: 29,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 35,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   title: {
     color: '#FFFFFF',
     fontSize: 25,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 10,
   },
   sub: {
@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   input: {
-    backgroundColor: '#241630',
-    borderColor: '#39244B',
+    backgroundColor: '#181025',
+    borderColor: '#68408A',
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   error: {
     color: '#FF8795',
