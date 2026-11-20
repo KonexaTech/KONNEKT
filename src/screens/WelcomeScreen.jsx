@@ -117,8 +117,8 @@ const styles = StyleSheet.create({
 
   brand: {
     color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 35,
+    fontWeight: '900',
     letterSpacing: 4,
     marginTop: 15,
   },
@@ -137,8 +137,8 @@ const styles = StyleSheet.create({
 
   title: {
     color: '#FFFFFF',
-    fontSize: 25,
-    fontWeight: 'bold',
+    fontSize: 29,
+    fontWeight: '900',
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -159,10 +159,10 @@ const styles = StyleSheet.create({
 
   feature: {
     width: '48%',
-    backgroundColor: '#0C0714',
-    borderRadius: 14,
+    backgroundColor: '#1B0E2C',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#352047',
+    borderColor: '#68408A',
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
@@ -175,14 +175,15 @@ const styles = StyleSheet.create({
 
   featureText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '700',
     textAlign: 'center',
   },
 
   signup: {
     backgroundColor: '#FF6B00',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 18,
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -196,9 +197,9 @@ const styles = StyleSheet.create({
   login: {
     backgroundColor: '#3A0CA3',
     borderWidth: 1,
-    borderColor: '#00E6FF',
+    borderColor: '#FFC107',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 18,
     alignItems: 'center',
   },
 
