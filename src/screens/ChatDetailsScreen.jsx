@@ -214,10 +214,10 @@ export default function ChatDetailsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -230,11 +230,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '900',
   },
   profileSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     alignItems: 'center',
     padding: 24,
     marginBottom: 10,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -254,17 +254,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   contactName: {
-    color: '#17202A',
-    fontSize: 21,
-    fontWeight: 'bold',
+    color: '#FAF8FF',
+    fontSize: 23,
+    fontWeight: '900',
   },
   username: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     marginTop: 5,
   },
   phone: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     marginTop: 5,
   },
@@ -281,12 +281,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   profileButtonText: {
-    color: '#075E54',
+    color: '#FFC107',
     fontSize: 12,
     fontWeight: '600',
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#FFC107',
     fontSize: 12,
     fontWeight: 'bold',
     marginTop: 20,
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   row: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 17,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F2F4',
+    borderBottomColor: '#4B3063',
   },
   rowIcon: {
     fontSize: 21,
@@ -311,17 +311,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rowTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
     fontWeight: '600',
   },
   rowSubtitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginTop: 4,
   },
   arrow: {
-    color: '#98A2B3',
+    color: '#CBBBD9',
     fontSize: 24,
   },
   footer: {
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     padding: 25,
   },
   footerText: {
-    color: '#98A2B3',
+    color: '#CBBBD9',
     fontSize: 11,
   },
 });
