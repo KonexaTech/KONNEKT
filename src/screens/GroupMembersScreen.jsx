@@ -226,12 +226,12 @@ export default function GroupMembersScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 16,
   },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 15,
     paddingHorizontal: 13,
     borderRadius: 12,
@@ -265,18 +265,18 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     fontSize: 24,
-    color: '#667085',
+    color: '#CBBBD9',
     marginRight: 9,
   },
   searchInput: {
     flex: 1,
     height: 46,
-    color: '#17202A',
+    color: '#FAF8FF',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     marginHorizontal: 15,
     borderRadius: 12,
@@ -295,17 +295,17 @@ const styles = StyleSheet.create({
   addIconText: {
     color: '#075E54',
     fontSize: 27,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   addButtonText: {
     color: '#075E54',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 18,
     marginTop: 23,
     marginBottom: 8,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   memberCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEF0F2',
@@ -332,19 +332,19 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#344054',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   memberInfo: {
     flex: 1,
     marginLeft: 12,
   },
   memberName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   username: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     marginTop: 3,
   },
@@ -361,35 +361,35 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   adminText: {
     color: '#087443',
   },
   regularText: {
-    color: '#667085',
+    color: '#CBBBD9',
   },
   moreButton: {
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
   moreText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 22,
   },
   emptyText: {
-    color: '#667085',
+    color: '#CBBBD9',
     textAlign: 'center',
     marginTop: 35,
   },
   footer: {
     padding: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderTopWidth: 1,
     borderTopColor: '#E3E8EA',
   },
   footerText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     textAlign: 'center',
   },
