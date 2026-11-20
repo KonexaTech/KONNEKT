@@ -191,10 +191,10 @@ export default function LiveStreamChatScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 17,
     paddingTop: 45,
     flexDirection: 'row',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   title: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   subtitle: {
     color: '#D1E7E1',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   liveBadge: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
     backgroundColor: '#D92D20',
     paddingHorizontal: 9,
     paddingVertical: 6,
@@ -234,14 +234,14 @@ const styles = StyleSheet.create({
   chatInfoText: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   list: {
     padding: 13,
     paddingBottom: 20,
   },
   messageCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     borderRadius: 12,
     marginBottom: 9,
@@ -265,15 +265,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   username: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   modBadge: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     color: '#FFFFFF',
     fontSize: 8,
-    fontWeight: 'bold',
+    fontWeight: '800',
     paddingHorizontal: 5,
     paddingVertical: 3,
     borderRadius: 4,
@@ -299,14 +299,14 @@ const styles = StyleSheet.create({
     marginTop: 9,
   },
   report: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     marginTop: 9,
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderTopWidth: 1,
     borderTopColor: '#EAECF0',
     alignItems: 'center',
@@ -317,11 +317,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderRadius: 20,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 16,
     paddingVertical: 11,
     borderRadius: 20,
@@ -330,10 +330,10 @@ const styles = StyleSheet.create({
   sendText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   footer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     color: '#98A2B3',
     textAlign: 'center',
     fontSize: 9,

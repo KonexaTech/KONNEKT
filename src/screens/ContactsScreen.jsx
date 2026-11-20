@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -140,33 +140,33 @@ const styles = StyleSheet.create({
   backButton: {
     color: '#075E54',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#17202A',
+    fontWeight: '800',
+    color: '#FAF8FF',
   },
   intro: {
     padding: 18,
   },
   heading: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#17202A',
+    fontWeight: '800',
+    color: '#FAF8FF',
   },
   description: {
     fontSize: 13,
-    color: '#667085',
+    color: '#CBBBD9',
     lineHeight: 19,
     marginTop: 6,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     marginHorizontal: 16,
     padding: 14,
     borderRadius: 11,
-    color: '#17202A',
+    color: '#FAF8FF',
   },
   list: {
     padding: 16,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     marginBottom: 9,
     borderRadius: 12,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 15,
   },
   contactInfo: {
@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
   },
   contactName: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#17202A',
+    fontWeight: '800',
+    color: '#FAF8FF',
   },
   username: {
     fontSize: 12,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   phone: {
     fontSize: 11,
-    color: '#667085',
+    color: '#CBBBD9',
     marginTop: 3,
   },
   statusBadge: {
@@ -224,17 +224,17 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#17202A',
+    fontWeight: '800',
+    color: '#FAF8FF',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#667085',
+    color: '#CBBBD9',
     marginTop: 35,
   },
   footer: {
     textAlign: 'center',
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     padding: 14,
     lineHeight: 17,

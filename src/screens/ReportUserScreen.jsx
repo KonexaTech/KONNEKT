@@ -166,7 +166,7 @@ export default function ReportUserScreen({ navigation, route }) {
 const s = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#10091B'
+    backgroundColor: '#05030A'
   },
   header: {
     padding: 18,
@@ -175,7 +175,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 18,
     borderBottomWidth: 1,
-    borderColor: '#39244B'
+    borderColor: '#68408A'
   },
   back: {
     color: '#D8B8F5',
@@ -202,8 +202,8 @@ const s = StyleSheet.create({
     marginBottom: 18
   },
   reason: {
-    backgroundColor: '#241630',
-    borderColor: '#39244B',
+    backgroundColor: '#181025',
+    borderColor: '#68408A',
     borderWidth: 1,
     borderRadius: 11,
     padding: 14,
@@ -225,7 +225,7 @@ const s = StyleSheet.create({
   },
   details: {
     minHeight: 110,
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     color: '#FFF',
     borderRadius: 11,
     padding: 14,

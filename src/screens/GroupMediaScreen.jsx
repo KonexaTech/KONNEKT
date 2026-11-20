@@ -152,12 +152,12 @@ export default function GroupMediaScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 17,
   },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   categoryContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     paddingVertical: 13,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeCategory: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
   },
   categoryText: {
     color: '#475467',
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
     paddingVertical: 17,
   },
   summaryTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summaryCount: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
   },
   list: {
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   mediaCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     borderRadius: 12,
     marginBottom: 10,
@@ -249,12 +249,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   mediaTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   mediaDetails: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginTop: 5,
   },
@@ -262,10 +262,10 @@ const styles = StyleSheet.create({
     color: '#075E54',
     fontSize: 10,
     marginTop: 4,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   arrow: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 24,
     marginLeft: 8,
   },
@@ -279,25 +279,25 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     lineHeight: 19,
     textAlign: 'center',
     marginTop: 8,
   },
   footer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     borderTopWidth: 1,
     borderTopColor: '#E8ECEF',
   },
   footerText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 17,

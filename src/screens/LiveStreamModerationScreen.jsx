@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F7F8',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingTop: 43,
     padding: 17,
     flexDirection: 'row',
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   liveBadge: {
     color: '#FFFFFF',
@@ -335,21 +335,21 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 5,
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 14,
     padding: 17,
     borderRadius: 12,
   },
   summaryTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summaryDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     marginTop: 6,
   },
@@ -363,17 +363,17 @@ const styles = StyleSheet.create({
   viewerNumber: {
     color: '#075E54',
     fontSize: 25,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   viewerLabel: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     marginTop: 3,
   },
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 9,
     padding: 4,
   },
@@ -384,12 +384,12 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
   activeTab: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
   },
   tabText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   activeTabText: {
     color: '#FFFFFF',
@@ -398,13 +398,13 @@ const styles = StyleSheet.create({
     margin: 14,
   },
   sectionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 12,
   },
   personCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 11,
     borderRadius: 10,
     marginBottom: 9,
@@ -421,19 +421,19 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   personInfo: {
     flex: 1,
     marginLeft: 9,
   },
   personName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   username: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     marginTop: 3,
   },
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   smallButtonText: {
     color: '#075E54',
     fontSize: 8,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   removeButton: {
     padding: 5,
@@ -467,10 +467,10 @@ const styles = StyleSheet.create({
   removeText: {
     color: '#D92D20',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   commentCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     borderRadius: 9,
     marginBottom: 8,
@@ -483,15 +483,15 @@ const styles = StyleSheet.create({
   commentUser: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   commentMessage: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
     marginTop: 5,
   },
   settingCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 14,
     borderRadius: 10,
     marginBottom: 9,
@@ -503,17 +503,17 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   settingDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 13,
     borderRadius: 8,
     alignItems: 'center',
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   saveText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   endButton: {
     backgroundColor: '#D92D20',
@@ -535,10 +535,10 @@ const styles = StyleSheet.create({
   endButtonText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     textAlign: 'center',
     padding: 20,

@@ -272,7 +272,7 @@ const s = StyleSheet.create({
   title: {
     color: '#FFF',
     fontSize: 22,
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   refresh: {
     color: '#A9B8FF',
@@ -292,7 +292,7 @@ const s = StyleSheet.create({
   },
   reportTitle: {
     color: '#FFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 15
   },
   meta: {
@@ -336,7 +336,7 @@ const s = StyleSheet.create({
   },
   buttonText: {
     color: '#FFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 11
   },
   error: {

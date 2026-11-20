@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F7F8',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   content: {
     padding: 16,
@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 12,
   },
   messageBubble: {
@@ -176,18 +176,18 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   messageText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
     lineHeight: 21,
   },
   messageTime: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     textAlign: 'right',
     marginTop: 9,
   },
   statusSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderRadius: 14,
   },
@@ -219,21 +219,21 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#075E54',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   recipientInfo: {
     flex: 1,
   },
   recipientName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 4,
   },
   statusText: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 7,
   },
   timeRow: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   statusIcon: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginLeft: 8,
     marginTop: 4,
   },

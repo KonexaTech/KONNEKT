@@ -178,10 +178,10 @@ export default function HashtagScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,16 +194,16 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   headerIcon: {
     color: '#FFFFFF',
     fontSize: 25,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   searchBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 15,
     borderRadius: 11,
     paddingHorizontal: 12,
@@ -213,14 +213,14 @@ const styles = StyleSheet.create({
     borderColor: '#EAECF0',
   },
   searchIcon: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 22,
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
     height: 43,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
   },
   content: {
@@ -234,17 +234,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   trendingLabel: {
     color: '#E76F00',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   hashtagCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 11,
     padding: 12,
     marginBottom: 9,
@@ -268,16 +268,16 @@ const styles = StyleSheet.create({
   hashSymbol: {
     color: '#075E54',
     fontSize: 21,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   hashtagInfo: {
     flex: 1,
     marginLeft: 11,
   },
   hashtagName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   postCount: {
     color: '#98A2B3',
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   videoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
@@ -327,13 +327,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   videoTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     lineHeight: 17,
   },
   creator: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 9,
     marginTop: 7,
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     color: '#075E54',
     fontSize: 10,
     marginTop: 7,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   views: {
     color: '#98A2B3',
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   emptyVideo: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 25,
     borderRadius: 12,
     alignItems: 'center',

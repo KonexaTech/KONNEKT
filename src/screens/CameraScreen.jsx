@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   topTitle: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 2,
   },
   cameraPreview: {
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   previewTitle: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   previewText: {
     color: '#BDBDBD',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   permissionButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 22,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   focusCircle: {
     position: 'absolute',
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   modeText: {
     color: '#888888',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 20,
   },
   activeMode: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 30,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
   },
   flipButton: {
     width: 48,

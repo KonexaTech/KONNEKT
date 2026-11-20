@@ -135,10 +135,10 @@ export default function StarredMessagesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   searchContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     margin: 15,
@@ -182,13 +182,13 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 13,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 17,
     marginBottom: 10,
   },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
   },
   messageCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 14,
     marginBottom: 10,
@@ -218,14 +218,14 @@ const styles = StyleSheet.create({
   contactName: {
     color: '#075E54',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   messageDate: {
     color: '#98A2B3',
     fontSize: 9,
   },
   messageText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   openLabel: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   removeButton: {
     padding: 10,
@@ -261,9 +261,9 @@ const styles = StyleSheet.create({
     fontSize: 55,
   },
   emptyTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 15,
   },
   emptyText: {

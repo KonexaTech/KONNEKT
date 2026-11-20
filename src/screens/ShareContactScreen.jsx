@@ -165,10 +165,10 @@ export default function ShareContactScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -194,24 +194,24 @@ const styles = StyleSheet.create({
   count: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   searchContainer: {
     padding: 15,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#E8ECEF',
-    color: '#17202A',
+    color: '#FAF8FF',
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginHorizontal: 17,
     marginBottom: 10,
   },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   contactCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 13,
@@ -245,18 +245,18 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#075E54',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   contactInfo: {
     flex: 1,
   },
   contactName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   phone: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginTop: 4,
   },
@@ -270,32 +270,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkedBox: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     borderColor: '#075E54',
   },
   checkmark: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 14,
   },
   emptyText: {
-    color: '#667085',
+    color: '#CBBBD9',
     textAlign: 'center',
     marginTop: 35,
   },
   bottomBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderTopWidth: 1,
     borderTopColor: '#E8ECEF',
   },
   selectedText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginBottom: 10,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 14,
     borderRadius: 25,
     alignItems: 'center',
@@ -306,6 +306,6 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });

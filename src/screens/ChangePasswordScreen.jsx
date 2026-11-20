@@ -217,10 +217,10 @@ export default function ChangePasswordScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   lock: {
@@ -251,14 +251,14 @@ const styles = StyleSheet.create({
     fontSize: 58,
   },
   heading: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 12,
   },
   description: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     lineHeight: 19,
     textAlign: 'center',
@@ -266,14 +266,14 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   label: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 8,
     marginTop: 12,
   },
   passwordBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderWidth: 1,
     borderColor: '#E4E7EC',
     borderRadius: 11,
@@ -284,13 +284,13 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 15,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
   },
   showText: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     padding: 8,
   },
   tipsCard: {
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   tipsTitle: {
     color: '#075E54',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 10,
   },
   tip: {
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   saveButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   forgotButton: {
     alignItems: 'center',
@@ -329,6 +329,6 @@ const styles = StyleSheet.create({
   forgotText: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });

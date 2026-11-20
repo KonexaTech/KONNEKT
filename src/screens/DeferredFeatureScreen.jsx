@@ -16,7 +16,7 @@ export default function DeferredFeatureScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#10091B' },
+  page: { flex: 1, backgroundColor: '#05030A' },
   content: { padding: 20, paddingBottom: 40 },
   back: { color: '#D8B8F5', fontSize: 16, marginTop: 12 },
   title: { color: '#FFF', fontSize: 28, fontWeight: '800', marginTop: 24 },

@@ -211,10 +211,10 @@ export default function CommentsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D1E7E1',
@@ -248,14 +248,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EAECF0',
   },
   summaryTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summaryCount: {
     color: '#075E54',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   list: {
     padding: 15,
@@ -285,9 +285,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   name: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   time: {
     color: '#98A2B3',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionText: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     marginRight: 20,
     fontWeight: '500',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   cancelReply: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: '#EAECF0',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
   },
   myAvatar: {
     width: 34,
@@ -358,11 +358,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     maxHeight: 90,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     width: 36,
     height: 36,
     borderRadius: 18,

@@ -194,7 +194,7 @@ export default function AccountDeletionScreen({ navigation }) {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#10091B'
+    backgroundColor: '#05030A'
   },
   content: {
     padding: 20,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   input: {
     minHeight: 105,
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderColor: '#503567',
     borderWidth: 1,
     borderRadius: 11,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   card: {
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 17,
     borderWidth: 1,

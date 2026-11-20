@@ -135,12 +135,12 @@ export default function GroupInviteScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 17,
   },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   content: {
     padding: 20,
@@ -173,14 +173,14 @@ const styles = StyleSheet.create({
     fontSize: 42,
   },
   title: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 21,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 20,
   },
   subtitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
@@ -188,32 +188,32 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   groupCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 17,
     borderWidth: 1,
     borderColor: '#E8ECEF',
   },
   groupLabel: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   groupName: {
     color: '#075E54',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 8,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 25,
     marginBottom: 9,
   },
   codeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 16,
     borderWidth: 1,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   inviteCode: {
     color: '#075E54',
     fontSize: 23,
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: 2,
     marginBottom: 15,
   },
@@ -235,11 +235,11 @@ const styles = StyleSheet.create({
   },
   copyButtonText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 12,
   },
   linkCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 15,
     borderWidth: 1,
@@ -259,11 +259,11 @@ const styles = StyleSheet.create({
   },
   copyLinkText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 12,
   },
   shareButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   notice: {
     backgroundColor: '#FFF7E6',
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   noticeTitle: {
     color: '#8A5A00',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 13,
   },
   noticeText: {

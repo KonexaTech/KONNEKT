@@ -165,12 +165,12 @@ export default function ChatAttachmentsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 17,
   },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   intro: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 20,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   optionCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 14,
     padding: 15,
     marginBottom: 13,
@@ -226,12 +226,12 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   optionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   optionDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 16,
     marginTop: 6,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     color: '#075E54',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   infoText: {
     color: '#426B59',

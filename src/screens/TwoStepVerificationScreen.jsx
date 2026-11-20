@@ -286,7 +286,7 @@ export default function TwoStepVerificationScreen({ navigation }) {
   );
 }
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#10091B" },
+  page: { flex: 1, backgroundColor: '#05030A' },
   content: { padding: 18, paddingBottom: 40 },
   back: { color: "#D8B8F5", fontSize: 16, marginTop: 12 },
   title: {
@@ -297,7 +297,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   card: {
-    backgroundColor: "#241630",
+    backgroundColor: '#181025',
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
