@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -176,15 +176,15 @@ const styles = StyleSheet.create({
   backButton: {
     color: '#075E54',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   groupHeader: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     alignItems: 'center',
     padding: 25,
   },
@@ -200,9 +200,9 @@ const styles = StyleSheet.create({
     fontSize: 42,
   },
   groupName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 21,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 15,
   },
   memberCount: {
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   groupDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     textAlign: 'center',
     marginTop: 10,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     marginTop: 10,
     paddingVertical: 17,
   },
@@ -232,19 +232,19 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 7,
   },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     marginTop: 12,
     paddingHorizontal: 16,
     paddingVertical: 15,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#17202A',
+    fontWeight: '800',
+    color: '#FAF8FF',
     marginBottom: 12,
   },
   memberRow: {
@@ -264,24 +264,24 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#075E54',
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   memberInfo: {
     flex: 1,
     marginLeft: 12,
   },
   memberName: {
-    color: '#17202A',
-    fontWeight: 'bold',
+    color: '#FAF8FF',
+    fontWeight: '800',
     fontSize: 14,
   },
   memberRole: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 12,
     marginTop: 3,
   },
   moreButton: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 18,
     paddingHorizontal: 8,
   },
@@ -294,21 +294,21 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEEEEE',
   },
   managementText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
   },
   dangerText: {
     color: '#B42318',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   arrow: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 22,
   },
   footer: {
     textAlign: 'center',
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     padding: 18,
     lineHeight: 17,
