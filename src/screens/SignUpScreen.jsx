@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   page: {
     flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     padding: 25,
   },
   back: {
@@ -238,27 +238,28 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: '#6A0DAD',
-    fontSize: 30,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '900',
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 35,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 30,
+    fontWeight: '900',
     marginBottom: 10,
   },
   sub: {
-    color: '#B8C4D4',
+    color: '#CBBBD9',
+    fontSize: 13,
     marginBottom: 25,
   },
   input: {
-    backgroundColor: '#241630',
-    borderColor: '#39244B',
+    backgroundColor: '#211232',
+    borderColor: '#68408A',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     color: '#FFFFFF',
     marginBottom: 14,
@@ -266,8 +267,10 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#6A0DAD',
+    borderWidth: 1,
+    borderColor: '#FFC107',
     padding: 17,
-    borderRadius: 12,
+    borderRadius: 18,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -276,7 +279,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '900',
+    fontSize: 15,
   },
   error: {
     color: '#FF8795',
