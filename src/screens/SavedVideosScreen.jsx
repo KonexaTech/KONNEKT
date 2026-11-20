@@ -147,10 +147,10 @@ export default function SavedVideosScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   headerIcon: {
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     margin: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     fontSize: 23,
-    color: '#667085',
+    color: '#CBBBD9',
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
     height: 45,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
   },
   summary: {
@@ -198,21 +198,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   summaryCount: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   list: {
     paddingHorizontal: 14,
     paddingBottom: 25,
   },
   videoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 13,
     padding: 10,
     marginBottom: 12,
@@ -257,13 +257,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   videoTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     lineHeight: 18,
   },
   creator: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 10,
     marginTop: 7,
   },
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   removeText: {
     color: '#D92D20',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyState: {
     flex: 1,
@@ -306,9 +306,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyText: {
     color: '#98A2B3',
