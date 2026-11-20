@@ -74,7 +74,11 @@ export async function setup(base, options = {}) {
       return respond({});
     }
     if (url.pathname.includes('/rpc/')) return respond(rpcResults.has(table) ? rpcResults.get(table) : CHAT);
-    if (url.pathname.includes('/storage/v1/object/sign/')) return respond({ signedURL: '/object/sign/fixture' });
+    if (url.pathname.includes('/storage/v1/object/sign/')) {
+      // Mirror the requested private object path in the returned signed URL.
+      const objectPath = url.pathname.slice('/storage/v1/object/sign/'.length);
+      return respond({ signedURL: '/object/sign/' + objectPath + '?token=fixture-signed-media' });
+    }
     if (url.pathname.includes('/storage/')) return respond({ Key: 'fixture-upload' });
     let rows = db[table] || [];
     let matches = filterRows(rows, url.searchParams);
