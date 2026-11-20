@@ -172,12 +172,12 @@ export default function GroupNotificationSettingsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 17,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -201,22 +201,22 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   intro: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 12,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 22,
     marginBottom: 9,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#EEF0F2',
@@ -226,12 +226,12 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   settingTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   settingDescription: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 17,
     marginTop: 5,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   saveButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -249,10 +249,10 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   note: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     lineHeight: 17,
     textAlign: 'center',
