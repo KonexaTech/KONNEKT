@@ -737,14 +737,14 @@ export default function GroupCallScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10091B',
+    backgroundColor: '#05030A',
     padding: 20,
     alignItems: 'center'
   },
   title: {
     color: '#FFF',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 25
   },
   subtitle: {
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
   person: {
     width: '100%',
-    backgroundColor: '#241630',
+    backgroundColor: '#181025',
     padding: 12,
     borderRadius: 12,
     flexDirection: 'row',
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
   },
   personName: {
     color: '#FFF',
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   personStatus: {
     color: '#9AB0C8',
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFF',
-    fontWeight: 'bold'
+    fontWeight: '800'
   },
   foot: {
     color: '#778BA4',
