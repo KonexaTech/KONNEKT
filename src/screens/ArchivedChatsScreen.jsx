@@ -159,10 +159,10 @@ export default function ArchivedChatsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   headerSubtitle: {
     color: '#D5EAE7',
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   searchContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     flexDirection: 'row',
     alignItems: 'center',
     margin: 15,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 13,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
   },
   infoBanner: {
@@ -232,16 +232,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   chatList: {
     paddingHorizontal: 15,
     paddingBottom: 25,
   },
   chatCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     padding: 12,
     marginBottom: 9,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#075E54',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   onlineDot: {
     position: 'absolute',
@@ -287,9 +287,9 @@ const styles = StyleSheet.create({
   },
   chatName: {
     flex: 1,
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginRight: 8,
   },
   chatTime: {
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     flex: 1,
-    color: '#667085',
+    color: '#CBBBD9',
     fontSize: 11,
     marginRight: 8,
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   unreadText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   unarchiveButton: {
     flexDirection: 'row',
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   unarchiveText: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -351,9 +351,9 @@ const styles = StyleSheet.create({
     fontSize: 45,
   },
   emptyTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 12,
   },
   emptyText: {
