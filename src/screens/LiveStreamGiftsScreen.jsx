@@ -169,10 +169,10 @@ export default function LiveStreamGiftsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FA',
+    backgroundColor: '#05030A',
   },
   header: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     padding: 17,
     paddingTop: 43,
     flexDirection: 'row',
@@ -186,10 +186,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   creatorCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 15,
     padding: 15,
     borderRadius: 12,
@@ -204,9 +204,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   creatorTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   creatorSubtitle: {
     color: '#98A2B3',
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -225,16 +225,16 @@ const styles = StyleSheet.create({
   balanceLabel: {
     color: '#D1E7E1',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   balanceAmount: {
     color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 5,
   },
   buyButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     paddingHorizontal: 13,
     paddingVertical: 9,
     borderRadius: 18,
@@ -242,12 +242,12 @@ const styles = StyleSheet.create({
   buyText: {
     color: '#075E54',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   sectionTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
     margin: 16,
   },
   giftList: {
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 5,
     padding: 13,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   giftName: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   giftPrice: {
     color: '#075E54',
@@ -285,11 +285,11 @@ const styles = StyleSheet.create({
   selectedLabel: {
     color: '#075E54',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 5,
   },
   selectedPanel: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     margin: 12,
     padding: 12,
     borderRadius: 12,
@@ -298,13 +298,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedText: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
   },
   sendButton: {
-    backgroundColor: '#075E54',
+    backgroundColor: '#6A0DAD',
     paddingHorizontal: 15,
     paddingVertical: 11,
     borderRadius: 8,
@@ -312,18 +312,18 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   activity: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#181025',
     padding: 13,
     marginHorizontal: 15,
     borderRadius: 10,
   },
   activityTitle: {
-    color: '#17202A',
+    color: '#FAF8FF',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 8,
   },
   empty: {
