@@ -63,6 +63,8 @@ BEGIN
   END IF;
   IF EXISTS (
     SELECT 1 FROM public.user_key_backups WHERE user_id = v_account
+  ) OR EXISTS (
+    SELECT 1 FROM public.user_key_passkey_backups WHERE user_id = v_account
   ) THEN
     RAISE EXCEPTION 'An existing encrypted recovery backup must be restored; reset refused.';
   END IF;
