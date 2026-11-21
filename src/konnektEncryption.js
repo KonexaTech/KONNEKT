@@ -57,6 +57,15 @@ async function prepareKonnektIdentity(userId) {
   if (readError) throw readError;
   // Never silently replace a server-registered identity when this device has lost its private key.
   if ((!identity?.privateKey || !identity?.publicJwk) && profile?.encryption_public_key) {
+    try {
+      const recovered = await restoreKonnektIdentityFromPasskey(userId, profile.encryption_public_key);
+      if (recovered) identity = await readKey(userId);
+    } catch {
+      // The passkey may be unavailable, unsupported or declined. Never silently
+      // rotate the identity; preserve the manual passphrase recovery path.
+    }
+  }
+  if ((!identity?.privateKey || !identity?.publicJwk) && profile?.encryption_public_key) {
     throw new Error('This account already has an encryption identity, but its private key is not stored on this device. Restore your encrypted key backup before opening encrypted chats. KONNEKT will not replace your old key.');
   }
   if (!identity?.privateKey || !identity?.publicJwk) {
@@ -200,6 +209,107 @@ export async function createKonnektKeyBackup(passphrase) {
   if (error) throw error;
   return true;
 }
+/**
+ * Last resort for a signed-in account that has lost its private identity and
+ * has no recovery backup. This does not decrypt or delete historical messages.
+ *
+ * The authenticated database RPC atomically publishes the replacement public
+ * key and the passphrase-encrypted backup, or changes neither. The private key
+ * is generated and encrypted in this browser and is never sent in plaintext.
+ */
+export async function replaceLostKonnektIdentity(passphrase) {
+  if (String(passphrase || '').length < 12) {
+    throw new Error('Choose a new recovery passphrase with at least 12 characters.');
+  }
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Secure encryption is unavailable. Use a supported browser over HTTPS.');
+  }
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('Sign in before starting a new encryption identity.');
+
+  // Never rotate a key that is still available on this device.
+  if (await readKey(user.id)) {
+    throw new Error('This device still has an encryption identity. Back it up instead of resetting it.');
+  }
+
+  const [
+    { data: profile, error: profileError },
+    { data: existingBackup, error: backupError }
+  ] = await Promise.all([
+    supabase.from('profiles')
+      .select('encryption_public_key').eq('id', user.id).maybeSingle(),
+    supabase.from('user_key_backups')
+      .select('user_id').eq('user_id', user.id).maybeSingle()
+  ]);
+  if (profileError) throw profileError;
+  if (backupError) throw backupError;
+  if (!profile?.encryption_public_key) {
+    throw new Error('No previous registered key was found. Open a chat to create your first encryption identity.');
+  }
+  if (existingBackup) {
+    throw new Error('An encrypted recovery backup exists. Do not replace this identity; restore your backup instead.');
+  }
+
+  // A passkey backup must also prevent a destructive identity rotation, even
+  // if the separate passphrase backup table is empty.
+  const { data: passkeyBackup, error: passkeyReadError } = await supabase
+    .from('user_key_passkey_backups')
+    .select('user_id').eq('user_id', user.id).maybeSingle();
+  if (passkeyReadError) throw passkeyReadError;
+  if (passkeyBackup) {
+    throw new Error('A passkey encrypted backup exists. Restore that identity instead of resetting it.');
+  }
+
+  const pair = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']
+  );
+  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  const privateKeyBytes = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+  const payload = JSON.stringify({
+    version: 1, userId: user.id, publicJwk,
+    privateKey: toBase64(privateKeyBytes)
+  });
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveRecoveryKey(passphrase, salt);
+  const ciphertext = toBase64(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(payload))
+  );
+
+  // The server enforces owner identity, a missing backup, the expected old key,
+  // and all-or-nothing publication of the new key with its encrypted backup.
+  // There is no automatic reset when a chat fails to open.
+  if (await readKey(user.id)) {
+    throw new Error('An encryption key appeared on this device. Reset cancelled; make a backup of it.');
+  }
+  const { data: replaced, error: replaceError } = await supabase.rpc(
+    'konnekt_replace_lost_encryption_identity',
+    {
+      p_previous_public_key: profile.encryption_public_key,
+      p_next_public_key: JSON.stringify(publicJwk),
+      p_ciphertext: ciphertext,
+      p_salt: toBase64(salt),
+      p_iv: toBase64(iv),
+      p_iterations: RECOVERY_ITERATIONS,
+      p_key_version: 1
+    }
+  );
+  if (replaceError) throw replaceError;
+  if (replaced !== true) throw new Error('The encryption identity was not updated.');
+
+  try {
+    await saveKey(user.id, { privateKey: pair.privateKey, publicJwk });
+  } catch {
+    throw new Error(
+      'Your new encrypted backup was saved, but this device could not store the private key. ' +
+      'Do not reset again. Keep the new passphrase and restore your backup on a supported browser.'
+    );
+  }
+  return true;
+}
+
 export async function restoreKonnektKeyBackup(passphrase) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Sign in before restoring your encryption key.');
@@ -268,6 +378,165 @@ if (profileError) throw profileError;
 
   return true;
 }
+
+/**
+ * Optional passwordless key recovery.
+ *
+ * A WebAuthn PRF-capable passkey, created while the original private key still
+ * exists, derives an AES wrapping key after the user's authenticator approval.
+ * Supabase stores only encrypted private-key bytes and public credential data.
+ * Neither the passkey secret nor plaintext private key leaves this browser.
+ * No passkey backup means no automatic recovery; this never rotates an identity.
+ */
+function requirePasskeyPrf() {
+  if (!globalThis.navigator?.credentials?.create ||
+      !globalThis.navigator?.credentials?.get ||
+      !globalThis.PublicKeyCredential ||
+      !globalThis.crypto?.subtle) {
+    throw new Error('Passkey recovery is unavailable in this browser or Android WebView.');
+  }
+}
+
+function passkeyRecoveryKeyFromCredential(credential) {
+  const result = credential?.getClientExtensionResults?.();
+  const first = result?.prf?.results?.first;
+  if (!first || first.byteLength !== 32) {
+    throw new Error('This passkey provider does not support encrypted-key recovery (WebAuthn PRF). Use passphrase recovery instead.');
+  }
+  return first;
+}
+
+async function promptKonnektPasskey(credentialId, salt) {
+  requirePasskeyPrf();
+  const credential = await navigator.credentials.get({
+    publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: fromBase64(credentialId) }],
+      userVerification: 'required',
+      timeout: 60000,
+      extensions: { prf: { eval: { first: salt } } }
+    }
+  });
+  if (toBase64(credential?.rawId || new Uint8Array()) !== credentialId) {
+    throw new Error('The selected passkey does not match the encrypted backup.');
+  }
+  return passkeyRecoveryKeyFromCredential(credential);
+}
+
+export async function enrollKonnektAutomaticKeyRecovery() {
+  requirePasskeyPrf();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error('Sign in before enrolling passkey recovery.');
+
+  const identity = await ensureKonnektIdentity(user.id);
+  if (!identity.privateKey.extractable) {
+    throw new Error('This older encryption key cannot be exported. Do not delete this device or reset it.');
+  }
+  const registeredKey = JSON.stringify(identity.publicJwk);
+  const { data: profile, error: profileError } = await supabase.from('profiles')
+    .select('encryption_public_key').eq('id', user.id).maybeSingle();
+  if (profileError) throw profileError;
+  if (profile?.encryption_public_key !== registeredKey) {
+    throw new Error('Your local encryption identity differs from the account identity. Passkey enrollment cancelled.');
+  }
+
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'KONNEKT' },
+      user: {
+        id: encoder.encode(user.id),
+        name: user.email || user.id,
+        displayName: 'KONNEKT encrypted recovery'
+      },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 }
+      ],
+      authenticatorSelection: {
+        residentKey: 'required',
+        requireResidentKey: true,
+        userVerification: 'required'
+      },
+      attestation: 'none',
+      timeout: 60000,
+      extensions: { prf: {} }
+    }
+  });
+  if (!credential?.rawId) throw new Error('Passkey enrollment was cancelled.');
+  const credentialId = toBase64(credential.rawId);
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const secret = await promptKonnektPasskey(credentialId, salt);
+  const wrappingKey = await crypto.subtle.importKey('raw', secret, { name: 'AES-GCM' }, false, ['encrypt']);
+  const payload = JSON.stringify({
+    version: 1,
+    userId: user.id,
+    publicJwk: identity.publicJwk,
+    privateKey: toBase64(await crypto.subtle.exportKey('pkcs8', identity.privateKey))
+  });
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = toBase64(await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, wrappingKey, encoder.encode(payload)
+  ));
+  const { data: { user: stillSignedIn } } = await supabase.auth.getUser();
+  if (stillSignedIn?.id !== user.id) throw new Error('Signed-in account changed during recovery setup.');
+  const { error } = await supabase.from('user_key_passkey_backups').upsert({
+    user_id: user.id,
+    credential_id: credentialId,
+    salt: toBase64(salt),
+    iv: toBase64(iv),
+    ciphertext,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if (error) throw error;
+  return true;
+}
+
+/**
+ * Attempts restoration from a previously enrolled passkey. The browser can
+ * present a fingerprint/PIN/face prompt; it cannot silently bypass user
+ * verification. If no enrolled backup exists, returns false.
+ */
+export async function restoreKonnektIdentityFromPasskey(userId, expectedPublicKey) {
+  requirePasskeyPrf();
+  if (!userId || !expectedPublicKey) return false;
+  const existing = await readKey(userId);
+  if (existing?.privateKey && existing?.publicJwk) return true;
+  const { data: backup, error } = await supabase.from('user_key_passkey_backups')
+    .select('credential_id,salt,iv,ciphertext').eq('user_id', userId).maybeSingle();
+  if (error) throw error;
+  if (!backup) return false;
+
+  const salt = fromBase64(backup.salt);
+  const secret = await promptKonnektPasskey(backup.credential_id, salt);
+  const wrappingKey = await crypto.subtle.importKey('raw', secret, { name: 'AES-GCM' }, false, ['decrypt']);
+  let payload;
+  try {
+    const bytes = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: fromBase64(backup.iv) },
+      wrappingKey, fromBase64(backup.ciphertext)
+    );
+    payload = JSON.parse(decoder.decode(bytes));
+  } catch {
+    throw new Error('Passkey recovery failed. The encrypted backup was not modified.');
+  }
+  if (payload?.version !== 1 || payload.userId !== userId ||
+      JSON.stringify(payload.publicJwk) !== expectedPublicKey ||
+      !payload.privateKey) {
+    throw new Error('Passkey backup does not match this signed-in encryption identity.');
+  }
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || user?.id !== userId) throw new Error('Signed-in account changed during passkey recovery.');
+  if (await readKey(userId)) {
+    throw new Error('An encryption key appeared on this device. Recovery did not overwrite it.');
+  }
+  const privateKey = await crypto.subtle.importKey('pkcs8', fromBase64(payload.privateKey),
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+  await saveKey(userId, { privateKey, publicJwk: payload.publicJwk });
+  return true;
+}
+
 export async function getKonnektIdentityFingerprint(publicJwk) {
   const bytes = await crypto.subtle.digest('SHA-256', encoder.encode(JSON.stringify(publicJwk)));
   return Array.from(new Uint8Array(bytes)).slice(0, 16).map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase().match(/.{1,4}/g).join(' ');

@@ -17,6 +17,9 @@ import {
   getStoredKonnektIdentity,
   createKonnektKeyBackup,
   restoreKonnektKeyBackup,
+  replaceLostKonnektIdentity,
+  enrollKonnektAutomaticKeyRecovery,
+  restoreKonnektIdentityFromPasskey,
   getKonnektIdentityFingerprint
 } from '../services/konnektEncryption';
 
@@ -27,6 +30,12 @@ export default function KeyRecoveryScreen({ navigation }) {
   const [confirmation, setConfirmation] = useState('');
   const [fingerprint, setFingerprint] = useState('');
   const [backupStatus, setBackupStatus] = useState('Checking backup…');
+  const [hasLocalIdentity, setHasLocalIdentity] = useState(null);
+  const [hasRecoveryBackup, setHasRecoveryBackup] = useState(null);
+  const [hasPasskeyBackup, setHasPasskeyBackup] = useState(null);
+  const [hasRegisteredIdentity, setHasRegisteredIdentity] = useState(false);
+  const [resetPhrase, setResetPhrase] = useState('');
+  const [passkeyBackupStatus, setPasskeyBackupStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeType, setNoticeType] = useState('info');
@@ -36,6 +45,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 
     try {
       const identity = await getStoredKonnektIdentity(user.id);
+      setHasLocalIdentity(!!identity?.privateKey && !!identity?.publicJwk);
 
       if (identity?.publicJwk) {
         const value = await getKonnektIdentityFingerprint(
@@ -46,6 +56,14 @@ export default function KeyRecoveryScreen({ navigation }) {
         setFingerprint('');
       }
 
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('encryption_public_key')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      setHasRegisteredIdentity(!!profile?.encryption_public_key);
+
       const { data, error } = await supabase
         .from('user_key_backups')
         .select('updated_at')
@@ -53,6 +71,20 @@ export default function KeyRecoveryScreen({ navigation }) {
         .maybeSingle();
 
       if (error) throw error;
+      setHasRecoveryBackup(!!data);
+
+      const { data: passkeyBackup, error: passkeyError } = await supabase
+        .from('user_key_passkey_backups')
+        .select('updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      // An older database may not have the optional passkey migration yet.
+      setHasPasskeyBackup(passkeyError ? null : !!passkeyBackup);
+      setPasskeyBackupStatus(passkeyError
+        ? 'Passkey recovery is not configured on this server yet.'
+        : passkeyBackup?.updated_at
+          ? `Passkey recovery enrolled: ${new Date(passkeyBackup.updated_at).toLocaleString()}`
+          : 'No passkey recovery enrolled.');
 
       if (data?.updated_at) {
         setBackupStatus(
@@ -62,6 +94,8 @@ export default function KeyRecoveryScreen({ navigation }) {
         setBackupStatus('No recovery backup found for this account.');
       }
     } catch (error) {
+      setHasPasskeyBackup(null);
+      setHasRecoveryBackup(null);
       setBackupStatus(
         error.message || 'Could not check recovery status.'
       );
@@ -82,6 +116,52 @@ export default function KeyRecoveryScreen({ navigation }) {
     setNotice(message);
   };
 
+  const restorePasskey = async () => {
+    if (!user?.id || hasLocalIdentity !== false || !hasRegisteredIdentity || hasPasskeyBackup !== true) {
+      showError('Passkey recovery is not ready for this account.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    try {
+      const { data: profile, error } = await supabase.from('profiles')
+        .select('encryption_public_key').eq('id', user.id).maybeSingle();
+      if (error) throw error;
+      const restored = await restoreKonnektIdentityFromPasskey(
+        user.id, profile?.encryption_public_key
+      );
+      if (!restored) throw new Error('No passkey backup was available to restore.');
+      showSuccess('Original encryption identity restored. Reopen chats and verify old messages.');
+      await refreshStatus();
+    } catch (error) {
+      showError(error.message || 'Passkey recovery failed. No identity was changed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const enrollPasskey = async () => {
+    if (!user?.id || !hasLocalIdentity) {
+      showError('Your original private encryption key must be available on this device first.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    try {
+      await enrollKonnektAutomaticKeyRecovery();
+      showSuccess(
+        'Passkey encrypted recovery enabled for this account. On supported browsers, ' +
+        'KONNEKT can restore this identity after fingerprint, face or screen-lock approval. ' +
+        'Keep your separate recovery passphrase as a fallback.'
+      );
+      await refreshStatus();
+    } catch (error) {
+      showError(error.message || 'Passkey recovery could not be enabled.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const run = async action => {
     if (!user?.id) {
       showError('Please sign in before using key recovery.');
@@ -95,9 +175,20 @@ export default function KeyRecoveryScreen({ navigation }) {
       return;
     }
 
-    if (action === 'backup' && passphrase !== confirmation) {
+    if ((action === 'backup' || action === 'replace') && passphrase !== confirmation) {
       showError('The two recovery passphrases do not match.');
       return;
+    }
+
+    if (action === 'replace') {
+      if (hasLocalIdentity !== false || hasRecoveryBackup !== false || hasPasskeyBackup !== false || !hasRegisteredIdentity) {
+        showError('A lost-key reset is unavailable. First check this device and your saved backup.');
+        return;
+      }
+      if (resetPhrase !== 'RESET MY ENCRYPTION') {
+        showError('Type RESET MY ENCRYPTION exactly to confirm losing access to old encrypted messages.');
+        return;
+      }
     }
 
     setBusy(true);
@@ -109,6 +200,13 @@ export default function KeyRecoveryScreen({ navigation }) {
 
         showSuccess(
           'Your encrypted recovery backup has been saved. Keep your passphrase somewhere safe. KONNEKT cannot recover a forgotten passphrase.'
+        );
+      } else if (action === 'replace') {
+        await replaceLostKonnektIdentity(passphrase);
+        showSuccess(
+          'A new encryption identity and encrypted recovery backup were created. ' +
+          'Older encrypted messages cannot be opened with this new key. ' +
+          'Reopen chats and verify your new identity with contacts.'
         );
       } else {
         await restoreKonnektKeyBackup(passphrase);
@@ -122,6 +220,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 
       setPassphrase('');
       setConfirmation('');
+      setResetPhrase('');
     } catch (error) {
       showError(
         error.message || 'Key recovery could not be completed.'
@@ -234,6 +333,84 @@ export default function KeyRecoveryScreen({ navigation }) {
         >
           {notice}
         </Text>
+      )}
+
+      {hasLocalIdentity === false && hasPasskeyBackup === true && (
+        <View style={s.card}>
+          <Text style={s.label}>RESTORE EXISTING IDENTITY WITH PASSKEY</Text>
+          <Text style={s.note}>
+            Use a previously enrolled passkey and biometric or device PIN approval.
+            Your existing encryption key, not a new key, will be restored.
+          </Text>
+          <TouchableOpacity
+            disabled={busy}
+            style={[s.primary, busy && s.disabled]}
+            onPress={restorePasskey}
+            accessibilityRole="button"
+          >
+            <Text style={s.buttonText}>RESTORE WITH PASSKEY</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={s.card}>
+        <Text style={s.label}>AUTOMATIC ENCRYPTION KEY RESTORE</Text>
+        <Text style={s.status}>{passkeyBackupStatus || 'Checking passkey recovery…'}</Text>
+        <Text style={s.note}>
+          Set this up while your original encryption key is still on this device.
+          After setup, a supported browser can restore your key using a passkey
+          with fingerprint, face or screen-lock approval. You will not need to
+          type your recovery passphrase for that restore. This does not recover
+          keys already lost without a backup. Some Android WebViews do not
+          support passkey recovery. Keep a separate backup as a fallback.
+        </Text>
+        <TouchableOpacity
+          disabled={busy || hasLocalIdentity !== true}
+          style={[s.secondary, (busy || hasLocalIdentity !== true) && s.disabled]}
+          onPress={enrollPasskey}
+          accessibilityRole="button"
+        >
+          <Text style={s.buttonText}>ENABLE PASSKEY AUTO-RESTORE</Text>
+        </TouchableOpacity>
+      </View>
+
+      {hasLocalIdentity === false &&
+       hasRecoveryBackup === false &&
+       hasPasskeyBackup === false &&
+       hasRegisteredIdentity && (
+        <View style={s.resetCard}>
+          <Text style={s.resetTitle}>Lost your encryption key?</Text>
+          <Text style={s.resetWarning}>
+            LAST RESORT: This device has no private key, and this account has
+            no recovery backup. Starting a new identity will NOT recover old
+            encrypted messages or existing group keys. Any original devices
+            may stop working with the replaced public key. Nothing is deleted,
+            but older encrypted history can remain unreadable. Check any
+            original phone or browser before continuing.
+          </Text>
+          <Text style={s.label}>TYPE RESET MY ENCRYPTION TO CONFIRM</Text>
+          <TextInput
+            value={resetPhrase}
+            onChangeText={setResetPhrase}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            style={s.input}
+            placeholder="RESET MY ENCRYPTION"
+            placeholderTextColor="#71839A"
+          />
+          <Text style={s.resetWarning}>
+            Enter and confirm a NEW recovery passphrase above (12+ characters).
+            This passphrase protects the new backup; it cannot unlock old messages.
+          </Text>
+          <TouchableOpacity
+            disabled={busy}
+            style={[s.resetButton, busy && s.disabled]}
+            onPress={() => run('replace')}
+            accessibilityRole="button"
+          >
+            <Text style={s.buttonText}>START NEW ENCRYPTION IDENTITY</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <View style={s.warningCard}>
@@ -371,6 +548,32 @@ const s = StyleSheet.create({
   },
   error: {
     color: '#FF8795'
+  },
+  resetCard: {
+    backgroundColor: '#25192D',
+    borderColor: '#FFB95A',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 18
+  },
+  resetTitle: {
+    color: '#FFCF85',
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 8
+  },
+  resetWarning: {
+    color: '#F0D5B0',
+    fontSize: 12,
+    lineHeight: 19,
+    marginBottom: 12
+  },
+  resetButton: {
+    backgroundColor: '#78402D',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center'
   },
   warningCard: {
     backgroundColor: '#30251B',
