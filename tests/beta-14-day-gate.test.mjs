@@ -22,3 +22,11 @@ test('beta proposal does not silently activate the gate or weaken its review-onl
   assert.doesNotMatch(sql, /^\s*update konnekt_beta\.control set enabled\s*=\s*true/im);
   assert.match(sql, /-- Do not activate until RPCs, Realtime, storage, Auth and bypass tests are accepted/);
 });
+
+test('privileged entrypoints use the same centrally gated session authorization', () => {
+  assert.match(sql, /create or replace function konnekt_private\.session_allowed\(\)/i);
+  assert.match(sql, /and \(select konnekt_beta\.allowed\(\)\)/i);
+  assert.match(sql, /from public\.account_deletion_requests/i);
+  assert.match(sql, /from auth\.mfa_factors/i);
+  assert.match(sql, /Inspect any future privileged RPCs before deployment/i);
+});

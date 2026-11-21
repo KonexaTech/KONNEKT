@@ -37,6 +37,30 @@ $$;
 revoke all on function konnekt_beta.allowed() from public, anon;
 grant usage on schema konnekt_beta to anon, authenticated;
 grant execute on function konnekt_beta.allowed() to anon, authenticated;
+-- Existing privileged public RPC entrypoints use this central SECURITY DEFINER helper.
+-- Preserve the live MFA/deletion checks while requiring the same beta eligibility.
+-- Staging only: this is deliberately fail-closed until the controlled beta activates.
+create or replace function konnekt_private.session_allowed()
+returns boolean language sql stable security definer set search_path = ''
+as $session$
+  select exists(select 1 from auth.users where id=auth.uid())
+    and not exists (
+      select 1 from public.account_deletion_requests
+      where user_id=auth.uid() and status in ('processing','completed')
+    )
+    and (
+      coalesce(auth.jwt()->>'aal','aal1')='aal2'
+      or not exists (
+        select 1 from auth.mfa_factors
+        where user_id=auth.uid() and status='verified'
+      )
+    )
+    and (select konnekt_beta.allowed());
+$session$;
+-- The public RPC for unregistering a push device only removes the current
+-- session's own private record, so it intentionally remains callable to clean up.
+-- Inspect any future privileged RPCs before deployment; they must call the
+-- guarded helper or independently enforce konnekt_beta.allowed().
 -- Restrictive PUBLIC policies cover anon and authenticated roles; auth.uid() is null for anon, so deny.
 -- Restrictive policies combine with existing ownership and membership policies.
 -- This deliberately does not modify public RPCs or Realtime authorization.
