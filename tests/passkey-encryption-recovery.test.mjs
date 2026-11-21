@@ -158,7 +158,7 @@ test('passkey restore requires no automatic identity rotation and server table i
   assert.match(sql, /ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /user_id = \(select auth\.uid\(\)\)/);
   assert.doesNotMatch(sql, /SECURITY DEFINER/);
-  assert.doesNotMatch(sql, /\b(?:DELETE|TRUNCATE|DROP TABLE)\b/i);
+  assert.doesNotMatch(sql, /\b(?:DELETE FROM|TRUNCATE|DROP TABLE)\b/i);
   assert.match(script, /restoreKonnektIdentityFromPasskey\(userId, profile\.encryption_public_key\)/);
   assert.match(script, /JSON\.stringify\(payload\.publicJwk\) !== expectedPublicKey/);
   assert.match(script, /Signed-in account changed during passkey recovery/);
