@@ -18,6 +18,7 @@ import {
   createKonnektKeyBackup,
   restoreKonnektKeyBackup,
   replaceLostKonnektIdentity,
+  enrollKonnektAutomaticKeyRecovery,
   getKonnektIdentityFingerprint
 } from '../services/konnektEncryption';
 
@@ -32,6 +33,7 @@ export default function KeyRecoveryScreen({ navigation }) {
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(null);
   const [hasRegisteredIdentity, setHasRegisteredIdentity] = useState(false);
   const [resetPhrase, setResetPhrase] = useState('');
+  const [passkeyBackupStatus, setPasskeyBackupStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeType, setNoticeType] = useState('info');
@@ -69,6 +71,18 @@ export default function KeyRecoveryScreen({ navigation }) {
       if (error) throw error;
       setHasRecoveryBackup(!!data);
 
+      const { data: passkeyBackup, error: passkeyError } = await supabase
+        .from('user_key_passkey_backups')
+        .select('updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      // An older database may not have the optional passkey migration yet.
+      setPasskeyBackupStatus(passkeyError
+        ? 'Passkey recovery is not configured on this server yet.'
+        : passkeyBackup?.updated_at
+          ? `Passkey recovery enrolled: ${new Date(passkeyBackup.updated_at).toLocaleString()}`
+          : 'No passkey recovery enrolled.');
+
       if (data?.updated_at) {
         setBackupStatus(
           `Backup saved: ${new Date(data.updated_at).toLocaleString()}`
@@ -96,6 +110,28 @@ export default function KeyRecoveryScreen({ navigation }) {
   const showSuccess = message => {
     setNoticeType('success');
     setNotice(message);
+  };
+
+  const enrollPasskey = async () => {
+    if (!user?.id || !hasLocalIdentity) {
+      showError('Your original private encryption key must be available on this device first.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    try {
+      await enrollKonnektAutomaticKeyRecovery();
+      showSuccess(
+        'Passkey encrypted recovery enabled for this account. On supported browsers, ' +
+        'KONNEKT can restore this identity after fingerprint, face or screen-lock approval. ' +
+        'Keep your separate recovery passphrase as a fallback.'
+      );
+      await refreshStatus();
+    } catch (error) {
+      showError(error.message || 'Passkey recovery could not be enabled.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const run = async action => {
@@ -270,6 +306,27 @@ export default function KeyRecoveryScreen({ navigation }) {
           {notice}
         </Text>
       )}
+
+      <View style={s.card}>
+        <Text style={s.label}>AUTOMATIC ENCRYPTION KEY RESTORE</Text>
+        <Text style={s.status}>{passkeyBackupStatus || 'Checking passkey recovery…'}</Text>
+        <Text style={s.note}>
+          Set this up while your original encryption key is still on this device.
+          After setup, a supported browser can restore your key using a passkey
+          with fingerprint, face or screen-lock approval. You will not need to
+          type your recovery passphrase for that restore. This does not recover
+          keys already lost without a backup. Some Android WebViews do not
+          support passkey recovery. Keep a separate backup as a fallback.
+        </Text>
+        <TouchableOpacity
+          disabled={busy || hasLocalIdentity !== true}
+          style={[s.secondary, (busy || hasLocalIdentity !== true) && s.disabled]}
+          onPress={enrollPasskey}
+          accessibilityRole="button"
+        >
+          <Text style={s.buttonText}>ENABLE PASSKEY AUTO-RESTORE</Text>
+        </TouchableOpacity>
+      </View>
 
       {hasLocalIdentity === false &&
        hasRecoveryBackup === false &&
