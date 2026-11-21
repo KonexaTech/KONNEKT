@@ -200,6 +200,97 @@ export async function createKonnektKeyBackup(passphrase) {
   if (error) throw error;
   return true;
 }
+/**
+ * Last resort for a signed-in account that has lost its private identity and
+ * has no recovery backup. This does not decrypt or delete historical messages.
+ *
+ * The authenticated database RPC atomically publishes the replacement public
+ * key and the passphrase-encrypted backup, or changes neither. The private key
+ * is generated and encrypted in this browser and is never sent in plaintext.
+ */
+export async function replaceLostKonnektIdentity(passphrase) {
+  if (String(passphrase || '').length < 12) {
+    throw new Error('Choose a new recovery passphrase with at least 12 characters.');
+  }
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Secure encryption is unavailable. Use a supported browser over HTTPS.');
+  }
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('Sign in before starting a new encryption identity.');
+
+  // Never rotate a key that is still available on this device.
+  if (await readKey(user.id)) {
+    throw new Error('This device still has an encryption identity. Back it up instead of resetting it.');
+  }
+
+  const [
+    { data: profile, error: profileError },
+    { data: existingBackup, error: backupError }
+  ] = await Promise.all([
+    supabase.from('profiles')
+      .select('encryption_public_key').eq('id', user.id).maybeSingle(),
+    supabase.from('user_key_backups')
+      .select('user_id').eq('user_id', user.id).maybeSingle()
+  ]);
+  if (profileError) throw profileError;
+  if (backupError) throw backupError;
+  if (!profile?.encryption_public_key) {
+    throw new Error('No previous registered key was found. Open a chat to create your first encryption identity.');
+  }
+  if (existingBackup) {
+    throw new Error('An encrypted recovery backup exists. Do not replace this identity; restore your backup instead.');
+  }
+
+  const pair = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']
+  );
+  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  const privateKeyBytes = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+  const payload = JSON.stringify({
+    version: 1, userId: user.id, publicJwk,
+    privateKey: toBase64(privateKeyBytes)
+  });
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveRecoveryKey(passphrase, salt);
+  const ciphertext = toBase64(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(payload))
+  );
+
+  // The server enforces owner identity, a missing backup, the expected old key,
+  // and all-or-nothing publication of the new key with its encrypted backup.
+  // There is no automatic reset when a chat fails to open.
+  if (await readKey(user.id)) {
+    throw new Error('An encryption key appeared on this device. Reset cancelled; make a backup of it.');
+  }
+  const { data: replaced, error: replaceError } = await supabase.rpc(
+    'konnekt_replace_lost_encryption_identity',
+    {
+      p_previous_public_key: profile.encryption_public_key,
+      p_next_public_key: JSON.stringify(publicJwk),
+      p_ciphertext: ciphertext,
+      p_salt: toBase64(salt),
+      p_iv: toBase64(iv),
+      p_iterations: RECOVERY_ITERATIONS,
+      p_key_version: 1
+    }
+  );
+  if (replaceError) throw replaceError;
+  if (replaced !== true) throw new Error('The encryption identity was not updated.');
+
+  try {
+    await saveKey(user.id, { privateKey: pair.privateKey, publicJwk });
+  } catch {
+    throw new Error(
+      'Your new encrypted backup was saved, but this device could not store the private key. ' +
+      'Do not reset again. Keep the new passphrase and restore your backup on a supported browser.'
+    );
+  }
+  return true;
+}
+
 export async function restoreKonnektKeyBackup(passphrase) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Sign in before restoring your encryption key.');
