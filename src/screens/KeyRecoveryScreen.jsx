@@ -17,6 +17,7 @@ import {
   getStoredKonnektIdentity,
   createKonnektKeyBackup,
   restoreKonnektKeyBackup,
+  replaceLostKonnektIdentity,
   getKonnektIdentityFingerprint
 } from '../services/konnektEncryption';
 
@@ -27,6 +28,10 @@ export default function KeyRecoveryScreen({ navigation }) {
   const [confirmation, setConfirmation] = useState('');
   const [fingerprint, setFingerprint] = useState('');
   const [backupStatus, setBackupStatus] = useState('Checking backup…');
+  const [hasLocalIdentity, setHasLocalIdentity] = useState(null);
+  const [hasRecoveryBackup, setHasRecoveryBackup] = useState(null);
+  const [hasRegisteredIdentity, setHasRegisteredIdentity] = useState(false);
+  const [resetPhrase, setResetPhrase] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeType, setNoticeType] = useState('info');
@@ -36,6 +41,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 
     try {
       const identity = await getStoredKonnektIdentity(user.id);
+      setHasLocalIdentity(!!identity?.privateKey && !!identity?.publicJwk);
 
       if (identity?.publicJwk) {
         const value = await getKonnektIdentityFingerprint(
@@ -46,6 +52,14 @@ export default function KeyRecoveryScreen({ navigation }) {
         setFingerprint('');
       }
 
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('encryption_public_key')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      setHasRegisteredIdentity(!!profile?.encryption_public_key);
+
       const { data, error } = await supabase
         .from('user_key_backups')
         .select('updated_at')
@@ -53,6 +67,7 @@ export default function KeyRecoveryScreen({ navigation }) {
         .maybeSingle();
 
       if (error) throw error;
+      setHasRecoveryBackup(!!data);
 
       if (data?.updated_at) {
         setBackupStatus(
@@ -62,6 +77,7 @@ export default function KeyRecoveryScreen({ navigation }) {
         setBackupStatus('No recovery backup found for this account.');
       }
     } catch (error) {
+      setHasRecoveryBackup(null);
       setBackupStatus(
         error.message || 'Could not check recovery status.'
       );
@@ -95,9 +111,20 @@ export default function KeyRecoveryScreen({ navigation }) {
       return;
     }
 
-    if (action === 'backup' && passphrase !== confirmation) {
+    if ((action === 'backup' || action === 'replace') && passphrase !== confirmation) {
       showError('The two recovery passphrases do not match.');
       return;
+    }
+
+    if (action === 'replace') {
+      if (hasLocalIdentity !== false || hasRecoveryBackup !== false || !hasRegisteredIdentity) {
+        showError('A lost-key reset is unavailable. First check this device and your saved backup.');
+        return;
+      }
+      if (resetPhrase !== 'RESET MY ENCRYPTION') {
+        showError('Type RESET MY ENCRYPTION exactly to confirm losing access to old encrypted messages.');
+        return;
+      }
     }
 
     setBusy(true);
@@ -109,6 +136,13 @@ export default function KeyRecoveryScreen({ navigation }) {
 
         showSuccess(
           'Your encrypted recovery backup has been saved. Keep your passphrase somewhere safe. KONNEKT cannot recover a forgotten passphrase.'
+        );
+      } else if (action === 'replace') {
+        await replaceLostKonnektIdentity(passphrase);
+        showSuccess(
+          'A new encryption identity and encrypted recovery backup were created. ' +
+          'Older encrypted messages cannot be opened with this new key. ' +
+          'Reopen chats and verify your new identity with contacts.'
         );
       } else {
         await restoreKonnektKeyBackup(passphrase);
@@ -122,6 +156,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 
       setPassphrase('');
       setConfirmation('');
+      setResetPhrase('');
     } catch (error) {
       showError(
         error.message || 'Key recovery could not be completed.'
@@ -234,6 +269,44 @@ export default function KeyRecoveryScreen({ navigation }) {
         >
           {notice}
         </Text>
+      )}
+
+      {hasLocalIdentity === false &&
+       hasRecoveryBackup === false &&
+       hasRegisteredIdentity && (
+        <View style={s.resetCard}>
+          <Text style={s.resetTitle}>Lost your encryption key?</Text>
+          <Text style={s.resetWarning}>
+            LAST RESORT: This device has no private key, and this account has
+            no recovery backup. Starting a new identity will NOT recover old
+            encrypted messages or existing group keys. Any original devices
+            may stop working with the replaced public key. Nothing is deleted,
+            but older encrypted history can remain unreadable. Check any
+            original phone or browser before continuing.
+          </Text>
+          <Text style={s.label}>TYPE RESET MY ENCRYPTION TO CONFIRM</Text>
+          <TextInput
+            value={resetPhrase}
+            onChangeText={setResetPhrase}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            style={s.input}
+            placeholder="RESET MY ENCRYPTION"
+            placeholderTextColor="#71839A"
+          />
+          <Text style={s.resetWarning}>
+            Enter and confirm a NEW recovery passphrase above (12+ characters).
+            This passphrase protects the new backup; it cannot unlock old messages.
+          </Text>
+          <TouchableOpacity
+            disabled={busy}
+            style={[s.resetButton, busy && s.disabled]}
+            onPress={() => run('replace')}
+            accessibilityRole="button"
+          >
+            <Text style={s.buttonText}>START NEW ENCRYPTION IDENTITY</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <View style={s.warningCard}>
@@ -371,6 +444,32 @@ const s = StyleSheet.create({
   },
   error: {
     color: '#FF8795'
+  },
+  resetCard: {
+    backgroundColor: '#25192D',
+    borderColor: '#FFB95A',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 18
+  },
+  resetTitle: {
+    color: '#FFCF85',
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 8
+  },
+  resetWarning: {
+    color: '#F0D5B0',
+    fontSize: 12,
+    lineHeight: 19,
+    marginBottom: 12
+  },
+  resetButton: {
+    backgroundColor: '#78402D',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center'
   },
   warningCard: {
     backgroundColor: '#30251B',
