@@ -66,10 +66,9 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   if (error) throw error;
   const type = isVideo ? 'video' : isAudio ? 'audio' : 'image';
   if (bucket === 'konnekt-public-media') {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return { path, url: data.publicUrl, type };
+    return { path, url: path, type };
   }
-  const { data, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+  const { data, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
   if (signedError) throw signedError;
   return { path, url: data.signedUrl, type };
 }

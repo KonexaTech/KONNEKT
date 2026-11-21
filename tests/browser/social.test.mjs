@@ -9,7 +9,7 @@ const reels=[reel('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Newest fixture Reel #n
 async function app(options={}){
   const fixture=await setup(server.base,{db:{reels,reel_likes:[],reel_comments:[],...options.db}});
   const video=await readFile(new URL('../fixtures/social-video.webm',import.meta.url));
-  await fixture.context.route('**/storage/v1/object/public/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
+  await fixture.context.route('**/storage/v1/object/sign/konnekt-public-media/**',route=>route.request().method()==='GET'?route.fulfill({status:200,contentType:'video/webm',body:video}):route.fallback());
   await fixture.page.reload();fixture.page.setDefaultTimeout(12000);return fixture;
 }
 test('multi-Reel feed stays within the viewport and a Discover selection opens that Reel',async()=>{

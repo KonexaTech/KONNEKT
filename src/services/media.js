@@ -27,8 +27,9 @@ export async function uploadMedia(file, bucket = 'konnekt-public-media', folder 
   if (error) throw error;
   const type = isVideo ? 'video' : isAudio ? 'audio' : 'image';
   if (bucket === 'konnekt-public-media') {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return { path, url: data.publicUrl, type };
+    // Keep the stable object path, not an unauthenticated public URL.
+    // Display components resolve it after checking active user access.
+    return { path, url: path, type };
   }
   // Private attachments are fetched by authorized recipients when displayed.
   // Do not mint a long-lived bearer URL at upload time.
@@ -54,7 +55,7 @@ export async function cleanupUnusedPublicMedia(table, userId, media) {
   const column = table === 'reels' ? 'media_path' : table === 'statuses' ? 'media_url' : null;
   if (!column || !media?.path || !userId) throw new Error('Cannot verify unused media.');
   const { data, error } = await supabase.from(table).select('id')
-    .eq('user_id', userId).eq(column, table === 'reels' ? media.path : media.url).limit(1);
+    .eq('user_id', userId).eq(column, table === 'reels' ? media.path : media.path).limit(1);
   if (error) throw error;
   if (data?.length) return false;
   const result = await supabase.storage.from('konnekt-public-media').remove([media.path]);

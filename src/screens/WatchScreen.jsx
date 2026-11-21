@@ -7,16 +7,12 @@ import { useAuth } from '../AuthContext';
 import { supabase } from '../lib_supabase';
 import { chooseMedia, uploadMedia, cleanupUnusedPublicMedia } from '../services/media';
 import ReelPlayer from '../components/ReelPlayer';
+import { authorizedPublicMediaUrl } from '../services/privateMedia';
 
 const MAX_VIDEO_BYTES = 45 * 1024 * 1024;
 const BUCKET = 'konnekt-public-media';
 const PAGE_HEIGHT = Math.max(420, Dimensions.get('window').height - 245);
 
-function mediaUrl(path) {
-  if (!path) return '';
-  if (/^https?:\/\//i.test(path)) return path;
-  return supabase.storage.from(BUCKET).getPublicUrl(path).data?.publicUrl || '';
-}
 
 export default function WatchScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -118,11 +114,15 @@ export default function WatchScreen({ navigation, route }) {
         counts[row.reel_id] = (counts[row.reel_id] || 0) + 1;
       });
 
-      const nextReels = rows.map(row => ({
-        ...row,
-        media_url: mediaUrl(row.media_path),
-        profile: profileMap[row.user_id] || {}
+      // Signed streaming URLs require current authenticated Storage SELECT RLS.
+      // A failed authorization displays no media, never a public fallback.
+      const nextReels = await Promise.all(rows.map(async row => {
+        let url = '';
+        try { url = await authorizedPublicMediaUrl(row.media_path); }
+        catch { warnings.push('one or more media files'); }
+        return { ...row, media_url: url, profile: profileMap[row.user_id] || {} };
       }));
+      if (requestId !== requestRef.current) return;
       setReels(nextReels);
       setComments(grouped);
       setLikeCounts(counts);
