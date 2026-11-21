@@ -19,6 +19,7 @@ import {
   restoreKonnektKeyBackup,
   replaceLostKonnektIdentity,
   enrollKonnektAutomaticKeyRecovery,
+  restoreKonnektIdentityFromPasskey,
   getKonnektIdentityFingerprint
 } from '../services/konnektEncryption';
 
@@ -31,6 +32,7 @@ export default function KeyRecoveryScreen({ navigation }) {
   const [backupStatus, setBackupStatus] = useState('Checking backup…');
   const [hasLocalIdentity, setHasLocalIdentity] = useState(null);
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(null);
+  const [hasPasskeyBackup, setHasPasskeyBackup] = useState(null);
   const [hasRegisteredIdentity, setHasRegisteredIdentity] = useState(false);
   const [resetPhrase, setResetPhrase] = useState('');
   const [passkeyBackupStatus, setPasskeyBackupStatus] = useState('');
@@ -77,6 +79,7 @@ export default function KeyRecoveryScreen({ navigation }) {
         .eq('user_id', user.id)
         .maybeSingle();
       // An older database may not have the optional passkey migration yet.
+      setHasPasskeyBackup(passkeyError ? null : !!passkeyBackup);
       setPasskeyBackupStatus(passkeyError
         ? 'Passkey recovery is not configured on this server yet.'
         : passkeyBackup?.updated_at
@@ -91,6 +94,7 @@ export default function KeyRecoveryScreen({ navigation }) {
         setBackupStatus('No recovery backup found for this account.');
       }
     } catch (error) {
+      setHasPasskeyBackup(null);
       setHasRecoveryBackup(null);
       setBackupStatus(
         error.message || 'Could not check recovery status.'
@@ -110,6 +114,30 @@ export default function KeyRecoveryScreen({ navigation }) {
   const showSuccess = message => {
     setNoticeType('success');
     setNotice(message);
+  };
+
+  const restorePasskey = async () => {
+    if (!user?.id || hasLocalIdentity !== false || !hasRegisteredIdentity || hasPasskeyBackup !== true) {
+      showError('Passkey recovery is not ready for this account.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    try {
+      const { data: profile, error } = await supabase.from('profiles')
+        .select('encryption_public_key').eq('id', user.id).maybeSingle();
+      if (error) throw error;
+      const restored = await restoreKonnektIdentityFromPasskey(
+        user.id, profile?.encryption_public_key
+      );
+      if (!restored) throw new Error('No passkey backup was available to restore.');
+      showSuccess('Original encryption identity restored. Reopen chats and verify old messages.');
+      await refreshStatus();
+    } catch (error) {
+      showError(error.message || 'Passkey recovery failed. No identity was changed.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const enrollPasskey = async () => {
@@ -153,7 +181,7 @@ export default function KeyRecoveryScreen({ navigation }) {
     }
 
     if (action === 'replace') {
-      if (hasLocalIdentity !== false || hasRecoveryBackup !== false || !hasRegisteredIdentity) {
+      if (hasLocalIdentity !== false || hasRecoveryBackup !== false || hasPasskeyBackup !== false || !hasRegisteredIdentity) {
         showError('A lost-key reset is unavailable. First check this device and your saved backup.');
         return;
       }
@@ -307,6 +335,24 @@ export default function KeyRecoveryScreen({ navigation }) {
         </Text>
       )}
 
+      {hasLocalIdentity === false && hasPasskeyBackup === true && (
+        <View style={s.card}>
+          <Text style={s.label}>RESTORE EXISTING IDENTITY WITH PASSKEY</Text>
+          <Text style={s.note}>
+            Use a previously enrolled passkey and biometric or device PIN approval.
+            Your existing encryption key, not a new key, will be restored.
+          </Text>
+          <TouchableOpacity
+            disabled={busy}
+            style={[s.primary, busy && s.disabled]}
+            onPress={restorePasskey}
+            accessibilityRole="button"
+          >
+            <Text style={s.buttonText}>RESTORE WITH PASSKEY</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={s.card}>
         <Text style={s.label}>AUTOMATIC ENCRYPTION KEY RESTORE</Text>
         <Text style={s.status}>{passkeyBackupStatus || 'Checking passkey recovery…'}</Text>
@@ -330,6 +376,7 @@ export default function KeyRecoveryScreen({ navigation }) {
 
       {hasLocalIdentity === false &&
        hasRecoveryBackup === false &&
+       hasPasskeyBackup === false &&
        hasRegisteredIdentity && (
         <View style={s.resetCard}>
           <Text style={s.resetTitle}>Lost your encryption key?</Text>
