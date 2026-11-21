@@ -252,6 +252,16 @@ export async function replaceLostKonnektIdentity(passphrase) {
     throw new Error('An encrypted recovery backup exists. Do not replace this identity; restore your backup instead.');
   }
 
+  // A passkey backup must also prevent a destructive identity rotation, even
+  // if the separate passphrase backup table is empty.
+  const { data: passkeyBackup, error: passkeyReadError } = await supabase
+    .from('user_key_passkey_backups')
+    .select('user_id').eq('user_id', user.id).maybeSingle();
+  if (passkeyReadError) throw passkeyReadError;
+  if (passkeyBackup) {
+    throw new Error('A passkey encrypted backup exists. Restore that identity instead of resetting it.');
+  }
+
   const pair = await crypto.subtle.generateKey(
     { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']
   );
