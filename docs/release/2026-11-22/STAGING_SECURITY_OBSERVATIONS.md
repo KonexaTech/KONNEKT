@@ -39,3 +39,9 @@ Final-source live A/B encrypted direct/group voice/document exchange, C row/Real
 Stable signing, same-key Android upgrade, two physical phones on Wi-Fi/mobile data, actual closed-app push, owner inbox recovery, backup/restore, deletion fulfillment and approved production security rollout remain separate gates. OneSignal Android delivery requires FCM credentials; no Firebase dependency or provider has been introduced in this increment. Human device tests cannot be replaced by synthetic browser audio or fixture APIs.
 
 **Public release: HOLD.**
+
+## Follow-up evidence and proposed repair
+
+The scoped live messaging/Realtime/recovery checks above now have passing evidence in LIVE_ACCEPTANCE.json, replacing their earlier unverified status for the tested paths. The critical social-file finding remains installed and unresolved remotely. A minimal invoker-only row-authorized policy replacement and exact prior-policy rollback were locally verified against PostgreSQL RLS. Current catalogs/policies and aggregate data counts were captured before requesting staging application. The Supabase connector confirmation expired; read-back showed no helper, no migration record and the old policy unchanged. Do not report deployment of the proposal. Staging and production data were not deleted or reset.
+
+Before an owner confirms the staging migration: inspect the two SQL files and three regression cases; target only oiwtfkgrnpzirghbsvim, retain current bucket flags, preserve current global MFA/beta and chat policies. Then verify with real positive social-media reads plus follower/blocked/expired/orphan negative downloads and signing; verify private messaging remains functional. Existing signed bearer URLs may remain usable until expiry and previously downloaded content cannot be revoked. Production rollout needs separate review and authorization.

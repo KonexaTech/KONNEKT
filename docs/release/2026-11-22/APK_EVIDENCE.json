@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "eaa1e934803ca2a353bfddc66ea4063d0dd6ab70",
+  "apkSha256": "375548a36843cd22ae681675bf00d7760f16266d916ef894298458bebdc27468",
+  "package": "com.konnekt.staging",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "minSdk": 26,
+  "certificateSha256": "e51bf3bd756933063b6388251209374a953fbe5376c7e41bff846072caeb31eb",
+  "debuggable": true,
+  "signing": "OWNER_CONFIGURED_KEY",
+  "physicalInstallation": "BLOCKED",
+  "physicalUpdate": "BLOCKED",
+  "pushDelivery": "BLOCKED"
+}
