@@ -1,6 +1,6 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { installPrivateSocialMedia } from './social-media-fixture.mjs';
 import { startServer, setup, OTHER } from './helpers.mjs';
 
 let server;
@@ -13,8 +13,7 @@ async function feed() {
     visibility: 'public', published_at: `2026-11-${15 - index}T00:00:00Z`, deleted_at: null
   }));
   const f = await setup(server.base, { db: { reels, reel_likes: [], reel_comments: [] } });
-  const bytes = await readFile(new URL('../fixtures/social-video.webm', import.meta.url));
-  await f.context.route('**/storage/v1/object/public/konnekt-public-media/**', route => route.fulfill({ status: 200, contentType: 'video/webm', body: bytes }));
+  await installPrivateSocialMedia(f.context);
   await f.page.reload();
   await f.page.waitForFunction(() => document.querySelector('video')?.readyState >= 2);
   return f;

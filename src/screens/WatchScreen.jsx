@@ -4,7 +4,8 @@ import {
   ActivityIndicator, TextInput, Image, Dimensions
 } from 'react-native';
 import { useAuth } from '../AuthContext';
-import { supabase } from '../lib_supabase';
+import { supabase, SUPABASE_URL } from '../lib_supabase';
+import { resolveSocialMedia } from '../services/socialMedia';
 import { chooseMedia, uploadMedia, cleanupUnusedPublicMedia } from '../services/media';
 import ReelPlayer from '../components/ReelPlayer';
 
@@ -12,11 +13,6 @@ const MAX_VIDEO_BYTES = 45 * 1024 * 1024;
 const BUCKET = 'konnekt-public-media';
 const PAGE_HEIGHT = Math.max(420, Dimensions.get('window').height - 245);
 
-function mediaUrl(path) {
-  if (!path) return '';
-  if (/^https?:\/\//i.test(path)) return path;
-  return supabase.storage.from(BUCKET).getPublicUrl(path).data?.publicUrl || '';
-}
 
 export default function WatchScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -38,6 +34,7 @@ export default function WatchScreen({ navigation, route }) {
   const [notice, setNotice] = useState('');
   const [feedHeight, setFeedHeight] = useState(0);
   const requestRef = useRef(0);
+  const lastMediaLoad = useRef(0);
   const feedRef = useRef(null);
   const publishLock = useRef(false);
   const selectedReel = route?.params?.reelId;
@@ -118,11 +115,16 @@ export default function WatchScreen({ navigation, route }) {
         counts[row.reel_id] = (counts[row.reel_id] || 0) + 1;
       });
 
-      const nextReels = rows.map(row => ({
-        ...row,
-        media_url: mediaUrl(row.media_path),
-        profile: profileMap[row.user_id] || {}
+      const nextReels = await Promise.all(rows.map(async row => {
+        try {
+          return { ...row, media_url: await resolveSocialMedia(supabase, SUPABASE_URL, row.media_path), profile: profileMap[row.user_id] || {} };
+        } catch {
+          warnings.push('video access');
+          return { ...row, media_url: '', profile: profileMap[row.user_id] || {} };
+        }
       }));
+      if (requestId !== requestRef.current) return;
+      lastMediaLoad.current = Date.now();
       setReels(nextReels);
       setComments(grouped);
       setLikeCounts(counts);
@@ -145,13 +147,16 @@ export default function WatchScreen({ navigation, route }) {
   useEffect(() => {
     load();
     if (!user?.id) return undefined;
+    const renewal = setInterval(() => { if (document.visibilityState === 'visible') load(true); }, 240000);
+    const renewOnVisible = () => { if (document.visibilityState === 'visible' && Date.now() - lastMediaLoad.current >= 240000) load(true); };
+    document.addEventListener('visibilitychange', renewOnVisible);
     const channel = supabase.channel(`konnekt-reels-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reels' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reel_likes' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reel_comments' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'follows' }, () => load())
       .subscribe();
-    return () => { requestRef.current += 1; supabase.removeChannel(channel); };
+    return () => { clearInterval(renewal); document.removeEventListener('visibilitychange', renewOnVisible); requestRef.current += 1; supabase.removeChannel(channel); };
   }, [load, user?.id]);
 
   const publish = async () => {
@@ -305,12 +310,12 @@ export default function WatchScreen({ navigation, route }) {
               </TouchableOpacity>}
         </View>
         <View style={s.mediaFrame}>
-          {failedMedia[item.id]
+          {(failedMedia[item.id] || !url)
             ? <View style={s.mediaError}>
                 <Text style={s.mediaErrorIcon}>⚠</Text>
                 <Text style={s.mediaErrorTitle}>This media could not play</Text>
                 <Text style={s.mediaErrorText}>The file may be unavailable or in an unsupported format.</Text>
-                <TouchableOpacity style={s.retryButton} onPress={() => setFailedMedia(prev => ({ ...prev, [item.id]: false }))}><Text style={s.retryText}>Try again</Text></TouchableOpacity>
+                <TouchableOpacity style={s.retryButton} onPress={() => load(true)}><Text style={s.retryText}>Try again</Text></TouchableOpacity>
               </View>
             : <ReelPlayer
                 key={`${item.id}-${url}`}

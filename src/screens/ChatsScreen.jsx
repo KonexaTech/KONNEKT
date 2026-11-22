@@ -90,7 +90,7 @@ export default function ChatsScreen({ navigation }) {
           onRefresh={load}
           refreshing={busy}
           renderItem={({ item }) => (
-            <TouchableOpacity style={s.item} onPress={() => navigation.navigate('ChatConversation', { chatId: item.id, chatName: item.displayName })}>
+            <TouchableOpacity testID={`conversation-${item.id}`} style={s.item} onPress={() => navigation.navigate('ChatConversation', { chatId: item.id, chatName: item.displayName })}>
               <View style={s.avatar}><Text style={s.avatarText}>{item.is_group ? '👥' : '👤'}</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={s.name}>{item.displayName}</Text>

@@ -122,7 +122,7 @@ export default function AccountSettingsScreen({ navigation }) {
       {renderLink(
         'Personal information',
         'Manage your name and username',
-        () => openScreen('EditProfile', 'Personal information')
+        () => openScreen('Profile', 'Personal information')
       )}
 
       {renderLink(

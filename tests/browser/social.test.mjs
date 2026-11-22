@@ -1,6 +1,7 @@
+import { readFile } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { installPrivateSocialMedia } from './social-media-fixture.mjs';
 import { startServer, setup, ME, OTHER } from './helpers.mjs';
 let server;
 before(async()=>{server=await startServer();});after(()=>server?.stop());
@@ -8,8 +9,7 @@ const reel=(id,caption,published_at)=>({id,user_id:OTHER,caption,media_path:`ree
 const reels=[reel('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Newest fixture Reel #new','2026-11-15T00:00:00Z'),reel('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Selected fixture Reel #selected','2026-11-14T00:00:00Z')];
 async function app(options={}){
   const fixture=await setup(server.base,{db:{reels,reel_likes:[],reel_comments:[],...options.db}});
-  const video=await readFile(new URL('../fixtures/social-video.webm',import.meta.url));
-  await fixture.context.route('**/storage/v1/object/public/konnekt-public-media/**',route=>route.fulfill({status:200,contentType:'video/webm',body:video}));
+  await installPrivateSocialMedia(fixture.context);
   await fixture.page.reload();fixture.page.setDefaultTimeout(12000);return fixture;
 }
 test('multi-Reel feed stays within the viewport and a Discover selection opens that Reel',async()=>{
