@@ -69,7 +69,7 @@ jobs:
       - name: Build staging mobile website
         if: ${{ true }}
         env:
-          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_URL: 'https://oiwtfkgrnpzirghbsvim.supabase.co' # exact source-pinned QA project, never production
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY }}
           VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
           VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
@@ -80,7 +80,7 @@ jobs:
       - name: Verify staging backend isolation
         if: ${{ true }}
         env:
-          VITE_SUPABASE_URL: ${{ vars.KONNEKT_STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_URL: 'https://oiwtfkgrnpzirghbsvim.supabase.co' # exact source-pinned QA project, never production
         run: node scripts/verify-staging-bundle.mjs
 
       - name: Verify website assets
