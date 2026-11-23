@@ -45,8 +45,9 @@ export async function cleanupUnusedChatMedia(userId, conversationId, path) {
   return true;
 }
 
-// Only remove an upload after a successful lookup proves no owned row uses it.
-// Ambiguous network failures retain media instead of breaking a committed post.
+// Retain media if an owned reference is visible. An empty client lookup alone
+// cannot authorize deletion: RLS may hide references, and publication can race.
+// The server must retire the path atomically before removing the Storage blob.
 export async function cleanupUnusedPublicMedia(table, userId, media) {
   const column = table === 'reels' ? 'media_path' : table === 'statuses' ? 'media_url' : null;
   if (!column || !media?.path || !userId) throw new Error('Cannot verify unused media.');
@@ -54,7 +55,8 @@ export async function cleanupUnusedPublicMedia(table, userId, media) {
     .eq('user_id', userId).eq(column, table === 'reels' ? media.path : media.url).limit(1);
   if (error) throw error;
   if (data?.length) return false;
-  const result = await supabase.storage.from('konnekt-public-media').remove([media.path]);
+  const result = await supabase.functions.invoke('cleanup-social-media', { body: { path: media.path } });
   if (result.error) throw result.error;
+  if (result.data?.removed !== true || result.data?.path !== media.path) throw new Error('Unused media cleanup could not be confirmed.');
   return true;
 }
