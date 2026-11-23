@@ -65,6 +65,49 @@ test('an open status removes its content and stops video at expiry',{timeout:250
 test('failed Reel and Status inserts remove unused uploads; Status retry publishes once',async()=>{
   const f=await app({db:{statuses:[]}});try{
     const {page,db,requests,failures}=f;
+    // The production cleanup flow uses an authenticated Edge Function, not
+    // a browser Storage DELETE. Other tests cover the handler's authorization
+    // and transactional server-side absence checks.
+    const cleanupRequests = [];
+    await f.context.route('**/functions/v1/cleanup-social-media', route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') {
+        return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,apikey,content-type' } });
+      }
+      const body = request.postDataJSON();
+      cleanupRequests.push({ method: request.method(), path: body?.path });
+      if (request.method() !== 'POST' || typeof body?.path !== 'string' ||
+          !new RegExp('^(reels|statuses)/' + ME + '/[A-Za-z0-9._-]+
+    failures.set('POST:reels',{message:'Fixture publication failure'});
+    let chooser=page.waitForEvent('filechooser');await page.getByText('＋ Create Reel',{exact:true}).click();
+    await (await chooser).setFiles({name:'fixture.webm',mimeType:'video/webm',buffer:await readFile(new URL('../fixtures/social-video.webm',import.meta.url))});
+    await page.getByText('Fixture publication failure',{exact:true}).waitFor();
+    assert.equal(cleanupRequests.length,1);
+    assert.equal(cleanupRequests[0].method,'POST');
+    assert.match(cleanupRequests[0].path,new RegExp('^reels/' + ME + '/'));
+    assert.equal(requests.filter(r=>r.method==='DELETE'&&r.path.includes('/storage/')).length,0);
+    assert.equal(db.reels.length,2);
+    await page.getByRole('tab',{name:'Profile',exact:true}).click();await page.getByText('☰  ALL FEATURES',{exact:true}).click();await page.getByRole('button',{name:'Open Create a status',exact:true}).click();
+    await page.getByPlaceholder("What's happening?").fill('Fixture image status');
+    chooser=page.waitForEvent('filechooser');await page.getByText('＋ Add photo or video',{exact:true}).click();
+    await (await chooser).setFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOuoAAAAASUVORK5CYII=','base64')});
+    failures.set('POST:statuses',{message:'Fixture status failure'});await page.getByText('PUBLISH STATUS',{exact:true}).click();
+    await page.getByText('Fixture status failure',{exact:true}).waitFor();
+    assert.equal(cleanupRequests.length,2);
+    assert.equal(cleanupRequests[1].method,'POST');
+    assert.match(cleanupRequests[1].path,new RegExp('^statuses/' + ME + '/'));
+    assert.equal(requests.filter(r=>r.method==='DELETE'&&r.path.includes('/storage/')).length,0);
+    assert.equal(db.statuses.length,0);
+    failures.delete('POST:statuses');await page.getByText('PUBLISH STATUS',{exact:true}).click();await page.getByRole('button',{name:'Open Create a status',exact:true}).waitFor();
+    assert.equal(db.statuses.length,1);assert.equal(db.statuses[0].user_id,ME);
+  }finally{await f.close();}
+});
+).test(body.path)) {
+        return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ status: 'invalid_owned_path' }), headers: { 'access-control-allow-origin': '*' } });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ removed: true, path: body.path }) });
+    });
     await page.getByPlaceholder('Add a caption before uploading (optional)').fill('Failed fixture Reel');
     failures.set('POST:reels',{message:'Fixture publication failure'});
     let chooser=page.waitForEvent('filechooser');await page.getByText('＋ Create Reel',{exact:true}).click();
