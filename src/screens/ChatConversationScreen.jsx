@@ -7,6 +7,9 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../AuthContext';
+import VoiceNotePlayer from '../components/VoiceNotePlayer';
+import { parseVoiceMetadata } from '../services/voiceNoteFormat';
+import { validateMediaFile } from '../services/mediaValidation';
 import { supabase } from '../lib_supabase';
 import { chooseMedia, uploadMedia, cleanupUnusedChatMedia } from '../services/media';
 import { isConversationId } from '../services/conversationId';
@@ -494,8 +497,9 @@ export default function ChatConversationScreen({ navigation, route }) {
     sendLock.current = true;
     setSending(true);
     try {
-      const file = await chooseMedia('image/*,video/*,audio/*');
+      const file = await chooseMedia('image/*,video/*,audio/*,application/pdf,text/plain');
       if (!file) return;
+      validateMediaFile(file, 'konnekt-chat-media', 16);
 
       let cryptoKey;
       if (isGroup) {
@@ -617,6 +621,7 @@ export default function ChatConversationScreen({ navigation, route }) {
 
   const render = ({ item }) => {
     const mine = item.sender_id === user?.id;
+    const voiceInfo = item.media_type === 'audio' ? parseVoiceMetadata(item.display_body) : null;
 
     return (
       <View testID={`message-${item.id}`} style={[s.row, mine ? s.mine : s.theirs]}>
@@ -632,11 +637,12 @@ export default function ChatConversationScreen({ navigation, route }) {
               otherPublicKey={otherMember?.encryption_public_key}
               conversationId={conversationId}
               isGroup={isGroup}
+              voiceInfo={voiceInfo}
             />
           ) : null}
 
           <Text style={s.message}>
-            {item.display_body ?? item.body}
+            {voiceInfo ? 'Voice note' : (item.display_body ?? item.body)}
           </Text>
 
           <Text style={s.time}>
@@ -762,7 +768,8 @@ function ChatAttachment({
   userId,
   otherPublicKey,
   conversationId,
-  isGroup
+  isGroup,
+  voiceInfo
 }) {
   const [url, setUrl] = useState('');
   const [loadError, setLoadError] = useState('');
@@ -831,11 +838,7 @@ function ChatAttachment({
 
   if (type === 'audio') {
     return (
-      <audio
-        src={url}
-        controls
-        style={{ width: '220px', marginBottom: 8 }}
-      />
+      <VoiceNotePlayer url={url} metadata={voiceInfo} label={voiceInfo ? 'Voice message' : 'Audio attachment'} />
     );
   }
 
@@ -869,6 +872,8 @@ function ChatAttachment({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel="Open attachment"
       onPress={() => {
         if (typeof window !== 'undefined') {
           window.open(url, '_blank', 'noopener,noreferrer');
@@ -876,7 +881,7 @@ function ChatAttachment({
       }}
     >
       <Text style={{ color: '#8BD0FF', padding: 10 }}>
-        ▶ Open video attachment
+        Open attachment
       </Text>
     </TouchableOpacity>
   );

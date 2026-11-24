@@ -11,7 +11,7 @@ import {
 const quickActions = [
   { icon: '💬', title: 'Messages', description: 'Chat with friends' },
   { icon: '📸', title: 'Status', description: 'Share your moments' },
-  { icon: '🎬', title: 'Watch', description: 'Discover videos' },
+  { icon: '🎬', title: 'Reels', description: 'Discover videos' },
   { icon: '🔴', title: 'Go Live (unavailable)', description: 'Not included in this release' }
 ];
 
@@ -47,8 +47,8 @@ export default function HomeScreen({ navigation }) {
             onPress={() => {
               if (action.title === 'Messages') {
                 navigation.navigate('Chats');
-              } else if (action.title === 'Watch') {
-                navigation.navigate('Watch');
+              } else if (action.title === 'Reels') {
+                navigation.navigate('Reels');
               } else if (action.title === 'Go Live (unavailable)') {
                 navigation.navigate('LiveStreamSetup');
               } else if (action.title === 'Status') {

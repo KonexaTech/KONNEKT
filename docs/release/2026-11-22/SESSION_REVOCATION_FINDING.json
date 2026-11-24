@@ -1,0 +1,26 @@
+{
+  "decision": "FAIL_REVOKED_JWT_RETAINS_PRIVATE_DATA_ACCESS",
+  "project": "konnekt-staging",
+  "sourceCommit": "68b5f3ae17768813792a2b474e5d579fb49158d1",
+  "authContextSHA256": "ac5abb24419c66ca0b7a221efe298f20a328b77b2b7569df6c98540aec8c45dd",
+  "checks": [
+    {
+      "check": "fresh approved fixture session can read its own backup metadata",
+      "result": "PASS"
+    },
+    {
+      "check": "revoked fresh session cannot reuse its still-unexpired JWT for protected backup metadata",
+      "result": "FAIL"
+    }
+  ],
+  "observation": {
+    "beforeRows": 1,
+    "afterRows": 1,
+    "httpStatus": 200,
+    "accessTokenStillUnexpired": true,
+    "denied": false,
+    "exposed": true
+  },
+  "scope": "Only a new nonpersistent approved fixture session was revoked; original profiles, identities and sessions were preserved.",
+  "observedAt": "2026-11-22T17:03:41.636270+00:00"
+}

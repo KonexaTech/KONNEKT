@@ -1,12 +1,31 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { supabase, SUPABASE_URL } from '../lib_supabase';
+import { resolveSocialMedia } from '../services/socialMedia';
 import { useExpiryTime } from '../services/useExpiryTime';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 export default function StatusViewerScreen({ navigation, route }) {
   const item = route?.params?.status;
   const now = useExpiryTime([item?.expires_at]);
   const video = useRef(null);
+  const [media, setMedia] = useState({ source: null, url: '', error: '' });
   const available = !!item && Date.parse(item.expires_at) > now;
-  useEffect(() => { const player = video.current; if (player && available) { player.src = item.media_url; player.load(); } return () => { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } }; }, [available, item?.media_url]);
+  useEffect(() => {
+    if (!available || !item.media_url) return undefined;
+    let cancelled = false;
+    const resolve = async () => {
+      try {
+        const url = await resolveSocialMedia(supabase, SUPABASE_URL, item.media_url, { expiresAt: item.expires_at });
+        if (!cancelled) setMedia({ source: item.media_url, url, error: '' });
+      } catch {
+        if (!cancelled) setMedia({ source: item.media_url, url: '', error: 'This media could not be loaded. Close and reopen the status to retry.' });
+      }
+    };
+    resolve();
+    const timer = setInterval(resolve, 240000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [available, item?.media_url, item?.expires_at]);
+  const mediaUrl = available && media.source === item?.media_url ? media.url : '';
+  useEffect(() => { const player = video.current; if (player && mediaUrl) { player.src = mediaUrl; player.load(); } return () => { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } }; }, [mediaUrl]);
   if (!available) return <View style={s.root}><Text style={s.text}>This status is no longer available.</Text><TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.back}>Go back</Text></TouchableOpacity></View>;
   const name = item.profile?.full_name || (item.profile?.username ? `@${item.profile.username}` : 'KONNEKT member');
   return <View style={s.root}>
@@ -14,7 +33,7 @@ export default function StatusViewerScreen({ navigation, route }) {
     <View style={s.progress}><View style={s.progressFill}/></View>
     <Text style={s.name}>{name}</Text>
     <Text style={s.created}>{new Date(item.created_at).toLocaleString()}</Text>
-    <View style={s.mediaBox}>{item.media_url ? (item.media_type === 'image' ? <Image source={{ uri: item.media_url }} style={s.media} resizeMode="contain"/> : <video ref={video} src={item.media_url} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
+    <View style={s.mediaBox}>{item.media_url ? (!mediaUrl ? <Text style={s.text}>{media.error || 'Loading media…'}</Text> : item.media_type === 'image' ? <Image source={{ uri: mediaUrl }} style={s.media} resizeMode="contain"/> : <video ref={video} src={mediaUrl} controls autoPlay playsInline style={{ width:'100%', height:'100%', objectFit:'contain', backgroundColor:'#000' }}/>) : <Text style={s.text}>{item.text_content || 'Shared a moment'}</Text>}</View>
     {!!item.media_url && !!item.text_content && <Text style={s.caption}>{item.text_content}</Text>}
     <Text style={s.time}>Expires {new Date(item.expires_at).toLocaleString()}</Text>
   </View>;

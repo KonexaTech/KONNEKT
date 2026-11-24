@@ -8,8 +8,25 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: konnekt_cleanup_test
+          POSTGRES_USER: konnekt_test
+          # Disposable loopback-only CI fixture, never a hosted database.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U konnekt_test -d konnekt_cleanup_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -18,7 +35,13 @@ jobs:
       - name: Audit production dependencies for high or critical vulnerabilities
         run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
+      - name: Type-check the staging-only social cleanup Edge adapter
+        run: npm exec --yes --package=deno@2.5.6 -- deno check supabase/functions/cleanup-social-media/index.ts
       - run: npm test
+      - name: Verify social cleanup against independent PostgreSQL transactions
+        env:
+          KONNEKT_CLEANUP_TEST_DATABASE_URL: postgresql://konnekt_test@127.0.0.1:5432/konnekt_cleanup_test
+        run: node --test tests/cleanup-social-concurrency.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - name: Smoke-test the production website build

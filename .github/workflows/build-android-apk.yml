@@ -70,7 +70,10 @@ jobs:
           # Stable test builds must be pinned to an owner-verified signing certificate.
           # A new certificate can be bootstrapped with a fresh-install-only build,
           # but that build is not eligible for the 20-person update-continuity gate.
-          if ! [[ "$KONNEKT_STAGING_CERT_SHA256" =~ ^([[:xdigit:]]{2}:){31}[[:xdigit:]]{2}$|^[[:xdigit:]]{64}$ ]]; then
+          # Pasted repository variables can contain a trailing CR/LF. Normalize
+          # line endings only; the full fingerprint and actual certificate must match.
+          CERTIFICATE_PIN="$(printf '%s' "$KONNEKT_STAGING_CERT_SHA256" | tr -d '\r\n')"
+          if ! [[ "$CERTIFICATE_PIN" =~ ^([[:xdigit:]]{2}:){31}[[:xdigit:]]{2}$|^[[:xdigit:]]{64}$ ]]; then
             echo "Missing or invalid KONNEKT_STAGING_CERT_SHA256 repository variable."
             echo "Pin the owner-verified signing certificate before producing a stable staging APK."
             exit 1

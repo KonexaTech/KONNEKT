@@ -1,0 +1,99 @@
+{
+  "project": "konnekt-staging",
+  "productionChanged": false,
+  "physicalDeviceAcceptance": "BLOCKED",
+  "runs": [
+    {
+      "decision": "PASS_SCOPED_LIVE_ENCRYPTED_SYNTHETIC_VOICE_DOCUMENTS_REPORTING",
+      "sourceCommit": "0f09dbc54a784f267604b3b2ac0ef1c2ebb46eb5",
+      "checks": [
+        {
+          "check": "A to B direct voice: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "A to B group voice: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "A to B direct document: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "A to B group document: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "actor 0: actual member Realtime delivery and outsider exclusion with before/after positive controls",
+          "result": "PASS"
+        },
+        {
+          "check": "actual clearly labelled TEST REPORT submission succeeds and outsider C cannot read the moderation record",
+          "result": "PASS"
+        },
+        {
+          "check": "B to A direct voice: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "B to A group voice: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "B to A direct document: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "B to A group document: actual encrypted insert and outsider message/file/signed-link denial",
+          "result": "PASS"
+        },
+        {
+          "check": "actor 1: actual member Realtime delivery and outsider exclusion with before/after positive controls",
+          "result": "PASS"
+        },
+        {
+          "check": "both original account identities decrypted peer direct/group voice and documents with matching original byte hashes; audio playback, seeking and speed work in-browser",
+          "result": "PASS"
+        }
+      ],
+      "scope": "encrypted_voice_documents",
+      "observedAt": "2026-11-22T14:51:33.442545+00:00",
+      "sourceSHA256": {
+        "src/services/voiceMessages.js": "13d4e815fac5209e45232665f6b0844fb4e1343c7c78014cb5dc9f9713433ada",
+        "src/services/media.js": "88370bd42d4ba7d51133acaa4a3e112dc36bf04ae24c82053521caafb83bd23f",
+        "src/services/mediaValidation.js": "e3cd817de666da245abeea7d586b2cca04568563dd4279fb32237e57311464b3",
+        "src/screens/VoiceNoteScreen.jsx": "2d9711a13578a6fad941a9bf3f98c29ba8bde71e139d0cdb362068c69dfc615e",
+        "src/screens/ChatConversationScreen.jsx": "ed5075d3ce620cb890ad12534364f54f245ce57ae10902901406fe313139979c",
+        "src/screens/ChatsScreen.jsx": "4b041528e5c9cd54bcb5f2b073e0dd64c406c59d913fb535f2957812a146e62c",
+        "src/components/VoiceNotePlayer.jsx": "92df7a1b4060134d307fef392defd4ba8a3c3ef38bcf72fe73b0d3cde1eef657",
+        "src/konnektEncryption.js": "743defd1ab457678ff836d19d031a7a0ef1fc90644c4d6d82b3bbc148540bf6d"
+      },
+      "currentSourceHashesMatch": true
+    },
+    {
+      "decision": "PASS_SCOPED_LIVE_UI_KEY_RECOVERY",
+      "sourceCommit": "eaa1e934803ca2a353bfddc66ea4063d0dd6ab70",
+      "checks": [
+        {
+          "check": "original fixture B identity backed up through the real UI; pre-existing unrelated backups preserved",
+          "result": "PASS"
+        },
+        {
+          "check": "wrong recovery passphrase rejected in isolated session without creating or replacing a local identity",
+          "result": "PASS"
+        },
+        {
+          "check": "correct passphrase restored the identical original key and authenticated existing direct/group voice ciphertext and private files",
+          "result": "PASS"
+        },
+        {
+          "check": "outsider C cannot read the original account recovery backup",
+          "result": "PASS"
+        }
+      ],
+      "scope": "key_recovery",
+      "observedAt": "2026-11-22T14:55:05.055670+00:00",
+      "cryptoSHA256": "743defd1ab457678ff836d19d031a7a0ef1fc90644c4d6d82b3bbc148540bf6d"
+    }
+  ]
+}

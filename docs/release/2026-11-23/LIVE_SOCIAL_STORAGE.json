@@ -1,0 +1,60 @@
+{
+  "project": "konnekt-staging",
+  "decision": "FAIL_CLEANUP_RETAINED_TEST_MEDIA",
+  "checks": [
+    {
+      "check": "unreferenced uploaded social object cannot be signed by uploader, peer or outsider",
+      "result": "PASS"
+    },
+    {
+      "check": "published public Reel can be authorized by uploader, peer and outsider",
+      "result": "PASS"
+    },
+    {
+      "check": "actual application media resolver retrieves the original playable fixture bytes",
+      "result": "PASS"
+    },
+    {
+      "check": "anonymous signing is denied for otherwise visible content",
+      "result": "PASS"
+    },
+    {
+      "check": "unauthenticated public object URL cannot bypass the private bucket",
+      "result": "PASS"
+    },
+    {
+      "check": "follower media is authorized for uploader and follower, denied to outsider",
+      "result": "PASS"
+    },
+    {
+      "check": "soft-deleted Reel cannot mint a new media URL for any test account",
+      "result": "PASS"
+    },
+    {
+      "check": "unexpired Status media is authorized for uploader, peer and outsider",
+      "result": "PASS"
+    },
+    {
+      "check": "expired Status media cannot mint a new URL for any test account",
+      "result": "PASS"
+    },
+    {
+      "check": "Storage removal is confirmed rather than inferred from an error-free SDK response",
+      "result": "FAIL"
+    }
+  ],
+  "sourceCommit": "0d31711ae0c28d6aafbb893c93722336c1ac8a6f",
+  "scriptSHA256": "0d9b42ce0147b1bf58dbc8e513889313fb0402ab2ba3ceb1477b5c63b09cd07f",
+  "startedAt": "2026-11-23T04:39:33.778Z",
+  "retainedEvidence": "Only newly labelled fixture records/media were eligible for cleanup. See private fixture IDs; failures require cleanup review. No original account, profile, key, follow or media was removed.",
+  "accessDecision": "PASS_SCOPED_LIVE_SOCIAL_STORAGE",
+  "cleanupVerification": {
+    "method": "Privileged read-only exact newly-created fixture path allowlist; no removal performed",
+    "remainingObjects": 2,
+    "reels": 1,
+    "statuses": 1,
+    "result": "FAIL",
+    "observedAt": "2026-11-23T04:43:20.694986+00:00"
+  },
+  "scope": "Nine real authenticated Storage/media-resolver checks passed. Privileged catalog verification then found two newly created objects retained despite SDK removal returning no error. No original data was removed. Subsequent script uses reviewed guarded Edge cleanup; that server correction is not deployed."
+}

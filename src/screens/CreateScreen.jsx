@@ -24,7 +24,7 @@ export default function CreateScreen({ navigation }) {
       navigation.navigate('CreateStatus');
       return;
     }
-    navigation.navigate('Watch');
+    navigation.navigate('Reels');
   };
 
   return (

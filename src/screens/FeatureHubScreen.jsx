@@ -19,7 +19,7 @@ const sections = [
     description: 'Discover people, publish content and manage your community.',
     items: [
       ['Discover people', 'Discover', 'Search and explore members'],
-      ['Reels feed', 'Watch', 'Watch and publish short videos'],
+      ['Reels feed', 'Reels', 'Watch and publish short videos'],
       ['Status updates', 'Status', 'View 24-hour updates'],
       ['Create a status', 'CreateStatus', 'Share a photo, video or text update'],
       ['Followers', 'Followers', 'View your followers'],
