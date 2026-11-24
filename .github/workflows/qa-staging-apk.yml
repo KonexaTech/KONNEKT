@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - qa/konnekt-exact-source-staging-apk-20261123
+      - qa/konnekt-staging-public-key-pin-20261124
     paths:
       - '.github/workflows/qa-staging-apk.yml'
 
