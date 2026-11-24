@@ -70,7 +70,10 @@ jobs:
         if: ${{ true }}
         env:
           VITE_SUPABASE_URL: 'https://oiwtfkgrnpzirghbsvim.supabase.co' # exact source-pinned QA project, never production
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.KONNEKT_STAGING_SUPABASE_PUBLISHABLE_KEY }}
+          # Public browser key verified active on the dedicated staging Supabase project.
+          # Public publishable key, not a privileged secret, service_role or production key.
+          # Rotate this pinned value only after verifying the new staging key.
+          VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_61aBpLRbHE_SRNhIbeFCqQ_JVl5oIlk'
           VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
           VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
         run: |
