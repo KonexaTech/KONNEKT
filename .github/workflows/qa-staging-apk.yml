@@ -6,6 +6,7 @@ on:
     branches:
       - qa/konnekt-exact-source-staging-apk-20261123
       - qa/konnekt-staging-public-key-pin-20261124
+      - qa/konnekt-integrated-staging-20261124
     paths:
       - '.github/workflows/qa-staging-apk.yml'
 
@@ -48,6 +49,8 @@ jobs:
           done
       - name: Download repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
