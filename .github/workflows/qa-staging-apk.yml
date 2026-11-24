@@ -1,0 +1,208 @@
+
+name: KONNEKT exact-source isolated staging APK
+
+on:
+  push:
+    branches:
+      - qa/konnekt-exact-source-staging-apk-20261123
+      - qa/konnekt-staging-public-key-pin-20261124
+      - qa/konnekt-integrated-staging-20261124
+    paths:
+      - '.github/workflows/qa-staging-apk.yml'
+
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    env:
+      KONNEKT_BUILD_TARGET: staging
+
+    steps:
+      - name: Check stable staging signing configuration
+        if: ${{ true }}
+        env:
+          KONNEKT_STAGING_KEYSTORE_BASE64: ${{ secrets.KONNEKT_STAGING_KEYSTORE_BASE64 }}
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+          KONNEKT_STAGING_CERT_SHA256: ${{ vars.KONNEKT_STAGING_CERT_SHA256 }}
+        run: |
+          # Stable test builds must be pinned to an owner-verified signing certificate.
+          # A new certificate can be bootstrapped with a fresh-install-only build,
+          # but that build is not eligible for the 20-person update-continuity gate.
+          # Pasted repository variables can contain a trailing CR/LF. Normalize
+          # line endings only; the full fingerprint and actual certificate must match.
+          CERTIFICATE_PIN="$(printf '%s' "$KONNEKT_STAGING_CERT_SHA256" | tr -d '\r\n')"
+          if ! [[ "$CERTIFICATE_PIN" =~ ^([[:xdigit:]]{2}:){31}[[:xdigit:]]{2}$|^[[:xdigit:]]{64}$ ]]; then
+            echo "Missing or invalid KONNEKT_STAGING_CERT_SHA256 repository variable."
+            echo "Pin the owner-verified signing certificate before producing a stable staging APK."
+            exit 1
+          fi
+          for NAME in KONNEKT_STAGING_KEYSTORE_BASE64 KONNEKT_STAGING_KEYSTORE_PASSWORD KONNEKT_STAGING_KEY_ALIAS KONNEKT_STAGING_KEY_PASSWORD; do
+            if [ -z "${!NAME}" ]; then
+              echo "Missing Actions secret: $NAME. An owner must configure stable signing."
+              exit 1
+            fi
+          done
+      - name: Download repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build mobile website
+        if: ${{ false }}
+        run: npm run build:mobile
+
+      - name: Build staging mobile website
+        if: ${{ true }}
+        env:
+          VITE_SUPABASE_URL: 'https://oiwtfkgrnpzirghbsvim.supabase.co' # exact source-pinned QA project, never production
+          # Public browser key verified active on the dedicated staging Supabase project.
+          # Public publishable key, not a privileged secret, service_role or production key.
+          # Rotate this pinned value only after verifying the new staging key.
+          VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_61aBpLRbHE_SRNhIbeFCqQ_JVl5oIlk'
+          VITE_TURN_CREDENTIALS_URL: ${{ vars.KONNEKT_STAGING_TURN_CREDENTIALS_URL }}
+          VITE_ONESIGNAL_APP_ID: ${{ vars.KONNEKT_STAGING_ONESIGNAL_APP_ID }}
+        run: |
+          node scripts/validate-staging-integrations.mjs
+          npm run build:mobile -- --mode staging
+
+      - name: Verify staging backend isolation
+        if: ${{ true }}
+        env:
+          VITE_SUPABASE_URL: 'https://oiwtfkgrnpzirghbsvim.supabase.co' # exact source-pinned QA project, never production
+        run: node scripts/verify-staging-bundle.mjs
+
+      - name: Verify website assets
+        run: |
+          test -f dist/index.html
+          echo "Website entry point exists."
+          ls -la dist
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Install existing KONNEKT brand assets
+        run: node scripts/android-assets.mjs
+
+      - name: Configure optional call device permissions
+        run: node scripts/android-permissions.mjs
+
+      - name: Synchronise Capacitor
+        run: npx cap sync android
+
+      - name: Set Android 8 minimum SDK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("android/variables.gradle")
+          if not file.exists():
+              raise SystemExit("Android variables.gradle was not generated.")
+
+          content = file.read_text()
+          pattern = r'(?m)^(\s*minSdkVersion\s*=\s*)\d+'
+
+          updated, count = re.subn(
+              pattern,
+              r'\g<1>26',
+              content,
+              count=1
+          )
+
+          if count != 1:
+              raise SystemExit("Could not safely set minSdkVersion.")
+
+          file.write_text(updated)
+          print("Android minimum SDK set to 26.")
+          PY
+
+          grep -n "minSdkVersion" android/variables.gradle
+
+      - name: Configure stable staging signing
+        id: staging_signing
+        if: ${{ true }}
+        env:
+          KONNEKT_STAGING_KEYSTORE_BASE64: ${{ secrets.KONNEKT_STAGING_KEYSTORE_BASE64 }}
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+          KONNEKT_STAGING_CERT_SHA256: ${{ vars.KONNEKT_STAGING_CERT_SHA256 }}
+        run: node scripts/android-staging-signing.mjs
+
+      - name: Build Android APK
+        working-directory: android
+        env:
+          KONNEKT_STAGING_KEYSTORE_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEYSTORE_PASSWORD }}
+          KONNEKT_STAGING_KEY_ALIAS: ${{ secrets.KONNEKT_STAGING_KEY_ALIAS }}
+          KONNEKT_STAGING_KEY_PASSWORD: ${{ secrets.KONNEKT_STAGING_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon clean assembleDebug
+
+      - name: Verify APK file and signature
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+
+          test -s "$APK"
+          echo "APK exists and is not empty."
+
+          zipinfo -t "$APK"
+
+          APKSIGNER="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+
+          if [ -z "$APKSIGNER" ]; then
+            echo "Could not find Android APK signature verifier."
+            exit 1
+          fi
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/konnekt-apk-signature.txt"
+          cat "$RUNNER_TEMP/konnekt-apk-signature.txt"
+          echo "APK signature verification passed."
+
+      - name: Record staging APK installation evidence
+        if: ${{ true }}
+        env:
+          KONNEKT_EXPECTED_PACKAGE: com.konnekt.staging
+          EXPECTED_STAGING_CERTIFICATE: ${{ steps.staging_signing.outputs.certificate_sha256 }}
+          KONNEKT_REQUIRE_STABLE_SIGNING: true
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$SDK/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          test -n "$AAPT"
+          node scripts/android-apk-evidence.mjs android/app/build/outputs/apk/debug/app-debug.apk "$APKSIGNER" "$AAPT" android/app/build/outputs/apk/debug/apk-evidence.json
+
+      - name: Upload verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KONNEKT-API26-Staging-QA-${{ github.sha }}
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/apk-evidence.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Remove staging keystore
+        if: ${{ always() }}
+        run: |
+          if [ -n "$KONNEKT_SIGNING_KEYSTORE_PATH" ]; then
+            rm -f -- "$KONNEKT_SIGNING_KEYSTORE_PATH"
+          fi
+          
